@@ -699,6 +699,7 @@ int main(int argc, char** argv)
                     return false;
                 return true;
             }, UNITY);
+    ana.cutflow.addCutToLastActiveCut("SignalRegion", UNITY, UNITY);
 
 
     // Histogram utility object that is used to define the histograms
@@ -765,6 +766,7 @@ int main(int argc, char** argv)
     ana.histograms.addHistogram("vbf_jets_maxmjj_0_phi", 180, -3.1416, 3.1416, [&]() { return tx.getBranch<LV>("vbf_jets_maxmjj_0").phi(); } );
     ana.histograms.addHistogram("vbf_jets_maxmjj_1_phi", 180, -3.1416, 3.1416, [&]() { return tx.getBranch<LV>("vbf_jets_maxmjj_1").phi(); } );
     ana.histograms.addHistogram("njets", 8, 0, 8, [&]() { return tx.getBranch<vector<LV>>("good_jets_p4").size(); } );
+    ana.histograms.addHistogram("met", 180, 0, 400, [&]() { return nt.MET_pt(); } );
 
     // Book cutflows
     ana.cutflow.bookCutflows();

@@ -1,3 +1,5 @@
+mkdir -p hadds/
+rm -rf hadds/*.root
 rm .jobs.txt
 echo "hadd -f hadds/ssww.root hists/output_ssww.root" >> .jobs.txt
 echo "hadd -f hadds/tt1l.root hists/output_tt1l_*.root" >> .jobs.txt
@@ -9,4 +11,6 @@ echo "hadd -f hadds/vbshww.root hists/output_vbshww.root" >> .jobs.txt
 echo "hadd -f hadds/wz.root hists/output_wz.root" >> .jobs.txt
 echo "hadd -f hadds/lambda20_vbshww.root hists/output_lambda20_vbshww.root" >> .jobs.txt
 echo "hadd -f hadds/lambdam20_vbshww.root hists/output_lambdam20_vbshww.root" >> .jobs.txt
+echo "Launching hadd jobs in parallel...."
 xargs.sh .jobs.txt
+echo "Done!"
