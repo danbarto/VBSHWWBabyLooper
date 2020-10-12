@@ -7,4 +7,4 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 sh $DIR/exec.sh
 sh $DIR/hadd.sh
 python $DIR/cutflow.py
-python $DIR/plot.py
+# python $DIR/plot.py

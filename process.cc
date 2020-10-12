@@ -505,8 +505,8 @@ int main(int argc, char** argv)
                     if (not (jet_p4.pt() > 30.))
                         continue;
 
-                    if (not (fabs(jet_p4.eta()) < 5.0))
-                        continue;
+                    // if (not (fabs(jet_p4.eta()) < 5.0))
+                    //     continue;
 
                     tx.pushbackToBranch<LV>("good_jets_p4", jet_p4);
                     bool is_loose_btagged = nt.Jet_btagDeepFlavB()[ijet] > 0.0521;
@@ -646,6 +646,12 @@ int main(int argc, char** argv)
                 return true;
             }, UNITY);
 
+    ana.cutflow.addCutToLastActiveCut("VBFJetsEtaCut",
+            [&]()
+            {
+                return fabs(tx.getBranchLazy<LV>("vbf_jets_maxmjj_0").eta()) > 2.;
+            }, UNITY);
+
     ana.cutflow.addCutToLastActiveCut("TwoTightLeptons",
             [&]()
             {
@@ -656,28 +662,18 @@ int main(int argc, char** argv)
                 return ntight == 2;
             }, UNITY);
 
+    ana.cutflow.addCutToLastActiveCut("LeptonPt",
+            [&]()
+            {
+                if (not (tx.getBranch<vector<LV>>("good_leptons_p4")[0].pt() > 50. and tx.getBranch<vector<LV>>("good_leptons_p4")[1].pt() > 25.))
+                    return false;
+                return true;
+            }, UNITY);
+
     ana.cutflow.addCutToLastActiveCut("NbMed",
             [&]()
             {
                 return tx.getBranch<int>("nbmedium") > 1.;
-            }, UNITY);
-
-    ana.cutflow.addCutToLastActiveCut("Mjj1000",
-            [&]()
-            {
-                return tx.getBranch<float>("maxmjj") > 1000.;
-            }, UNITY);
-
-    ana.cutflow.addCutToLastActiveCut("HiggsCuts",
-            [&]()
-            {
-                return tx.getBranch<float>("mbb_maxmjj") < 150.;
-            }, UNITY);
-
-    ana.cutflow.addCutToLastActiveCut("SignalCuts",
-            [&]()
-            {
-                return tx.getBranch<float>("maxmjj") > 2000.;
             }, UNITY);
 
     ana.cutflow.addCutToLastActiveCut("NjetCuts",
@@ -686,19 +682,42 @@ int main(int argc, char** argv)
                 return tx.getBranch<vector<LV>>("good_jets_p4").size() < 6.;
             }, UNITY);
 
+    ana.cutflow.addCutToLastActiveCut("HiggsCuts",
+            [&]()
+            {
+                return tx.getBranch<float>("mbb_maxmjj") < 150.;
+            }, UNITY);
+
+    ana.cutflow.addCutToLastActiveCut("Mjj500",
+            [&]()
+            {
+                return tx.getBranch<float>("maxmjj") > 500.;
+            }, UNITY);
+
+    ana.cutflow.addCutToLastActiveCut("Mjj1000",
+            [&]()
+            {
+                return tx.getBranch<float>("maxmjj") > 1000.;
+            }, UNITY);
+
+    ana.cutflow.addCutToLastActiveCut("Mjj1500",
+            [&]()
+            {
+                return tx.getBranch<float>("maxmjj") > 1500.;
+            }, UNITY);
+
+    ana.cutflow.addCutToLastActiveCut("SignalCuts",
+            [&]()
+            {
+                return tx.getBranch<float>("maxmjj") > 2000.;
+            }, UNITY);
+
     ana.cutflow.addCutToLastActiveCut("CJVCuts",
             [&]()
             {
                 return tx.getBranchLazy<float>("cjv_pt0") < 30.;
             }, UNITY);
 
-    ana.cutflow.addCutToLastActiveCut("LeptonPt",
-            [&]()
-            {
-                if (not (tx.getBranch<vector<LV>>("good_leptons_p4")[0].pt() > 25. and tx.getBranch<vector<LV>>("good_leptons_p4")[1].pt() > 20.))
-                    return false;
-                return true;
-            }, UNITY);
     ana.cutflow.addCutToLastActiveCut("SignalRegion", UNITY, UNITY);
 
 
@@ -767,6 +786,26 @@ int main(int argc, char** argv)
     ana.histograms.addHistogram("vbf_jets_maxmjj_1_phi", 180, -3.1416, 3.1416, [&]() { return tx.getBranch<LV>("vbf_jets_maxmjj_1").phi(); } );
     ana.histograms.addHistogram("njets", 8, 0, 8, [&]() { return tx.getBranch<vector<LV>>("good_jets_p4").size(); } );
     ana.histograms.addHistogram("met", 180, 0, 400, [&]() { return nt.MET_pt(); } );
+    ana.histograms.addHistogram("maxmjj_binned", 3, 0, 3,
+            [&]()
+            {
+                if (tx.getBranch<float>("maxmjj") < 1000.)
+                {
+                    return 0.;
+                }
+                else if (tx.getBranch<float>("maxmjj") < 2000.)
+                {
+                    return 1.;
+                }
+                else if (tx.getBranch<float>("maxmjj") < 2000.)
+                {
+                    return 2.;
+                }
+                else
+                {
+                    return -1.;
+                }
+            } );
 
     // Book cutflows
     ana.cutflow.bookCutflows();
