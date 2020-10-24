@@ -813,6 +813,8 @@ int main(int argc, char** argv)
     // Book Histograms
     ana.cutflow.bookHistogramsForCutAndBelow(ana.histograms, "TwoTightLeptons");
 
+    ana.cutflow.printCuts();
+
     // Looping input file
     while (ana.looper.nextEvent())
     {
