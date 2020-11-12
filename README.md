@@ -4,5 +4,5 @@
     source setup.sh
     make clean; make -j
 
-    sh scripts/run.sh
-    python scripts/plot.py
+    sh run.sh
+    python plot.py
