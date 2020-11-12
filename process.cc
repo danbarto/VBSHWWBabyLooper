@@ -248,152 +248,14 @@ int main(int argc, char** argv)
     //
     // and no need for "SetBranchAddress" and declaring variable shenanigans necessary
     // This is a standard thing SNT does pretty much every looper we use
-    nt.SetYear(2017); // Hardcoded since we're running on 2017 MC only
+    nt.SetYear(2017);
     ana.looper.init(ana.events_tchain, &nt, ana.n_events);
-
-//********************************************************************************
-//
-// Interlude... notes on RooUtil framework
-//
-//********************************************************************************
-
-    // ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=
-    // Quick tutorial on RooUtil::Cutflow object cut tree formation
-    // ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=
-    //
-    // The RooUtil::Cutflow object facilitates creating a tree structure of cuts
-    //
-    // To add cuts to each node of the tree with cuts defined, use "addCut" or "addCutToLastActiveCut"
-    // The "addCut" or "addCutToLastActiveCut" accepts three argument, <name>, and two lambda's that define the cut selection, and the weight to apply to that cut stage
-    //
-    // e.g. To create following cut-tree structure one does
-    //
-    //             (Root) <--- Always exists as soon as RooUtil::Cutflow object is created. But this is basically hidden underneath and users do not have to care
-    //                |
-    //            CutWeight
-    //            |       |
-    //     CutPreSel1    CutPreSel2
-    //       |                  |
-    //     CutSel1           CutSel2
-    //
-    //
-    //   code:
-    //
-    //      // Create the object (Root node is created as soon as the instance is created)
-    //      RooUtil::Cutflow cutflow;
-    //
-    //      cutflow.addCut("CutWeight"                 , <lambda> , <lambda>); // CutWeight is added below "Root"-node
-    //      cutflow.addCutToLastActiveCut("CutPresel1" , <lambda> , <lambda>); // The last "active" cut is "CutWeight" since I just added that. So "CutPresel1" is added below "CutWeight"
-    //      cutflow.addCutToLastActiveCut("CutSel1"    , <lambda> , <lambda>); // The last "active" cut is "CutPresel1" since I just added that. So "CutSel1" is added below "CutPresel1"
-    //
-    //      cutflow.getCut("CutWeight"); // By "getting" the cut object, this makes the "CutWeight" the last "active" cut.
-    //      cutflow.addCutToLastActiveCut("CutPresel2" , <lambda> , <lambda>); // The last "active" cut is "CutWeight" since I "getCut" on it. So "CutPresel2" is added below "CutWeight"
-    //      cutflow.addCutToLastActiveCut("CutSel2"    , <lambda> , <lambda>); // The last "active" cut is "CutPresel2" since I just added that. So "CutSel2" is added below "CutPresel1"
-    //
-    // (Side note: "UNITY" lambda is defined in the framework to just return 1. This so that use don't have to type [&]() {return 1;} so many times.)
-    //
-    // Once the cutflow is formed, create cutflow histograms can be created by calling RooUtil::Cutflow::bookCutflows())
-    // This function looks through the terminating nodes of the tree structured cut tree. and creates a histogram that will fill the yields
-    // For the example above, there are two terminationg nodes, "CutSel1", and "CutSel2"
-    // So in this case Root::Cutflow::bookCutflows() will create two histograms. (Actually four histograms.)
-    //
-    //  - TH1F* type object :  CutSel1_cutflow (4 bins, with first bin labeled "Root", second bin labeled "CutWeight", third bin labeled "CutPreSel1", fourth bin labeled "CutSel1")
-    //  - TH1F* type object :  CutSel2_cutflow (...)
-    //  - TH1F* type object :  CutSel1_rawcutflow (...)
-    //  - TH1F* type object :  CutSel2_rawcutflow (...)
-    //                                ^
-    //                                |
-    // NOTE: There is only one underscore "_" between <CutName>_cutflow or <CutName>_rawcutflow
-    //
-    // And later in the loop when RooUtil::Cutflow::fill() function is called, the tree structure will be traversed through and the appropriate yields will be filled into the histograms
-    //
-    // After running the loop check for the histograms in the output root file
-
-    // ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=
-    // Quick tutorial on RooUtil::Histograms object
-    // ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=
-    //
-    // The RooUtil::Histograms object facilitates book keeping histogram definitions
-    // And in conjunction with RooUtil::Cutflow object, one can book same histograms across different cut stages easily without copy pasting codes many times by hand.
-    //
-    // The histogram addition happens in two steps.
-    // 1. Defining histograms
-    // 2. Booking histograms to cuts
-    //
-    // Histograms are defined via following functions
-    //
-    //      RooUtil::Histograms::addHistogram       : Typical 1D histogram (TH1F*) "Fill()" called once per event
-    //      RooUtil::Histograms::addVecHistogram    : Typical 1D histogram (TH1F*) "Fill()" called multiple times per event
-    //      RooUtil::Histograms::add2DHistogram     : Typical 2D histogram (TH2F*) "Fill()" called once per event
-    //      RooUtil::Histograms::add2DVecHistogram  : Typical 2D histogram (TH2F*) "Fill()" called multiple times per event
-    // e.g.
-    //
-    //    RooUtil::Histograms histograms;
-    //    histograms.addHistogram   ("MllSS"    , 180 , 0. , 300. , [&]() { return www.MllSS()  ; }); // The lambda returns float
-    //    histograms.addVecHistogram("AllLepPt" , 180 , 0. , 300. , [&]() { return www.lep_pt() ; }); // The lambda returns vector<float>
-    //
-    // The addVecHistogram will have lambda to return vector<float> and it will loop over the values and call TH1F::Fill() for each item
-    //
-    // To book histograms to cuts one uses
-    //
-    //      RooUtil::Cutflow::bookHistogramsForCut()
-    //      RooUtil::Cutflow::bookHistogramsForCutAndBelow()
-    //      RooUtil::Cutflow::bookHistogramsForCutAndAbove()
-    //      RooUtil::Cutflow::bookHistogramsForEndCuts()
-    //
-    // e.g. Given a tree like the following, we can book histograms to various cuts as we want
-    //
-    //              Root
-    //                |
-    //            CutWeight
-    //            |       |
-    //     CutPreSel1    CutPreSel2
-    //       |                  |
-    //     CutSel1           CutSel2
-    //
-    // For example,
-    //
-    //    1. book a set of histograms to one cut:
-    //
-    //       cutflow.bookHistogramsForCut(histograms, "CutPreSel2")
-    //
-    //    2. book a set of histograms to a cut and below
-    //
-    //       cutflow.bookHistogramsForCutAndBelow(histograms, "CutWeight") // will book a set of histograms to CutWeight, CutPreSel1, CutPreSel2, CutSel1, and CutSel2
-    //
-    //    3. book a set of histograms to a cut and above (... useless...?)
-    //
-    //       cutflow.bookHistogramsForCutAndAbove(histograms, "CutPreSel2") // will book a set of histograms to CutPreSel2, CutWeight (nothing happens to Root node)
-    //
-    //    4. book a set of histograms to a terminating nodes
-    //
-    //       cutflow.bookHistogramsForEndCuts(histograms) // will book a set of histograms to CutSel1 and CutSel2
-    //
-    // The naming convention of the booked histograms are as follows
-    //
-    //   cutflow.bookHistogramsForCut(histograms, "CutSel1");
-    //
-    //  - TH1F* type object : CutSel1__MllSS;
-    //  - TH1F* type object : CutSel1__AllLepPt;
-    //                               ^^
-    //                               ||
-    // NOTE: There are two underscores "__" between <CutName>__<HistogramName>
-    //
-    // And later in the loop when RooUtil::CutName::fill() function is called, the tree structure will be traversed through and the appropriate histograms will be filled with appropriate variables
-    // After running the loop check for the histograms in the output root file
 
     // Set the cutflow object output file
     ana.cutflow.setTFile(ana.output_tfile);
 
-    ana.cutflow.addCut("Weight", [&]() { return 1/*set your cut here*/; },
-            [&]()
-            {
-                float wgt = ((nt.Generator_weight() > 0) - (nt.Generator_weight() < 0)) * ana.scale1fb;
-                return wgt * 137.f;
-            } );
-
-    // Variables
-    RooUtil::TTreeX tx("variable", "variable");
+    // Intermediate variables
+    RooUtil::TTreeX tx("variable", "variable"); // new TTree
     tx.createBranch<vector<LV>>("good_leptons_p4");
     tx.createBranch<vector<int>>("good_leptons_pdgid");
     tx.createBranch<vector<int>>("good_leptons_tight");
@@ -406,46 +268,102 @@ int main(int argc, char** argv)
     tx.createBranch<vector<int>>("good_jets_loose_btagged");
     tx.createBranch<vector<int>>("good_jets_medium_btagged");
     tx.createBranch<vector<int>>("good_jets_tight_btagged");
+    tx.createBranch<vector<float>>("good_jets_btag_score");
+    tx.createBranch<vector<LV>>("higgs_jets_p4");
+    tx.createBranch<vector<int>>("higgs_jets_loose_btagged");
+    tx.createBranch<vector<int>>("higgs_jets_medium_btagged");
+    tx.createBranch<vector<int>>("higgs_jets_tight_btagged");
+    tx.createBranch<vector<float>>("higgs_jets_btag_score");
+    tx.createBranch<vector<int>>("higgs_jets_good_jets_idx");
+    tx.createBranch<vector<LV>>("vbs_jets_p4");
     tx.createBranch<int>("nbloose");
     tx.createBranch<int>("nbmedium");
     tx.createBranch<int>("nbtight");
-    tx.createBranch<float>("maxmjj");
-    tx.createBranch<LV>("vbf_jets_maxmjj_0");
-    tx.createBranch<LV>("vbf_jets_maxmjj_1");
-    tx.createBranch<int>("vbf_jets_maxmjj_0_idx");
-    tx.createBranch<int>("vbf_jets_maxmjj_1_idx");
-    tx.createBranch<float>("mbb_maxmjj");
-    tx.createBranch<float>("drbb_maxmjj");
-    tx.createBranch<LV>("hbb_jets_maxmjj_0");
-    tx.createBranch<LV>("hbb_jets_maxmjj_1");
-    tx.createBranch<float>("mbb_mindr");
-    tx.createBranch<float>("drbb_mindr");
-    tx.createBranch<LV>("hbb_mindr_jets_maxmjj_0");
-    tx.createBranch<LV>("hbb_mindr_jets_maxmjj_1");
-    tx.createBranch<float>("minmlb");
-    tx.createBranch<float>("summlb");
-    tx.createBranch<float>("mindrlb");
-    tx.createBranch<float>("sumdrlb");
-    tx.createBranch<float>("ht");
-    tx.createBranch<vector<LV>>("extra_jets_p4");
-    tx.createBranch<vector<LV>>("central_jets_p4");
-    tx.createBranch<float>("cjv_pt0");
-    tx.createBranch<float>("cjv_pt1");
-    tx.createBranch<float>("cjv_pt2");
-    ana.cutflow.addCutToLastActiveCut("SelectObjects",
+    tx.createBranch<int>("ncenjet30");
+    tx.createBranch<int>("njet30");
+
+    // ======================================
+    /* TODO: Factor this out to NanoCORE */
+    // Load the b-tagging working points
+    float loose_working_point;  
+    float medium_working_point;
+    float tight_working_point;
+    if (nt.year() == 2016)
+    {
+        loose_working_point = 0.0614;
+        medium_working_point = 0.3093;
+        tight_working_point = 0.7221;
+    }
+    else if (nt.year() == 2017)
+    {
+        loose_working_point = 0.0521;
+        medium_working_point = 0.3033;
+        tight_working_point = 0.7489;
+    }
+    else if (nt.year() == 2018)
+    {
+        loose_working_point = 0.0494;
+        medium_working_point = 0.2770;
+        tight_working_point = 0.7264;
+    }
+    // ======================================
+
+    // Weight
+    ana.cutflow.addCut("Weight",
+            [&]() { return 1/*set your cut here*/; },
             [&]()
             {
-                // Initialize
-                tx.clear();
+                float wgt = ((nt.Generator_weight() > 0) - (nt.Generator_weight() < 0)) * ana.scale1fb;
+                return wgt * 137.f;
+            } );
+
+    ana.cutflow.addCutToLastActiveCut("Preselection",
+            [&]()
+            {
+                int nel20 = 0;
+                int nmu20 = 0;
+                std::vector<int> el20_idx;
+                std::vector<int> mu20_idx;
+
+                // loop over electrons to count electrons above 20 GeV, and store indices
+                for (unsigned int idx = 0; idx < nt.Electron_pt().size(); ++idx)
+                {
+                    float el_pt = nt.Electron_pt()[idx];
+                    if (el_pt > 20)
+                    {
+                        nel20++;
+                        el20_idx.push_back(idx);
+                    }
+                }
+
+                // loop over muons to count muons above 20 GeV, and store indices
+                for (unsigned int idx = 0; idx < nt.Muon_pt().size(); ++idx)
+                {
+                    float mu_pt = nt.Muon_pt()[idx];
+                    if (mu_pt > 20)
+                    {
+                        nmu20++;
+                        mu20_idx.push_back(idx);
+                    }
+                }
+
+                // return true if more than or equals to 2 leptons
+                return nel20 + nmu20 >= 2;
+            },
+            UNITY);
+
+    ana.cutflow.addCutToLastActiveCut("SelectLeptons",
+            [&]()
+            {
 
                 // Select muons
                 for (unsigned int imu = 0; imu < nt.Muon_pt().size(); ++imu)
                 {
-                    if (SS::muonID(imu, SS::IDfakable, 2017))
+                    if (SS::muonID(imu, SS::IDfakable, nt.year()))
                     {
                         tx.pushbackToBranch<LV>("good_leptons_p4", nt.Muon_p4()[imu]);
                         tx.pushbackToBranch<int>("good_leptons_pdgid", (-nt.Muon_charge()[imu]) * 13);
-                        tx.pushbackToBranch<int>("good_leptons_tight", SS::muonID(imu, SS::IDtight, 2017));
+                        tx.pushbackToBranch<int>("good_leptons_tight", SS::muonID(imu, SS::IDtight, nt.year()));
                         tx.pushbackToBranch<float>("good_leptons_pfRelIso03_all", nt.Muon_pfRelIso03_all()[imu]);
                         tx.pushbackToBranch<float>("good_leptons_pfRelIso03_chg", -999);
                         tx.pushbackToBranch<float>("good_leptons_jetPtRelv2", nt.Muon_jetPtRelv2()[imu]);
@@ -457,11 +375,11 @@ int main(int argc, char** argv)
                 // Select electrons
                 for (unsigned int iel = 0; iel < nt.Electron_pt().size(); ++iel)
                 {
-                    if (SS::electronID(iel, SS::IDfakable, 2017))
+                    if (SS::electronID(iel, SS::IDfakable, nt.year()))
                     {
                         tx.pushbackToBranch<LV>("good_leptons_p4", nt.Electron_p4()[iel]);
                         tx.pushbackToBranch<int>("good_leptons_pdgid", (-nt.Electron_charge()[iel]) * 11);
-                        tx.pushbackToBranch<int>("good_leptons_tight", SS::electronID(iel, SS::IDtight, 2017) * (nt.Electron_pfRelIso03_all()[iel] < 0.05));
+                        tx.pushbackToBranch<int>("good_leptons_tight", SS::electronID(iel, SS::IDtight, nt.year()) * (nt.Electron_pfRelIso03_all()[iel] < 0.05));
                         tx.pushbackToBranch<float>("good_leptons_pfRelIso03_all", nt.Electron_pfRelIso03_all()[iel]);
                         tx.pushbackToBranch<float>("good_leptons_pfRelIso03_chg", nt.Electron_pfRelIso03_chg()[iel]);
                         tx.pushbackToBranch<float>("good_leptons_jetPtRelv2", nt.Electron_jetPtRelv2()[iel]);
@@ -472,16 +390,86 @@ int main(int argc, char** argv)
 
                 tx.sortVecBranchesByPt(
                         /* name of the 4vector branch to use to pt sort by*/               "good_leptons_p4",
-                        /* names of any associated vector<float> branches to sort along */ {},
+                        /* names of any associated vector<float> branches to sort along */ {"good_leptons_pfRelIso03_all", "good_leptons_pfRelIso03_chg", "good_leptons_jetPtRelv2", "good_leptons_jetRelIso", "good_leptons_miniPFRelIso_all"},
                         /* names of any associated vector<int>   branches to sort along */ {"good_leptons_pdgid", "good_leptons_tight"},
                         /* names of any associated vector<bool>  branches to sort along */ {}
                         );
 
-                // Select jets
+                return true;
+
+            },
+            UNITY);
+
+    ana.cutflow.getCut("SelectLeptons");
+    ana.cutflow.addCutToLastActiveCut("SSPreselection",
+            [&]()
+            {
+
+                // Select only two loose leptons
+                if (not (tx.getBranchLazy<vector<LV>>("good_leptons_p4").size() == 2))
+                    return false;
+
+                int ntight = 0;
+                for (auto& istight : tx.getBranch<vector<int>>("good_leptons_tight"))
+                {
+                    if (istight)
+                        ntight++;
+                }
+
+                // Select only two tight leptons
+                if (not (ntight == 2))
+                    return false;
+
+                // Therefore I will only have two leptons in the good_leptons container
+                const int& pdgid0 = tx.getBranch<vector<int>>("good_leptons_pdgid")[0];
+                const int& pdgid1 = tx.getBranch<vector<int>>("good_leptons_pdgid")[1];
+
+                // Require same sign
+                if (not (pdgid0 * pdgid1 > 0))
+                    return false;
+
+                const float& pt0 = tx.getBranch<vector<LV>>("good_leptons_p4")[0].pt();
+                const float& pt1 = tx.getBranch<vector<LV>>("good_leptons_p4")[1].pt();
+
+                // Apply Pt selections
+                if (abs(pdgid0) == 11 and abs(pdgid1) == 11)
+                {
+                    return ((pt0 > 25.) and (pt1 > 25.));
+                }
+                else if (abs(pdgid0) == 11 and abs(pdgid1) == 13)
+                {
+                    return ((pt0 > 25.) and (pt1 > 20.));
+                }
+                else if (abs(pdgid0) == 13 and abs(pdgid1) == 11)
+                {
+                    return ((pt0 > 25.) and (pt1 > 25.));
+                }
+                else if (abs(pdgid0) == 13 and abs(pdgid1) == 13)
+                {
+                    return ((pt0 > 25.) and (pt1 > 20.));
+                }
+                else
+                {
+                    // I should not be here
+                    std::cout << "I should not be here!!!! " << std::endl;
+                    return false;
+                }
+            },
+            UNITY);
+
+    ana.cutflow.addCutToLastActiveCut("SelectJets",
+            [&]()
+            {
+
+                // b tagging counters
                 int nbloose = 0;
                 int nbmedium = 0;
                 int nbtight = 0;
-                float ht = 0;
+
+                int ncenjet30 = 0;
+                int njet30 = 0;
+
+                // Loop over the jets
                 for (unsigned int ijet = 0; ijet < nt.Jet_pt().size(); ++ijet)
                 {
                     // Read jet p4
@@ -502,318 +490,210 @@ int main(int argc, char** argv)
                     if (isOverlap)
                         continue;
 
-                    if (not (jet_p4.pt() > 30.))
+                    // B-tagging is done down to 20 GeV
+                    if (not (jet_p4.pt() > 20.))
                         continue;
 
-                    // if (not (fabs(jet_p4.eta()) < 5.0))
-                    //     continue;
+                    bool is_loose_btagged = false;
+                    bool is_medium_btagged = false;
+                    bool is_tight_btagged = false;
+
+                    // B-tagging is also done up to 2.5 in eta only
+                    if (abs(jet_p4.eta()) < 2.5)
+                    {
+                        // Check if it passes btagging
+                        is_loose_btagged = nt.Jet_btagDeepFlavB()[ijet] > loose_working_point;
+                        is_medium_btagged = nt.Jet_btagDeepFlavB()[ijet] > medium_working_point;
+                        is_tight_btagged = nt.Jet_btagDeepFlavB()[ijet] > tight_working_point;
+
+                        // Count up the btagging
+                        if (is_loose_btagged) nbloose++;
+                        if (is_medium_btagged) nbmedium++;
+                        if (is_tight_btagged) nbtight++;
+                    }
 
                     tx.pushbackToBranch<LV>("good_jets_p4", jet_p4);
-                    bool is_loose_btagged = nt.Jet_btagDeepFlavB()[ijet] > 0.0521;
-                    bool is_medium_btagged = nt.Jet_btagDeepFlavB()[ijet] > 0.3033;
-                    bool is_tight_btagged = nt.Jet_btagDeepFlavB()[ijet] > 0.7489;
-
-                    if (is_loose_btagged) nbloose++;
-                    if (is_medium_btagged) nbmedium++;
-                    if (is_tight_btagged) nbtight++;
-
                     tx.pushbackToBranch<int>("good_jets_loose_btagged", is_loose_btagged);
                     tx.pushbackToBranch<int>("good_jets_medium_btagged", is_medium_btagged);
                     tx.pushbackToBranch<int>("good_jets_tight_btagged", is_tight_btagged);
+                    tx.pushbackToBranch<float>("good_jets_btag_score", nt.Jet_btagDeepFlavB()[ijet]);
 
-                    ht += jet_p4.pt();
+                    if (abs(jet_p4.eta()) < 3.0 and jet_p4.pt() > 30.)
+                    {
+                        ncenjet30 ++;
+                    }
+                    if (jet_p4.pt() > 30.)
+                    {
+                        njet30 ++;
+                    }
 
                 }
 
                 tx.setBranch<int>("nbloose", nbloose);
                 tx.setBranch<int>("nbmedium", nbmedium);
                 tx.setBranch<int>("nbtight", nbtight);
-                tx.setBranch<float>("ht", ht);
+                tx.setBranch<int>("ncenjet30", ncenjet30);
+                tx.setBranch<int>("njet30", njet30);
 
                 tx.sortVecBranchesByPt(
                         /* name of the 4vector branch to use to pt sort by*/               "good_jets_p4",
-                        /* names of any associated vector<float> branches to sort along */ {},
+                        /* names of any associated vector<float> branches to sort along */ {"good_jets_btag_score"},
                         /* names of any associated vector<int>   branches to sort along */ {"good_jets_loose_btagged", "good_jets_medium_btagged", "good_jets_tight_btagged"},
                         /* names of any associated vector<bool>  branches to sort along */ {}
                         );
-
-                float max_mjj = -999;
-                for (unsigned int ijet = 0; ijet < tx.getBranchLazy<vector<LV>>("good_jets_p4").size(); ++ijet)
-                {
-                    for (unsigned int jjet = ijet + 1; jjet < tx.getBranchLazy<vector<LV>>("good_jets_p4").size(); ++jjet)
-                    {
-                        if (ijet == jjet)
-                            continue;
-
-                        const LV& ijet_p4 = tx.getBranch<vector<LV>>("good_jets_p4")[ijet];
-                        const LV& jjet_p4 = tx.getBranch<vector<LV>>("good_jets_p4")[jjet];
-
-                        float tmp_mjj = (ijet_p4 + jjet_p4).mass();
-
-                        if (max_mjj < tmp_mjj)
-                        {
-                            max_mjj = tmp_mjj;
-                            tx.setBranch<float>("maxmjj", max_mjj);
-                            tx.setBranch<LV>("vbf_jets_maxmjj_0", ijet_p4);
-                            tx.setBranch<LV>("vbf_jets_maxmjj_1", jjet_p4);
-                            tx.setBranch<int>("vbf_jets_maxmjj_0_idx", ijet);
-                            tx.setBranch<int>("vbf_jets_maxmjj_1_idx", jjet);
-                        }
-                    }
-                }
-
-                tx.fill();
-
-                if (not (tx.getBranch<vector<LV>>("good_leptons_p4")[0].pt() > 25. and tx.getBranch<vector<LV>>("good_leptons_p4")[1].pt() > 20.))
-                    return false;
 
                 return true;
             },
             UNITY);
 
-    ana.cutflow.addCutToLastActiveCut("GeqFourJets",
+    ana.cutflow.addCutToLastActiveCut("GeqTwoTightBtag", [&]() { return tx.getBranch<int>("nbtight") >= 2; }, /* TODO btag scale factor */ UNITY);
+
+    ana.cutflow.addCutToLastActiveCut("SelectHiggsJets",
             [&]()
             {
-                return tx.getBranchLazy<vector<LV>>("good_jets_p4").size() >= 4;
+                // get scores and indices pairs
+                std::vector<std::pair<float, int>> btag_jets;
+                for (unsigned int i = 0; i < tx.getBranch<vector<LV>>("good_jets_p4").size(); i++)
+                {
+                    const float& btag_score = tx.getBranch<vector<float>>("good_jets_btag_score")[i];
+                    btag_jets.push_back(std::make_pair(btag_score, i));
+                }
+
+                // Sort the pairs
+                std::sort(btag_jets.begin(), btag_jets.end(),
+                        [](const std::pair<float, int> & a, const std::pair<float, int> & b) -> bool
+                        { 
+                            return a.first > b.first;
+                        });
+
+                int higgs_jet_0 = btag_jets[0].second < btag_jets[1].second ? btag_jets[0].second : btag_jets[1].second;
+                int higgs_jet_1 = btag_jets[0].second < btag_jets[1].second ? btag_jets[1].second : btag_jets[0].second;
+
+                tx.pushbackToBranch<LV>("higgs_jets_p4", tx.getBranch<vector<LV>>("good_jets_p4")[higgs_jet_0]);
+                tx.pushbackToBranch<int>("higgs_jets_loose_btagged", tx.getBranch<vector<int>>("good_jets_loose_btagged")[higgs_jet_0]);
+                tx.pushbackToBranch<int>("higgs_jets_medium_btagged", tx.getBranch<vector<int>>("good_jets_medium_btagged")[higgs_jet_0]);
+                tx.pushbackToBranch<int>("higgs_jets_tight_btagged", tx.getBranch<vector<int>>("good_jets_tight_btagged")[higgs_jet_0]);
+                tx.pushbackToBranch<float>("higgs_jets_btag_score", tx.getBranch<vector<float>>("good_jets_btag_score")[higgs_jet_0]);
+                tx.pushbackToBranch<int>("higgs_jets_good_jets_idx", higgs_jet_0);
+
+                tx.pushbackToBranch<LV>("higgs_jets_p4", tx.getBranch<vector<LV>>("good_jets_p4")[higgs_jet_1]);
+                tx.pushbackToBranch<int>("higgs_jets_loose_btagged", tx.getBranch<vector<int>>("good_jets_loose_btagged")[higgs_jet_1]);
+                tx.pushbackToBranch<int>("higgs_jets_medium_btagged", tx.getBranch<vector<int>>("good_jets_medium_btagged")[higgs_jet_1]);
+                tx.pushbackToBranch<int>("higgs_jets_tight_btagged", tx.getBranch<vector<int>>("good_jets_tight_btagged")[higgs_jet_1]);
+                tx.pushbackToBranch<float>("higgs_jets_btag_score", tx.getBranch<vector<float>>("good_jets_btag_score")[higgs_jet_1]);
+                tx.pushbackToBranch<int>("higgs_jets_good_jets_idx", higgs_jet_1);
+                return true;
+
             }, UNITY);
 
-    ana.cutflow.addCutToLastActiveCut("SelectHiggs",
+    ana.cutflow.addCutToLastActiveCut("SelectVBSJets",
             [&]()
             {
-                float min_dr = 999;
-                for (unsigned int ijet = 0; ijet < tx.getBranchLazy<vector<LV>>("good_jets_p4").size(); ++ijet)
+
+                // higgs jet indices
+                const int& higgs_jet_0 = tx.getBranch<vector<int>>("higgs_jets_good_jets_idx")[0];
+                const int& higgs_jet_1 = tx.getBranch<vector<int>>("higgs_jets_good_jets_idx")[1];
+
+                // Select VBS candidates
+                std::vector<int> vbs_jet_cands_idxs;
+                for (unsigned int i = 0; i < tx.getBranch<vector<LV>>("good_jets_p4").size(); i++)
                 {
-                    if (ijet == (unsigned int) tx.getBranch<int>("vbf_jets_maxmjj_0_idx")) continue;
-                    if (ijet == (unsigned int) tx.getBranch<int>("vbf_jets_maxmjj_1_idx")) continue;
-                    if (not tx.isBranchSet<LV>("hbb_jets_maxmjj_0"))
-                        tx.setBranch<LV>("hbb_jets_maxmjj_0", tx.getBranchLazy<vector<LV>>("good_jets_p4")[ijet]);
-                    else if (not tx.isBranchSet<LV>("hbb_jets_maxmjj_1"))
-                        tx.setBranch<LV>("hbb_jets_maxmjj_1", tx.getBranchLazy<vector<LV>>("good_jets_p4")[ijet]);
-                    else
-                        tx.pushbackToBranch<LV>("extra_jets_p4", tx.getBranchLazy<vector<LV>>("good_jets_p4")[ijet]);
-                    for (unsigned int jjet = ijet + 1; jjet < tx.getBranchLazy<vector<LV>>("good_jets_p4").size(); ++jjet)
+                    if ((int) i != higgs_jet_0 and (int) i != higgs_jet_1)
                     {
-                        if (jjet == (unsigned int) tx.getBranch<int>("vbf_jets_maxmjj_0_idx")) continue;
-                        if (jjet == (unsigned int) tx.getBranch<int>("vbf_jets_maxmjj_1_idx")) continue;
-                        float tmp_dr = RooUtil::Calc::DeltaR(tx.getBranchLazy<vector<LV>>("good_jets_p4")[ijet], tx.getBranchLazy<vector<LV>>("good_jets_p4")[jjet]);
-                        if (tmp_dr < min_dr)
+                        if (tx.getBranch<vector<LV>>("good_jets_p4")[i].pt() > 30.)
                         {
-                            tmp_dr = min_dr;
-                            tx.setBranch<LV>("hbb_mindr_jets_maxmjj_0", tx.getBranchLazy<vector<LV>>("good_jets_p4")[ijet]);
-                            tx.setBranch<LV>("hbb_mindr_jets_maxmjj_1", tx.getBranchLazy<vector<LV>>("good_jets_p4")[jjet]);
+                            vbs_jet_cands_idxs.push_back(i);
                         }
                     }
                 }
-                tx.setBranch<float>("mbb_maxmjj", (tx.getBranchLazy<LV>("hbb_jets_maxmjj_0") + tx.getBranchLazy<LV>("hbb_jets_maxmjj_1")).mass());
-                tx.setBranch<float>("drbb_maxmjj", RooUtil::Calc::DeltaR(tx.getBranchLazy<LV>("hbb_jets_maxmjj_0"), tx.getBranchLazy<LV>("hbb_jets_maxmjj_1")));
-                tx.setBranch<float>("mbb_mindr", (tx.getBranchLazy<LV>("hbb_mindr_jets_maxmjj_0") + tx.getBranchLazy<LV>("hbb_mindr_jets_maxmjj_1")).mass());
-                tx.setBranch<float>("drbb_mindr", RooUtil::Calc::DeltaR(tx.getBranchLazy<LV>("hbb_mindr_jets_maxmjj_0"), tx.getBranchLazy<LV>("hbb_mindr_jets_maxmjj_1")));
 
-                float mlb00 = (tx.getBranch<vector<LV>>("good_leptons_p4")[0] + tx.getBranch<LV>("hbb_jets_maxmjj_0")).mass();
-                float mlb10 = (tx.getBranch<vector<LV>>("good_leptons_p4")[1] + tx.getBranch<LV>("hbb_jets_maxmjj_0")).mass();
-                float mlb01 = (tx.getBranch<vector<LV>>("good_leptons_p4")[0] + tx.getBranch<LV>("hbb_jets_maxmjj_1")).mass();
-                float mlb11 = (tx.getBranch<vector<LV>>("good_leptons_p4")[1] + tx.getBranch<LV>("hbb_jets_maxmjj_1")).mass();
-                float summlb = mlb00 + mlb10 + mlb01 + mlb11;
-                float minmlb = min(mlb00, min(mlb10, min(mlb01, mlb11)));
-                tx.setBranch<float>("minmlb", minmlb);
-                tx.setBranch<float>("summlb", summlb);
-                float drlb00 = RooUtil::Calc::DeltaR(tx.getBranch<vector<LV>>("good_leptons_p4")[0], tx.getBranch<LV>("hbb_jets_maxmjj_0"));
-                float drlb10 = RooUtil::Calc::DeltaR(tx.getBranch<vector<LV>>("good_leptons_p4")[1], tx.getBranch<LV>("hbb_jets_maxmjj_0"));
-                float drlb01 = RooUtil::Calc::DeltaR(tx.getBranch<vector<LV>>("good_leptons_p4")[0], tx.getBranch<LV>("hbb_jets_maxmjj_1"));
-                float drlb11 = RooUtil::Calc::DeltaR(tx.getBranch<vector<LV>>("good_leptons_p4")[1], tx.getBranch<LV>("hbb_jets_maxmjj_1"));
-                float sumdrlb = drlb00 + drlb10 + drlb01 + drlb11;
-                float mindrlb = min(drlb00, min(drlb10, min(drlb01, drlb11)));
-                tx.setBranch<float>("mindrlb", mindrlb);
-                tx.setBranch<float>("sumdrlb", sumdrlb);
+                if (vbs_jet_cands_idxs.size() < 2)
+                    return false;
 
-                // CJV
-                float vbfeta0 = tx.getBranch<LV>("vbf_jets_maxmjj_0").eta();
-                float vbfeta1 = tx.getBranch<LV>("vbf_jets_maxmjj_1").eta();
-                for (auto& extra_jet_p4 : tx.getBranchLazy<vector<LV>>("extra_jets_p4"))
+                if (vbs_jet_cands_idxs.size() == 2)
                 {
-                    float extraeta = extra_jet_p4.eta();
-                    if ((vbfeta0 > extraeta and extraeta > vbfeta1) or (vbfeta1 > extraeta and extraeta > vbfeta0))
+                    tx.pushbackToBranch<LV>("vbs_jets_p4", tx.getBranch<vector<LV>>("good_jets_p4")[vbs_jet_cands_idxs[0]]);
+                    tx.pushbackToBranch<LV>("vbs_jets_p4", tx.getBranch<vector<LV>>("good_jets_p4")[vbs_jet_cands_idxs[1]]);
+                    return true;
+                }
+
+                // Otherwise, I have 3 or more vbs candidate jets
+                std::vector<std::pair<float, int>> vbs_pos_eta_jets;
+                std::vector<std::pair<float, int>> vbs_neg_eta_jets;
+                for (unsigned int ijet = 0; ijet < vbs_jet_cands_idxs.size(); ijet++)
+                {
+                    const LV& jet = tx.getBranch<vector<LV>>("good_jets_p4")[vbs_jet_cands_idxs[ijet]];
+                    const float& P = tx.getBranch<vector<LV>>("good_jets_p4")[vbs_jet_cands_idxs[ijet]].P();
+                    if (jet.eta() >= 0)
                     {
-                        tx.pushbackToBranch<LV>("central_jets_p4", extra_jet_p4);
+                        vbs_pos_eta_jets.push_back(std::make_pair(P, ijet));
+                    }
+                    if (jet.eta() < 0)
+                    {
+                        vbs_neg_eta_jets.push_back(std::make_pair(P, ijet));
                     }
                 }
-                if (tx.getBranchLazy<vector<LV>>("central_jets_p4").size() > 0)
-                    tx.setBranch<float>("cjv_pt0", tx.getBranch<vector<LV>>("central_jets_p4")[0].pt());
-                if (tx.getBranchLazy<vector<LV>>("central_jets_p4").size() > 1)
-                    tx.setBranch<float>("cjv_pt1", tx.getBranch<vector<LV>>("central_jets_p4")[1].pt());
-                if (tx.getBranchLazy<vector<LV>>("central_jets_p4").size() > 2)
-                    tx.setBranch<float>("cjv_pt2", tx.getBranch<vector<LV>>("central_jets_p4")[2].pt());
-                return true;
-            }, UNITY);
 
-    ana.cutflow.addCutToLastActiveCut("VBFJetsEtaCut",
-            [&]()
-            {
-                return fabs(tx.getBranchLazy<LV>("vbf_jets_maxmjj_0").eta()) > 2.;
-            }, UNITY);
+                // Sort the pairs
+                std::sort(vbs_pos_eta_jets.begin(), vbs_pos_eta_jets.end(),
+                        [](const std::pair<float, int> & a, const std::pair<float, int> & b) -> bool
+                        { 
+                        return a.first > b.first;
+                        });
 
-    ana.cutflow.addCutToLastActiveCut("TwoTightLeptons",
-            [&]()
-            {
-                int ntight = 0;
-                for (auto& is_tight : tx.getBranch<vector<int>>("good_leptons_tight"))
-                    if (is_tight)
-                        ntight++;
-                return ntight == 2;
-            }, UNITY);
+                // Sort the pairs
+                std::sort(vbs_neg_eta_jets.begin(), vbs_neg_eta_jets.end(),
+                        [](const std::pair<float, int> & a, const std::pair<float, int> & b) -> bool
+                        { 
+                        return a.first > b.first;
+                        });
 
-    ana.cutflow.addCutToLastActiveCut("LeptonPt",
-            [&]()
-            {
-                if (not (tx.getBranch<vector<LV>>("good_leptons_p4")[0].pt() > 50. and tx.getBranch<vector<LV>>("good_leptons_p4")[1].pt() > 25.))
-                    return false;
-                return true;
-            }, UNITY);
-
-    ana.cutflow.addCutToLastActiveCut("NbMed",
-            [&]()
-            {
-                return tx.getBranch<int>("nbmedium") > 1.;
-            }, UNITY);
-
-    ana.cutflow.addCutToLastActiveCut("NjetCuts",
-            [&]()
-            {
-                return tx.getBranch<vector<LV>>("good_jets_p4").size() < 6.;
-            }, UNITY);
-
-    ana.cutflow.addCutToLastActiveCut("HiggsCuts",
-            [&]()
-            {
-                return tx.getBranch<float>("mbb_maxmjj") < 150.;
-            }, UNITY);
-
-    ana.cutflow.addCutToLastActiveCut("Mjj500",
-            [&]()
-            {
-                return tx.getBranch<float>("maxmjj") > 500.;
-            }, UNITY);
-
-    ana.cutflow.addCutToLastActiveCut("Mjj1000",
-            [&]()
-            {
-                return tx.getBranch<float>("maxmjj") > 1000.;
-            }, UNITY);
-
-    ana.cutflow.addCutToLastActiveCut("Mjj1500",
-            [&]()
-            {
-                return tx.getBranch<float>("maxmjj") > 1500.;
-            }, UNITY);
-
-    ana.cutflow.addCutToLastActiveCut("SignalCuts",
-            [&]()
-            {
-                return tx.getBranch<float>("maxmjj") > 2000.;
-            }, UNITY);
-
-    ana.cutflow.addCutToLastActiveCut("CJVCuts",
-            [&]()
-            {
-                return tx.getBranchLazy<float>("cjv_pt0") < 30.;
-            }, UNITY);
-
-    ana.cutflow.addCutToLastActiveCut("SignalRegion", UNITY, UNITY);
-
-
-    // Histogram utility object that is used to define the histograms
-    ana.histograms.addHistogram("Nlep", 6, 0, 6, [&]() { return tx.getBranch<vector<LV>>("good_leptons_p4").size(); } );
-    ana.histograms.addHistogram("lepPt0", 180, 0, 450, [&]() { return tx.getBranch<vector<LV>>("good_leptons_p4")[0].pt(); } );
-    ana.histograms.addHistogram("lepPt1", 180, 0, 250, [&]() { return tx.getBranch<vector<LV>>("good_leptons_p4")[1].pt(); } );
-    ana.histograms.addHistogram("lepEta0", 180, -5, 5, [&]() { return tx.getBranch<vector<LV>>("good_leptons_p4")[0].eta(); } );
-    ana.histograms.addHistogram("lepEta1", 180, -5, 5, [&]() { return tx.getBranch<vector<LV>>("good_leptons_p4")[1].eta(); } );
-    ana.histograms.addHistogram("lepPhi0", 180, -3.1416, 3.1416, [&]() { return tx.getBranch<vector<LV>>("good_leptons_p4")[0].phi(); } );
-    ana.histograms.addHistogram("lepPhi1", 180, -3.1416, 3.1416, [&]() { return tx.getBranch<vector<LV>>("good_leptons_p4")[1].phi(); } );
-    ana.histograms.addHistogram("leppfIsoRel03All0", 180, -0.02, 0.2, [&]() { return tx.getBranch<vector<float>>("good_leptons_pfRelIso03_all")[0]; } );
-    ana.histograms.addHistogram("leppfIsoRel03All1", 180, -0.02, 0.2, [&]() { return tx.getBranch<vector<float>>("good_leptons_pfRelIso03_all")[1]; } );
-    ana.histograms.addHistogram("leppfIsoRel03Chg0", 180, -0.02, 0.2, [&]() { return tx.getBranch<vector<float>>("good_leptons_pfRelIso03_chg")[0]; } );
-    ana.histograms.addHistogram("leppfIsoRel03Chg1", 180, -0.02, 0.2, [&]() { return tx.getBranch<vector<float>>("good_leptons_pfRelIso03_chg")[1]; } );
-    ana.histograms.addHistogram("leppfIsoRelminiAll0", 180, -0.02, 0.2, [&]() { return tx.getBranch<vector<float>>("good_leptons_miniPFRelIso_all")[0]; } );
-    ana.histograms.addHistogram("leppfIsoRelminiAll1", 180, -0.02, 0.2, [&]() { return tx.getBranch<vector<float>>("good_leptons_miniPFRelIso_all")[1]; } );
-    ana.histograms.addHistogram("cjv_pt0", 180, 0, 100, [&]() { return tx.getBranchLazy<float>("cjv_pt0"); } );
-    ana.histograms.addHistogram("cjv_pt1", 180, 0, 100, [&]() { return tx.getBranchLazy<float>("cjv_pt1"); } );
-    ana.histograms.addHistogram("cjv_pt2", 180, 0, 100, [&]() { return tx.getBranchLazy<float>("cjv_pt2"); } );
-    ana.histograms.addHistogram("ht", 180, 0, 1500, [&]() { return tx.getBranch<float>("ht"); } );
-    ana.histograms.addHistogram("mll", 180, 0, 650, [&]() { return (tx.getBranch<vector<LV>>("good_leptons_p4")[0]+tx.getBranch<vector<LV>>("good_leptons_p4")[1]).mass(); } );
-    ana.histograms.addHistogram("dphill", 180, 0, 3.1416, [&]() { return fabs(RooUtil::Calc::DeltaPhi(tx.getBranch<vector<LV>>("good_leptons_p4")[0], tx.getBranch<vector<LV>>("good_leptons_p4")[1])); } );
-    ana.histograms.addHistogram("detall", 180, 0, 5, [&]() { return fabs(RooUtil::Calc::DeltaEta(tx.getBranch<vector<LV>>("good_leptons_p4")[0], tx.getBranch<vector<LV>>("good_leptons_p4")[1])); } );
-    ana.histograms.addHistogram("mindrlb", 180, 0, 10, [&]() { return tx.getBranch<float>("mindrlb"); } );
-    ana.histograms.addHistogram("minmlb", 180, 0, 400, [&]() { return tx.getBranch<float>("minmlb"); } );
-    ana.histograms.addHistogram("sumdrlb", 180, 0, 40, [&]() { return tx.getBranch<float>("sumdrlb"); } );
-    ana.histograms.addHistogram("summlb", 180, 0, 1600, [&]() { return tx.getBranch<float>("summlb"); } );
-    ana.histograms.addHistogram("channel", 3, 0, 3, [&]() { int pdgidprod = tx.getBranch<vector<int>>("good_leptons_pdgid")[0] * tx.getBranch<vector<int>>("good_leptons_pdgid")[1]; if (pdgidprod == 121) return 0; else if (pdgidprod == 143) return 1; else if (pdgidprod == 169) return 2; else return 3; } );
-    ana.histograms.addHistogram("nbloose", 5, 0, 5, [&]() { return tx.getBranch<int>("nbloose"); } );
-    ana.histograms.addHistogram("nbmedium", 5, 0, 5, [&]() { return tx.getBranch<int>("nbmedium"); } );
-    ana.histograms.addHistogram("nbtight", 5, 0, 5, [&]() { return tx.getBranch<int>("nbtight"); } );
-    ana.histograms.addHistogram("maxmjj", 180, 0, 3000, [&]() { return tx.getBranch<float>("maxmjj"); } );
-    ana.histograms.addHistogram("detajj_maxmjj", 180, 0, 10, [&]() { return fabs(RooUtil::Calc::DeltaEta(tx.getBranch<LV>("vbf_jets_maxmjj_0"), tx.getBranch<LV>("vbf_jets_maxmjj_1"))); } );
-    ana.histograms.addHistogram("mbb_maxmjj", 180, 0, 300, [&]() { return tx.getBranch<float>("mbb_maxmjj"); } );
-    ana.histograms.addHistogram("drbb_maxmjj", 180, 0, 10, [&]() { return tx.getBranch<float>("drbb_maxmjj"); } );
-    ana.histograms.addHistogram("mbb_mindr", 180, 0, 300, [&]() { return tx.getBranch<float>("mbb_mindr"); } );
-    ana.histograms.addHistogram("drbb_mindr", 180, 0, 10, [&]() { return tx.getBranch<float>("drbb_mindr"); } );
-    ana.histograms.addHistogram("drjl00_maxmjj", 180, 0, 10, [&]() { return fabs(RooUtil::Calc::DeltaR(tx.getBranch<LV>("vbf_jets_maxmjj_0"), tx.getBranch<vector<LV>>("good_leptons_p4")[0])); } );
-    ana.histograms.addHistogram("drjl01_maxmjj", 180, 0, 10, [&]() { return fabs(RooUtil::Calc::DeltaR(tx.getBranch<LV>("vbf_jets_maxmjj_0"), tx.getBranch<vector<LV>>("good_leptons_p4")[1])); } );
-    ana.histograms.addHistogram("drjl10_maxmjj", 180, 0, 10, [&]() { return fabs(RooUtil::Calc::DeltaR(tx.getBranch<LV>("vbf_jets_maxmjj_1"), tx.getBranch<vector<LV>>("good_leptons_p4")[0])); } );
-    ana.histograms.addHistogram("drjl11_maxmjj", 180, 0, 10, [&]() { return fabs(RooUtil::Calc::DeltaR(tx.getBranch<LV>("vbf_jets_maxmjj_1"), tx.getBranch<vector<LV>>("good_leptons_p4")[1])); } );
-    ana.histograms.addHistogram("detajl00_maxmjj", 180, -10, 10, [&]() { return RooUtil::Calc::DeltaEta(tx.getBranch<LV>("vbf_jets_maxmjj_0"), tx.getBranch<vector<LV>>("good_leptons_p4")[0]); } );
-    ana.histograms.addHistogram("detajl01_maxmjj", 180, -10, 10, [&]() { return RooUtil::Calc::DeltaEta(tx.getBranch<LV>("vbf_jets_maxmjj_0"), tx.getBranch<vector<LV>>("good_leptons_p4")[1]); } );
-    ana.histograms.addHistogram("detajl10_maxmjj", 180, -10, 10, [&]() { return RooUtil::Calc::DeltaEta(tx.getBranch<LV>("vbf_jets_maxmjj_1"), tx.getBranch<vector<LV>>("good_leptons_p4")[0]); } );
-    ana.histograms.addHistogram("detajl11_maxmjj", 180, -10, 10, [&]() { return RooUtil::Calc::DeltaEta(tx.getBranch<LV>("vbf_jets_maxmjj_1"), tx.getBranch<vector<LV>>("good_leptons_p4")[1]); } );
-    ana.histograms.addHistogram("dphijl00_maxmjj", 180, -3.1416, 3.1416, [&]() { return RooUtil::Calc::DeltaPhi(tx.getBranch<LV>("vbf_jets_maxmjj_0"), tx.getBranch<vector<LV>>("good_leptons_p4")[0]); } );
-    ana.histograms.addHistogram("dphijl01_maxmjj", 180, -3.1416, 3.1416, [&]() { return RooUtil::Calc::DeltaPhi(tx.getBranch<LV>("vbf_jets_maxmjj_0"), tx.getBranch<vector<LV>>("good_leptons_p4")[1]); } );
-    ana.histograms.addHistogram("dphijl10_maxmjj", 180, -3.1416, 3.1416, [&]() { return RooUtil::Calc::DeltaPhi(tx.getBranch<LV>("vbf_jets_maxmjj_1"), tx.getBranch<vector<LV>>("good_leptons_p4")[0]); } );
-    ana.histograms.addHistogram("dphijl11_maxmjj", 180, -3.1416, 3.1416, [&]() { return RooUtil::Calc::DeltaPhi(tx.getBranch<LV>("vbf_jets_maxmjj_1"), tx.getBranch<vector<LV>>("good_leptons_p4")[1]); } );
-    ana.histograms.addHistogram("absdetajl00_maxmjj", 180, 0, 10, [&]() { return fabs(RooUtil::Calc::DeltaEta(tx.getBranch<LV>("vbf_jets_maxmjj_0"), tx.getBranch<vector<LV>>("good_leptons_p4")[0])); } );
-    ana.histograms.addHistogram("absdetajl01_maxmjj", 180, 0, 10, [&]() { return fabs(RooUtil::Calc::DeltaEta(tx.getBranch<LV>("vbf_jets_maxmjj_0"), tx.getBranch<vector<LV>>("good_leptons_p4")[1])); } );
-    ana.histograms.addHistogram("absdetajl10_maxmjj", 180, 0, 10, [&]() { return fabs(RooUtil::Calc::DeltaEta(tx.getBranch<LV>("vbf_jets_maxmjj_1"), tx.getBranch<vector<LV>>("good_leptons_p4")[0])); } );
-    ana.histograms.addHistogram("absdetajl11_maxmjj", 180, 0, 10, [&]() { return fabs(RooUtil::Calc::DeltaEta(tx.getBranch<LV>("vbf_jets_maxmjj_1"), tx.getBranch<vector<LV>>("good_leptons_p4")[1])); } );
-    ana.histograms.addHistogram("absdphijl00_maxmjj", 180, 0, 3.1416, [&]() { return fabs(RooUtil::Calc::DeltaPhi(tx.getBranch<LV>("vbf_jets_maxmjj_0"), tx.getBranch<vector<LV>>("good_leptons_p4")[0])); } );
-    ana.histograms.addHistogram("absdphijl01_maxmjj", 180, 0, 3.1416, [&]() { return fabs(RooUtil::Calc::DeltaPhi(tx.getBranch<LV>("vbf_jets_maxmjj_0"), tx.getBranch<vector<LV>>("good_leptons_p4")[1])); } );
-    ana.histograms.addHistogram("absdphijl10_maxmjj", 180, 0, 3.1416, [&]() { return fabs(RooUtil::Calc::DeltaPhi(tx.getBranch<LV>("vbf_jets_maxmjj_1"), tx.getBranch<vector<LV>>("good_leptons_p4")[0])); } );
-    ana.histograms.addHistogram("absdphijl11_maxmjj", 180, 0, 3.1416, [&]() { return fabs(RooUtil::Calc::DeltaPhi(tx.getBranch<LV>("vbf_jets_maxmjj_1"), tx.getBranch<vector<LV>>("good_leptons_p4")[1])); } );
-    ana.histograms.addHistogram("vbf_jets_maxmjj_0_pt", 180, 0, 1000, [&]() { return tx.getBranch<LV>("vbf_jets_maxmjj_0").pt(); } );
-    ana.histograms.addHistogram("vbf_jets_maxmjj_1_pt", 180, 0, 500, [&]() { return tx.getBranch<LV>("vbf_jets_maxmjj_1").pt(); } );
-    ana.histograms.addHistogram("vbf_jets_maxmjj_0_eta", 180, -5, 5, [&]() { return tx.getBranch<LV>("vbf_jets_maxmjj_0").eta(); } );
-    ana.histograms.addHistogram("vbf_jets_maxmjj_1_eta", 180, -5, 5, [&]() { return tx.getBranch<LV>("vbf_jets_maxmjj_1").eta(); } );
-    ana.histograms.addHistogram("vbf_jets_maxmjj_0_abseta", 180, 0, 5, [&]() { return fabs(tx.getBranch<LV>("vbf_jets_maxmjj_0").eta()); } );
-    ana.histograms.addHistogram("vbf_jets_maxmjj_1_abseta", 180, 0, 5, [&]() { return fabs(tx.getBranch<LV>("vbf_jets_maxmjj_1").eta()); } );
-    ana.histograms.addHistogram("vbf_jets_maxmjj_0_phi", 180, -3.1416, 3.1416, [&]() { return tx.getBranch<LV>("vbf_jets_maxmjj_0").phi(); } );
-    ana.histograms.addHistogram("vbf_jets_maxmjj_1_phi", 180, -3.1416, 3.1416, [&]() { return tx.getBranch<LV>("vbf_jets_maxmjj_1").phi(); } );
-    ana.histograms.addHistogram("njets", 8, 0, 8, [&]() { return tx.getBranch<vector<LV>>("good_jets_p4").size(); } );
-    ana.histograms.addHistogram("met", 180, 0, 400, [&]() { return nt.MET_pt(); } );
-    ana.histograms.addHistogram("maxmjj_binned", 3, 0, 3,
-            [&]()
-            {
-                if (tx.getBranch<float>("maxmjj") < 1000.)
+                int vbs_jet_idx_A = -999;
+                int vbs_jet_idx_B = -999;
+                if (vbs_pos_eta_jets.size() == 0)
                 {
-                    return 0.;
+                    vbs_jet_idx_A = vbs_neg_eta_jets[0].second;
+                    vbs_jet_idx_B = vbs_neg_eta_jets[1].second;
                 }
-                else if (tx.getBranch<float>("maxmjj") < 2000.)
+                else if (vbs_neg_eta_jets.size() == 0)
                 {
-                    return 1.;
-                }
-                else if (tx.getBranch<float>("maxmjj") < 2000.)
-                {
-                    return 2.;
+                    vbs_jet_idx_A = vbs_pos_eta_jets[0].second;
+                    vbs_jet_idx_B = vbs_pos_eta_jets[1].second;
                 }
                 else
                 {
-                    return -1.;
+                    vbs_jet_idx_A = vbs_pos_eta_jets[0].second;
+                    vbs_jet_idx_B = vbs_neg_eta_jets[0].second;
                 }
-            } );
 
-    // Book cutflows
-    ana.cutflow.bookCutflows();
+                int vbs_jet_idx_0 = vbs_jet_idx_A < vbs_jet_idx_B ? vbs_jet_idx_A : vbs_jet_idx_B;
+                int vbs_jet_idx_1 = vbs_jet_idx_A < vbs_jet_idx_B ? vbs_jet_idx_B : vbs_jet_idx_A;
 
-    // Book Histograms
-    ana.cutflow.bookHistogramsForCutAndBelow(ana.histograms, "TwoTightLeptons");
+                tx.pushbackToBranch<LV>("vbs_jets_p4", tx.getBranch<vector<LV>>("good_jets_p4")[vbs_jet_idx_0]);
+                tx.pushbackToBranch<LV>("vbs_jets_p4", tx.getBranch<vector<LV>>("good_jets_p4")[vbs_jet_idx_1]);
+
+                return true;
+
+            },
+            UNITY);
+
+    ana.cutflow.addCutToLastActiveCut("DEtajjCut",
+            [&]()
+            {
+                return abs(RooUtil::Calc::DeltaEta(tx.getBranch<vector<LV>>("vbs_jets_p4")[0], tx.getBranch<vector<LV>>("vbs_jets_p4")[1])) > 2.0;
+            },
+            UNITY);
+
+    ana.cutflow.getCut("Preselection");
+    ana.cutflow.addCutToLastActiveCut("OS", [&]() { return 1; }, UNITY);
 
     ana.cutflow.printCuts();
+
+    ana.histograms.addHistogram("NCenJet30", 9, 0, 9, [&]() { return tx.getBranchLazy<int>("ncenjet30"); } );
+    ana.histograms.addHistogram("NJet30", 9, 0, 9, [&]() { return tx.getBranchLazy<int>("njet30"); } );
+
+    ana.cutflow.bookHistogramsForCutAndBelow(ana.histograms, "SelectVBSJets");
+    ana.cutflow.bookCutflows();
 
     // Looping input file
     while (ana.looper.nextEvent())
@@ -826,9 +706,13 @@ int main(int argc, char** argv)
                 continue;
         }
 
+        tx.clear();
+
         //Do what you need to do in for each event here
         //To save use the following function
         ana.cutflow.fill();
+
+        // tx.fill();
     }
 
     // Writing output file
