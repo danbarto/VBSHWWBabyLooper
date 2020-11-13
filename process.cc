@@ -677,12 +677,7 @@ int main(int argc, char** argv)
             },
             UNITY);
 
-    ana.cutflow.addCutToLastActiveCut("DEtajjCut",
-            [&]()
-            {
-                return abs(RooUtil::Calc::DeltaEta(tx.getBranch<vector<LV>>("vbs_jets_p4")[0], tx.getBranch<vector<LV>>("vbs_jets_p4")[1])) > 2.0;
-            },
-            UNITY);
+    ana.cutflow.addCutToLastActiveCut("SignalRegion", UNITY, UNITY);
 
     ana.cutflow.getCut("Preselection");
     ana.cutflow.addCutToLastActiveCut("OS", [&]() { return 1; }, UNITY);
