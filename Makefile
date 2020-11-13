@@ -2,7 +2,7 @@
 
 EXE=doAnalysis
 
-SOURCES=$(wildcard *.cc) $(wildcard NanoTools/NanoCORE/*.cc) rooutil/rooutil.cc $(wildcard NanoTools/NanoCORE/Tools/*.cc)
+SOURCES=$(wildcard *.cc) $(wildcard NanoTools/NanoCORE/*.cc) rooutil/rooutil.cc $(wildcard NanoTools/NanoCORE/Tools/*.cc) $(wildcard VBSHWWCORE/*.cc)
 OBJECTS=$(SOURCES:.cc=.o)
 HEADERS=$(SOURCES:.cc=.h)
 
@@ -17,7 +17,7 @@ LDFLAGS     = -g -O2
 ROOTLIBS    = $(shell root-config --libs)
 ROOTCFLAGS  = $(shell root-config --cflags)
 CXXFLAGS   += $(ROOTCFLAGS)
-CFLAGS      = $(ROOTCFLAGS) -Wall -Wno-unused-function -g -O2 -fPIC -fno-var-tracking -INanoTools/NanoCORE -Irooutil/ -DLorentzVectorPtEtaPhiM4D
+CFLAGS      = $(ROOTCFLAGS) -Wall -Wno-unused-function -g -O2 -fPIC -fno-var-tracking -INanoTools/NanoCORE -Irooutil/ -DLorentzVectorPtEtaPhiM4D -IVBSHWWCORE
 EXTRACFLAGS = $(shell rooutil-config)
 EXTRAFLAGS  = -fPIC -ITMultiDrawTreePlayer -Wunused-variable -lTMVA -lEG -lGenVector -lXMLIO -lMLP -lTreePlayer
 

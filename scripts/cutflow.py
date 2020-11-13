@@ -18,7 +18,7 @@ p.dump_plot(fnames=[
         "hadds/lambdam20_vbshww.root",
         ],
     data_fname="hadds/vbshww.root",
-    filter_pattern="SignalRegion_cutflow",
+    filter_pattern="SignalRegionPreselection_cutflow",
     extraoptions={
         "print_yield": True,
         "yield_prec": 3,
@@ -41,7 +41,7 @@ p.dump_plot(fnames=[
         "hadds/lambdam20_vbshww.root",
         ],
     data_fname="hadds/vbshww.root",
-    filter_pattern="SignalRegion_rawcutflow",
+    filter_pattern="SignalRegionPreselection_rawcutflow",
     extraoptions={
         "print_yield": True,
         "yield_prec": 3,

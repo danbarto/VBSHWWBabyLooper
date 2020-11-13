@@ -6,5 +6,3 @@
     make clean; make -j
 
     sh scripts/run.sh
-    python scripts/cutflow.py
-    python scripts/plot.py
