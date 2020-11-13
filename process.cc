@@ -13,9 +13,6 @@ int main(int argc, char** argv)
 
     VBSHWW vbshww(argc, argv);
 
-    vbshww.cutflow.getCut("Preselection");
-    vbshww.cutflow.addCutToLastActiveCut("OS", [&]() { return 1; }, UNITY);
-
     vbshww.cutflow.printCuts();
 
     vbshww.histograms.addHistogram("NCenJet30", 9, 0, 9, [&]() { return vbshww.tx.getBranchLazy<int>("ncenjet30"); } );
