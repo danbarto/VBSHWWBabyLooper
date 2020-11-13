@@ -6,7 +6,7 @@ import plottery_wrapper as p
 p.dump_plot(fnames=[
         "hadds/wz.root",
         "hadds/tt1l.root",
-        "hadds/tt2l.root",
+        # "hadds/tt2l.root",
         "hadds/ttw.root",
         "hadds/ttz.root",
         "hadds/tth.root",
@@ -29,7 +29,7 @@ p.dump_plot(fnames=[
 p.dump_plot(fnames=[
         "hadds/wz.root",
         "hadds/tt1l.root",
-        "hadds/tt2l.root",
+        # "hadds/tt2l.root",
         "hadds/ttw.root",
         "hadds/ttz.root",
         "hadds/tth.root",

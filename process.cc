@@ -20,9 +20,9 @@ int main(int argc, char** argv)
 
     vbshww.cutflow.bookHistogramsForCutAndBelow(vbshww.histograms, "TagVBSJets");
     vbshww.cutflow.bookCutflows();
+    vbshww.cutflow.bookEventLists();
 
     // Looping input file
-    // while (ana.looper.nextEvent())
     while (vbshww.looper.nextEvent())
     {
 
@@ -33,19 +33,20 @@ int main(int argc, char** argv)
                 continue;
         }
 
-        vbshww.tx.clear();
+        vbshww.process();
 
-        //Do what you need to do in for each event here
-        //To save use the following function
-        vbshww.cutflow.fill();
-
-        // tx.fill();
     }
 
     // Writing output file
     vbshww.cutflow.saveOutput();
 
+    // Write the data structure to the root file
     vbshww.tx.write();
+
+    // Write out the "run:lumi:evt" of the events passing a certain cut into a text file
+    // If the output.root is "output/path/dir/name.root"
+    // then the text file will be named "output/path/dir/name_CutName.txt"
+    vbshww.writeEventList("SignalRegionPreselection");
 
     // The below can be sometimes crucial
     delete vbshww.output_tfile;

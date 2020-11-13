@@ -1,6 +1,10 @@
 #include "VBSHWW.h"
 
-VBSHWW::VBSHWW(int argc, char** argv) : tx("variable", "variable")
+VBSHWW::VBSHWW(int argc, char** argv) :
+    tx(
+       (parseCLI(argc, argv), "variable"), // This weird syntax guarantees that parseCLI runs prior to initializing "tx"
+       "variable"
+      )
 {
 
 //=============================
@@ -8,9 +12,6 @@ VBSHWW::VBSHWW(int argc, char** argv) : tx("variable", "variable")
 // Setting Up Analysis
 //
 //=============================
-
-    // Parse command line arguments
-    parseCLI(argc, argv);
 
     // Create the TChain that holds the TTree's of the baby ntuples
     events_tchain = RooUtil::FileUtil::createTChain(input_tree_name, input_file_list_tstring);
@@ -32,9 +33,9 @@ VBSHWW::VBSHWW(int argc, char** argv) : tx("variable", "variable")
 //=============================
 
     // Create event level branches
-    tx.createBranch<int>("evt");
-    tx.createBranch<int>("lumi");
     tx.createBranch<int>("run");
+    tx.createBranch<int>("lumi");
+    tx.createBranch<unsigned long long>("evt");
 
     // Create met branches
     tx.createBranch<LV>("met_p4");
@@ -88,7 +89,15 @@ VBSHWW::VBSHWW(int argc, char** argv) : tx("variable", "variable")
     // Description: Weighting each event to 137/fb
     // TODO TODO TODO TODO TODO: MAKE LUMINOSITY AN CLI ARGUMENT THAT DEPENDS ON YEAR
     cutflow.addCut("Weight",
-            [&]() { return 1/*set your cut here*/; },
+            [&]()
+            {
+                // Set event level variables that would be processed for the given event regardless
+                tx.setBranch<int>("run", nt.run());
+                tx.setBranch<int>("lumi", nt.luminosityBlock());
+                tx.setBranch<unsigned long long>("evt", nt.event());
+                tx.setBranch<LV>("met_p4", RooUtil::Calc::getLV(nt.MET_pt(), 0, nt.MET_phi(), 0));
+                return 1/*set your cut here*/;
+            },
             [&]()
             {
                 float wgt = ((nt.Generator_weight() > 0) - (nt.Generator_weight() < 0)) * scale1fb;
@@ -686,3 +695,30 @@ void VBSHWW::parseCLI(int argc, char** argv)
 
 }
 
+// For a given cutname it writes the run, lumi, evt into a textfile based on the output root name
+void VBSHWW::writeEventList(TString cutname)
+{
+    TString eventlist_output_name = output_tfile->GetName(); // get the output file name
+    TString suffix = TString::Format(".%s.txt", cutname.Data());
+    eventlist_output_name.ReplaceAll(".root", suffix); // replace .root with suffix if .root exists
+    if (not eventlist_output_name.Contains(suffix)) eventlist_output_name += suffix; // if no suffix exists, then append suffix
+    cutflow.getCut(cutname).writeEventList(eventlist_output_name);
+}
+
+void VBSHWW::process()
+{
+    // Clear the data structure for the event
+    tx.clear();
+
+    // Set the run lumi and event for this event
+    cutflow.setEventID(nt.run(), nt.luminosityBlock(), nt.event()); // Setting event ID in case we need to keep track of event id
+
+    // Run all the cutflow selections and filling histograms
+    cutflow.fill();
+
+    // Writing skimmed event tree for the data structure we created
+    if (cutflow.getCut("SignalRegionPreselection").pass)
+    {
+        tx.fill();
+    }
+}

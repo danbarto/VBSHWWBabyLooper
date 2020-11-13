@@ -58,6 +58,10 @@ public:
 
     // Parse command line arguments
     void parseCLI(int argc, char** argv);
+    void writeEventList(TString cutname);
+
+    // Actions to take per event are placed here
+    void process();
 
 };
 

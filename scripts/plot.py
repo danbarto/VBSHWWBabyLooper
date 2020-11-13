@@ -5,6 +5,7 @@ import plottery_wrapper as p
 cutname_to_plot = "NbMed"
 
 bkg_labels = ["WZ", "tt1l", "tt2l", "ttw", "ttz", "ttH", "ssww"]
+bkg_labels = ["WZ", "tt1l", "ttw", "ttz", "ttH", "ssww"]
 signal_labels = ["SM", "lam20", "lam-20"]
 
 ##########################
@@ -13,7 +14,7 @@ signal_labels = ["SM", "lam20", "lam-20"]
 p.dump_plot(fnames=[
         "hadds/wz.root",
         "hadds/tt1l.root",
-        "hadds/tt2l.root",
+        # "hadds/tt2l.root",
         "hadds/ttw.root",
         "hadds/ttz.root",
         "hadds/tth.root",
@@ -43,7 +44,7 @@ p.dump_plot(fnames=[
 p.dump_plot(fnames=[
         "hadds/wz.root",
         "hadds/tt1l.root",
-        "hadds/tt2l.root",
+        # "hadds/tt2l.root",
         "hadds/ttw.root",
         "hadds/ttz.root",
         "hadds/tth.root",
@@ -74,7 +75,7 @@ p.dump_plot(fnames=[
 p.dump_plot(fnames=[
         "hadds/wz.root",
         "hadds/tt1l.root",
-        "hadds/tt2l.root",
+        # "hadds/tt2l.root",
         "hadds/ttw.root",
         "hadds/ttz.root",
         "hadds/tth.root",
