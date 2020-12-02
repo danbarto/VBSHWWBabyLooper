@@ -11,43 +11,45 @@
 int main(int argc, char** argv)
 {
 
-    VBSHWW vbshww(argc, argv);
+    VBSHWW vbs(argc, argv);
 
-    vbshww.cutflow.printCuts();
+    vbs.initSRCutflow();
 
-    vbshww.histograms.addHistogram("NCenJet30", 9, 0, 9, [&]() { return vbshww.tx.getBranchLazy<int>("ncenjet30"); } );
-    vbshww.histograms.addHistogram("NJet30", 9, 0, 9, [&]() { return vbshww.tx.getBranchLazy<int>("njet30"); } );
+    vbs.cutflow.printCuts();
 
-    vbshww.cutflow.bookHistogramsForCutAndBelow(vbshww.histograms, "TagVBSJets");
-    vbshww.cutflow.bookCutflows();
-    vbshww.cutflow.bookEventLists();
+    vbs.histograms.addHistogram("NCenJet30", 9, 0, 9, [&]() { return vbs.tx.getBranchLazy<int>("ncenjet30"); } );
+    vbs.histograms.addHistogram("NJet30", 9, 0, 9, [&]() { return vbs.tx.getBranchLazy<int>("njet30"); } );
+
+    vbs.cutflow.bookHistogramsForCutAndBelow(vbs.histograms, "VBSJetPreselection");
+    vbs.cutflow.bookCutflows();
+    vbs.cutflow.bookEventLists();
 
     // Looping input file
-    while (vbshww.looper.nextEvent())
+    while (vbs.looper.nextEvent())
     {
 
         // If splitting jobs are requested then determine whether to process the event or not based on remainder
-        if (vbshww.job_index != -1 and vbshww.nsplit_jobs > 0)
+        if (vbs.job_index != -1 and vbs.nsplit_jobs > 0)
         {
-            if (vbshww.looper.getNEventsProcessed() % vbshww.nsplit_jobs != (unsigned int) vbshww.job_index)
+            if (vbs.looper.getNEventsProcessed() % vbs.nsplit_jobs != (unsigned int) vbs.job_index)
                 continue;
         }
 
-        vbshww.process();
+        vbs.process("SignalRegionPreselection");
 
     }
 
     // Writing output file
-    vbshww.cutflow.saveOutput();
+    vbs.cutflow.saveOutput();
 
     // Write the data structure to the root file
-    vbshww.tx.write();
+    vbs.tx.write();
 
     // Write out the "run:lumi:evt" of the events passing a certain cut into a text file
     // If the output.root is "output/path/dir/name.root"
     // then the text file will be named "output/path/dir/name_CutName.txt"
-    vbshww.writeEventList("SignalRegionPreselection");
+    vbs.writeEventList("SignalRegionPreselection");
 
     // The below can be sometimes crucial
-    delete vbshww.output_tfile;
+    delete vbs.output_tfile;
 }
