@@ -9,8 +9,9 @@ Then, clone the repository to local area.
     git pull upstream main # to pull changes upstream repository in cmstas to local repo
     git pull origin main # to pull changes forked repository in cmstas to local repo
     source setup.sh
-    make clean; make -j
-    sh scripts/run.sh
+    make clean
+    make -j
+    sh scripts/run.sh -s mainAnalysis # for more info, $ sh scripts/run.sh -h
 
 # Making changes to the code and making pull requests
 
