@@ -3,7 +3,7 @@
 First fork the following repo to user's area.  
 Then, clone the repository to local area.
 
-    git clone --recursive git@github.com:<gituser>/VBSHWWBabyLooper.git
+    git clone --recursive git@github.com:<yourgitusername>/VBSHWWBabyLooper.git
     cd VBSHWWBabyLooper
     git remote add upstream git@github.com:cmstas/VBSHWWBabyLooper.git
     git pull upstream main # to pull changes upstream repository in cmstas to local repo
@@ -20,5 +20,5 @@ Then, clone the repository to local area.
     git pull upstream main # Make sure to merge any changes that is in the main repository
     # vim <conflictingcode> # Make any necessary merging and changes
     git push origin main # to push the local changes to the forked repository
-    # Then go to https://github.com/cmstas/VBSHWWBabyLooper repo github page and make a pull request
+    # Then go to https://github.com/<yourgitusername>/VBSHWWBabyLooper repo github page and make a pull request
 
