@@ -1,31 +1,29 @@
-# Simple makefile
+SUBDIRS := $(wildcard studies/*/.)
+LIBRARIES := NanoTools/NanoCORE VBSHWWCORE rooutil
 
-EXE=doAnalysis
+all: $(LIBRARIES) $(SUBDIRS)
 
-SOURCES=$(wildcard *.cc) $(wildcard NanoTools/NanoCORE/*.cc) rooutil/rooutil.cc $(wildcard NanoTools/NanoCORE/Tools/*.cc) $(wildcard VBSHWWCORE/*.cc)
-OBJECTS=$(SOURCES:.cc=.o)
-HEADERS=$(SOURCES:.cc=.h)
+NanoCORE:
+	$(MAKE) -C NanoTools/NanoCORE
 
-CC          = g++
-CXX         = g++
-CXXFLAGS    = -g -O2 -Wall -fPIC -Wshadow -Woverloaded-virtual
-LD          = g++
-LDFLAGS     = -g -O2
-SOFLAGS     = -g -shared
-CXXFLAGS    = -g -O2 -Wall -fPIC -Wshadow -Woverloaded-virtual
-LDFLAGS     = -g -O2
-ROOTLIBS    = $(shell root-config --libs)
-ROOTCFLAGS  = $(shell root-config --cflags)
-CXXFLAGS   += $(ROOTCFLAGS)
-CFLAGS      = $(ROOTCFLAGS) -Wall -Wno-unused-function -g -O2 -fPIC -fno-var-tracking -INanoTools/NanoCORE -Irooutil/ -DLorentzVectorPtEtaPhiM4D -IVBSHWWCORE
-EXTRACFLAGS = $(shell rooutil-config)
-EXTRAFLAGS  = -fPIC -ITMultiDrawTreePlayer -Wunused-variable -lTMVA -lEG -lGenVector -lXMLIO -lMLP -lTreePlayer
+VBSHWWCORE:
+	$(MAKE) -C VBSHWWCORE
 
-$(EXE): $(OBJECTS)
-	$(LD) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(ROOTLIBS) $(EXTRAFLAGS) -o $@
+rooutil:
+	$(MAKE) -C rooutil
 
-%.o: %.cc
-	$(CC) $(CFLAGS) $(EXTRACFLAGS) $< -c -o $@
+$(SUBDIRS): NanoCORE VBSHWWCORE rooutil
+	$(MAKE) -C $@
+
+.PHONY: all $(LIBRARIES) $(SUBDIRS)
 
 clean:
-	rm -f $(OBJECTS) $(EXE)
+	cd studies/mainAnalysis && make clean;
+
+cleanall:
+	cd VBSHWWCORE/ && make clean;
+	cd rooutil/ && make clean;
+	cd NanoTools/NanoCORE/ && make clean;
+	cd studies/mainAnalysis && make clean;
+	cd studies/extraJets && make clean;
+	cd studies/philipSR && make clean;

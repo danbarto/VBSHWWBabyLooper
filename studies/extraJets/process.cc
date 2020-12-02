@@ -14,44 +14,44 @@ int main(int argc, char** argv)
     VBSHWW vbs(argc, argv);
 
     // Additional branches
-    tx.createBranch<vector<int>>("good_jets_is_higgs_jet");
-    tx.createBranch<vector<int>>("good_jets_is_vbs_jet");
-    tx.createBranch<int>("leading_q_from_W_id");
-    tx.createBranch<float>("leading_q_from_W_pt");
-    tx.createBranch<float>("leading_q_from_W_eta");
-    tx.createBranch<float>("leading_q_from_W_phi");
-    tx.createBranch<bool>("leading_q_from_W_has_match"); // i.e. matched to extra jet
-    tx.createBranch<int>("trailing_q_from_W_id");
-    tx.createBranch<float>("trailing_q_from_W_pt");
-    tx.createBranch<float>("trailing_q_from_W_eta");
-    tx.createBranch<float>("trailing_q_from_W_phi");
-    tx.createBranch<bool>("trailing_q_from_W_has_match"); // i.e. matched to extra jet
+    vbs.tx.createBranch<vector<int>>("good_jets_is_higgs_jet");
+    vbs.tx.createBranch<vector<int>>("good_jets_is_vbs_jet");
+    vbs.tx.createBranch<int>("leading_q_from_W_id");
+    vbs.tx.createBranch<float>("leading_q_from_W_pt");
+    vbs.tx.createBranch<float>("leading_q_from_W_eta");
+    vbs.tx.createBranch<float>("leading_q_from_W_phi");
+    vbs.tx.createBranch<bool>("leading_q_from_W_has_match"); // i.e. matched to extra jet
+    vbs.tx.createBranch<int>("trailing_q_from_W_id");
+    vbs.tx.createBranch<float>("trailing_q_from_W_pt");
+    vbs.tx.createBranch<float>("trailing_q_from_W_eta");
+    vbs.tx.createBranch<float>("trailing_q_from_W_phi");
+    vbs.tx.createBranch<bool>("trailing_q_from_W_has_match"); // i.e. matched to extra jet
 
     vbs.cutflow.printCuts();
 
-    cutflow.getCut("Preselection");
+    vbs.cutflow.getCut("Preselection");
 
     //*****************************
     // - Require Two Medium Btag
     //*****************************
     // Description: Select two medium b-tag /* TODO TODO TODO TODO btag scale factor */
-    cutflow.addCutToLastActiveCut("GeqTwoMediumBtag", [&]() { return tx.getBranch<int>("nbmedium") >= 2; },  UNITY);
+    vbs.cutflow.addCutToLastActiveCut("GeqTwoMediumBtag", [&]() { return vbs.tx.getBranch<int>("nbmedium") >= 2; },  UNITY);
 
     //*****************************
     // - Fill generator branches
     //*****************************
     // Description: 'benign' cut that only serves to fill some generator branches
-    cutflow.addCutToLastActiveCut("FillGenBranches",
+    vbs.cutflow.addCutToLastActiveCut("FillGenBranches",
             [&]()
             {
-                int quark_A_idx; = -1;
-                int quark_B_idx; = -1;
+                int quark_A_idx = -1;
+                int quark_B_idx = -1;
                 for (unsigned int idx = 0; idx < nt.nGenPart(); ++idx)
                 {
-                    if (abs(nt.GenPart_pdgId()[idx]) < 6 && nt.GenPart_status() == 23) 
+                    if (abs(nt.GenPart_pdgId()[idx]) < 6 && nt.GenPart_status()[idx] == 23) 
                     {
                         // Try to find mother
-                        int mother_idx = nt.GenPart_genPartMotherIdx()[idx];
+                        int mother_idx = nt.GenPart_genPartIdxMother()[idx];
                         if (mother_idx < 0) { continue; }
                         // Check if mother is a W
                         if (abs(nt.GenPart_pdgId()[mother_idx]) == 24) 
@@ -80,14 +80,14 @@ int main(int argc, char** argv)
                     trailing_quark_idx = quark_A_idx;
                 }
                 // Fill branches
-                tx.setBranch<int>("leading_q_from_W_id", nt.GenPart_pdgId()[leading_quark_idx]);
-                tx.setBranch<float>("leading_q_from_W_pt", nt.GenPart_pt()[leading_quark_idx]);
-                tx.setBranch<float>("leading_q_from_W_eta", nt.GenPart_eta()[leading_quark_idx]);
-                tx.setBranch<float>("leading_q_from_W_phi", nt.GenPart_phi()[leading_quark_idx]);
-                tx.setBranch<int>("trailing_q_from_W_id", nt.GenPart_pdgId()[trailing_quark_idx]);
-                tx.setBranch<float>("trailing_q_from_W_pt", nt.GenPart_pt()[trailing_quark_idx]);
-                tx.setBranch<float>("trailing_q_from_W_eta", nt.GenPart_eta()[trailing_quark_idx]);
-                tx.setBranch<float>("trailing_q_from_W_phi", nt.GenPart_phi()[trailing_quark_idx]);
+                vbs.tx.setBranch<int>("leading_q_from_W_id", nt.GenPart_pdgId()[leading_quark_idx]);
+                vbs.tx.setBranch<float>("leading_q_from_W_pt", nt.GenPart_pt()[leading_quark_idx]);
+                vbs.tx.setBranch<float>("leading_q_from_W_eta", nt.GenPart_eta()[leading_quark_idx]);
+                vbs.tx.setBranch<float>("leading_q_from_W_phi", nt.GenPart_phi()[leading_quark_idx]);
+                vbs.tx.setBranch<int>("trailing_q_from_W_id", nt.GenPart_pdgId()[trailing_quark_idx]);
+                vbs.tx.setBranch<float>("trailing_q_from_W_pt", nt.GenPart_pt()[trailing_quark_idx]);
+                vbs.tx.setBranch<float>("trailing_q_from_W_eta", nt.GenPart_eta()[trailing_quark_idx]);
+                vbs.tx.setBranch<float>("trailing_q_from_W_phi", nt.GenPart_phi()[trailing_quark_idx]);
                 return true;
             },
             UNITY);
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
     // - Matching gen quarks to reco jets
     //*****************************
     // Description: Match generator quarks to extra jets
-    // cutflow.addCutToLastActiveCut("MatchToExtraJets",
+    // vbs.cutflow.addCutToLastActiveCut("MatchToExtraJets",
     //         [&]()
     //         {
     //             return true;

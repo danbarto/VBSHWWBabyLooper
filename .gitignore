@@ -1,7 +1,11 @@
 *.o
 VBSHWWCORE/*.o
+VBSHWWCORE/*.so
 .jobs.txt
 hadds/
 hists/
 outputs/
 plots/
+studies/*/doAnalysis
+studies/*/*.o
+.*.history
