@@ -61,7 +61,10 @@ public:
     void writeEventList(TString cutname);
 
     // Actions to take per event are placed here
-    void process();
+    void process(TString final_cutname);
+
+    // Signal and Control regions
+    void initSRCutflow();
 
 };
 
