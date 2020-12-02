@@ -1,2 +1,7 @@
 *.o
 VBSHWWCORE/*.o
+.jobs.txt
+hadds/
+hists/
+outputs/
+plots/
