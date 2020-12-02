@@ -1,4 +1,4 @@
-SUBDIRS := $(wildcard studies/*/.)
+SUBDIRS := $(sort $(dir $(wildcard studies/*/.)))
 LIBRARIES := NanoTools/NanoCORE VBSHWWCORE rooutil
 
 all: $(LIBRARIES) $(SUBDIRS)
