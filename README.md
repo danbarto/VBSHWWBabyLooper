@@ -12,6 +12,8 @@ Then, clone the repository to local area.
     make clean
     make -j
     sh scripts/run.sh -s mainAnalysis # for more info, $ sh scripts/run.sh -h
+    python scripts/cutflow.py mainAnalysis SignalRegionPreselection # To make cutflow for SignalRegionPreselection
+    python scripts/plot.py mainAnalysis SignalRegionPreselection # To make plots at SignalRegionPreselection cut selection level
 
 # Making changes to the code and making pull requests
 
