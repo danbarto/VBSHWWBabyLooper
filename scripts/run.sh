@@ -41,6 +41,6 @@ echo "STUDY          : ${STUDY}"
 echo "================================================"
 
 sh $DIR/exec.sh ${STUDY}
-sh $DIR/hadd.sh
-python $DIR/cutflow.py
+sh $DIR/hadd.sh ${STUDY}
+# python $DIR/cutflow.py ${STUDY}
 # python $DIR/plot.py

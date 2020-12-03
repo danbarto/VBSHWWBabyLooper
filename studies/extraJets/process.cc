@@ -32,12 +32,6 @@ int main(int argc, char** argv)
     vbs.cutflow.getCut("Preselection");
 
     //*****************************
-    // - Require Two Medium Btag
-    //*****************************
-    // Description: Select two medium b-tag /* TODO TODO TODO TODO btag scale factor */
-    vbs.cutflow.addCutToLastActiveCut("GeqTwoMediumBtag", [&]() { return vbs.tx.getBranch<int>("nbmedium") >= 2; },  UNITY);
-
-    //*****************************
     // - Fill generator branches
     //*****************************
     // Description: 'benign' cut that only serves to fill some generator branches
@@ -134,7 +128,7 @@ int main(int argc, char** argv)
     // Write out the "run:lumi:evt" of the events passing a certain cut into a text file
     // If the output.root is "output/path/dir/name.root"
     // then the text file will be named "output/path/dir/name_CutName.txt"
-    vbs.writeEventList("SignalRegionPreselection");
+    vbs.writeEventList("FillGenBranches");
 
     // The below can be sometimes crucial
     delete vbs.output_tfile;
