@@ -21,6 +21,13 @@ Assuming you have compiled the code following the previous step instructions:
 
     sh scripts/run.sh -s bdtInputs
 
+The outputs are located in
+
+    ls hadds/bdtInputs_2016
+    ls hadds/bdtInputs_2017 # For now, this is the only usable ones
+    ls hadds/bdtInputs_2018
+    ls hadds/bdtInputs_Run2
+
 # Making changes to the code and making pull requests
 
     git pull origin main # Make sure you're at the latest code
