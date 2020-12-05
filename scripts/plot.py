@@ -21,9 +21,18 @@ except:
 
 hadd_dir = "hadds/{}".format(study_name)
 
-bkg_labels = ["WZ", "tt1l", "tt2l", "ttw", "ttz", "ttH", "ssww"]
-bkg_labels = ["WZ", "tt1l", "ttw", "ttz", "ttH", "ssww"]
-signal_labels = ["SM", "lam20", "lam-20"]
+bkg_labels = ["WZ", "t#bar{t}(1l)", "t#bar{t}(2l)", "t#bar{t}W", "t#bar{t}Z", "t#bar{t}H", "W^{#pm}W^{#pm}jj"]
+signal_labels = ["SM"]
+colors = [4022, 4020, 4023, 4021, 4024, 4101, 4201]
+
+# bkg_labels = ["WZ", "tt1l", "ttw", "ttz", "ttH", "ssww"]
+# signal_labels = ["SM", "lam20", "lam-20"]
+
+#
+lumi = -1
+if "2016" in hadd_dir: lumi = 35.9
+if "2017" in hadd_dir: lumi = 41.5
+if "2018" in hadd_dir: lumi = 59.97
 
 ##########################
 
@@ -31,7 +40,7 @@ signal_labels = ["SM", "lam20", "lam-20"]
 p.dump_plot(fnames=[
         "{}/wz.root".format(hadd_dir),
         "{}/tt1l.root".format(hadd_dir),
-        # "{}/tt2l.root".format(hadd_dir),
+        "{}/tt2l.root".format(hadd_dir),
         "{}/ttw.root".format(hadd_dir),
         "{}/ttz.root".format(hadd_dir),
         "{}/tth.root".format(hadd_dir),
@@ -39,14 +48,15 @@ p.dump_plot(fnames=[
         ],
     sig_fnames=[
         "{}/vbshww.root".format(hadd_dir),
-        "{}/lambda20_vbshww.root".format(hadd_dir),
-        "{}/lambdam20_vbshww.root".format(hadd_dir),
+        # "{}/lambda20_vbshww.root".format(hadd_dir),
+        # "{}/lambdam20_vbshww.root".format(hadd_dir),
         ],
     legend_labels=bkg_labels,
     signal_labels=signal_labels,
     dirname="plots/sig_150x/{}".format(study_name),
     filter_pattern="{}__".format(cutname_to_plot),
     dogrep=True,
+    usercolors=colors,
     extraoptions={
         "print_yield": True,
         "nbins": 20,
@@ -54,7 +64,7 @@ p.dump_plot(fnames=[
         # "signal_scale": "auto",
         "legend_ncolumns": 3,
         "legend_scalex": 1.8,
-        "lumi_value": 137,
+        "lumi_value": lumi,
         },
     )
 
@@ -62,7 +72,7 @@ p.dump_plot(fnames=[
 p.dump_plot(fnames=[
         "{}/wz.root".format(hadd_dir),
         "{}/tt1l.root".format(hadd_dir),
-        # "{}/tt2l.root".format(hadd_dir),
+        "{}/tt2l.root".format(hadd_dir),
         "{}/ttw.root".format(hadd_dir),
         "{}/ttz.root".format(hadd_dir),
         "{}/tth.root".format(hadd_dir),
@@ -70,14 +80,15 @@ p.dump_plot(fnames=[
         ],
     sig_fnames=[
         "{}/vbshww.root".format(hadd_dir),
-        "{}/lambda20_vbshww.root".format(hadd_dir),
-        "{}/lambdam20_vbshww.root".format(hadd_dir),
+        # "{}/lambda20_vbshww.root".format(hadd_dir),
+        # "{}/lambdam20_vbshww.root".format(hadd_dir),
         ],
     legend_labels=bkg_labels,
     signal_labels=signal_labels,
     dirname="plots/sig_auto/{}".format(study_name),
     filter_pattern="{}__".format(cutname_to_plot),
     dogrep=True,
+    usercolors=colors,
     extraoptions={
         "print_yield": True,
         "nbins": 20,
@@ -85,7 +96,7 @@ p.dump_plot(fnames=[
         "signal_scale": "auto",
         "legend_ncolumns": 3,
         "legend_scalex": 1.8,
-        "lumi_value": 137,
+        "lumi_value": lumi,
         },
     )
 
@@ -93,18 +104,20 @@ p.dump_plot(fnames=[
 p.dump_plot(fnames=[
         "{}/wz.root".format(hadd_dir),
         "{}/tt1l.root".format(hadd_dir),
-        # "{}/tt2l.root".format(hadd_dir),
+        "{}/tt2l.root".format(hadd_dir),
         "{}/ttw.root".format(hadd_dir),
         "{}/ttz.root".format(hadd_dir),
         "{}/tth.root".format(hadd_dir),
         "{}/ssww.root".format(hadd_dir),
         ],
     sig_fnames=[
-        "{}/lambdam20_vbshww.root".format(hadd_dir),
+        "{}/vbshww.root".format(hadd_dir),
+        # "{}/lambdam20_vbshww.root".format(hadd_dir),
         ],
     dirname="plots/cut_opt_scan/{}".format(study_name),
     filter_pattern="{}__".format(cutname_to_plot),
     dogrep=True,
+    usercolors=colors,
     extraoptions={
         "print_yield": True,
         # "nbins": 60,

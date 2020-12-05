@@ -12,8 +12,14 @@ Then, clone the repository to local area.
     make clean
     make -j
     sh scripts/run.sh -s mainAnalysis # for more info, $ sh scripts/run.sh -h
-    python scripts/cutflow.py mainAnalysis SignalRegionPreselection # To make cutflow for SignalRegionPreselection
-    python scripts/plot.py mainAnalysis SignalRegionPreselection # To make plots at SignalRegionPreselection cut selection level
+    python scripts/cutflow.py mainAnalysis_2017 SignalRegionPreselection # To make cutflow for SignalRegionPreselection for year 2017
+    python scripts/plot.py mainAnalysis_2017 SignalRegionPreselection # To make plots at SignalRegionPreselection cut selection level year 2017
+
+# Running BDT input preparation code
+
+Assuming you have compiled the code following the previous step instructions:
+
+    sh scripts/run.sh -s bdtInputs
 
 # Making changes to the code and making pull requests
 

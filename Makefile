@@ -26,4 +26,5 @@ cleanall:
 	cd NanoTools/NanoCORE/ && make clean;
 	cd studies/mainAnalysis && make clean;
 	cd studies/extraJets && make clean;
+	cd studies/bdtInputs && make clean;
 	cd studies/philipSR && make clean;
