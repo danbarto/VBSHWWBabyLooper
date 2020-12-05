@@ -66,6 +66,9 @@ public:
     // Signal and Control regions
     void initSRCutflow();
 
+    // BDT input computation
+    void initBDTInputComputation();
+
 };
 
 

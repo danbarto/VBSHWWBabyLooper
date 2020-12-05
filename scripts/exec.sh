@@ -11,51 +11,71 @@ usage()
 if [ -z ${1} ]; then usage; fi
 STUDY=${1}
 
-mkdir -p hists/${STUDY}
-rm -rf hists/${STUDY}/*.root
+rm .jobs.txt
+
+YEARS="2016 2017 2018"
+
+EXECUTABLE=./studies/${STUDY}/doAnalysis
+
+SAMPLES="TTJets_DiLept \
+TTJets_SingLept_FromT \
+TTJets_SingLept_FromTbar \
+TTWJetsToLNu \
+TTZToLLNuNu \
+WZTo3LNu \
+WpWpJJ_EWK-QCD \
+ttHTobb \
+VBSHWW"
+
+BABYDIR=/nfs-7/userdata/phchang/HWW_babies/Baby_v3
 
 rm .jobs.txt
 
-BABYVERSION=Baby_v2
-EXECUTABLE=./studies/${STUDY}/doAnalysis
-HISTDIR=hists/${STUDY}
+for SAMPLE in ${SAMPLES}; do
 
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tth.root              --scale1fb 0.000013717    -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/2017tth_results.root         > ${HISTDIR}/log_tth.txt              " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_ttw.root              --scale1fb 0.000076266    -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/2017ttw_results.root         > ${HISTDIR}/log_ttw.txt              " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_ttz.root              --scale1fb 0.000067525    -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/2017ttz_results.root         > ${HISTDIR}/log_ttz.txt              " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_wz.root               --scale1fb 0.00064316     -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/2017wz_results.root          > ${HISTDIR}/log_wz.txt               " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_ssww.root             --scale1fb 0.00036322     -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/WWSS_results.root            > ${HISTDIR}/log_ssww.txt             " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_lambda20_vbshww.root  --scale1fb 0.00000077834  -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/sig_lambda_20_results.root   > ${HISTDIR}/log_lambda20_vbshww.txt  " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_lambdam20_vbshww.root --scale1fb 0.00000071875  -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/sig_lambda_m20_results.root  > ${HISTDIR}/log_lambdam20_vbshww.txt " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_vbshww.root           --scale1fb 0.00000017131  -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/sig_results.root             > ${HISTDIR}/log_vbshww.txt           " >> .jobs.txt
-# echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt2l_1.root           --scale1fb 0.0016280      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbardilep1_results.root     > ${HISTDIR}/log_tt2l_1.txt           " >> .jobs.txt
-# echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt2l_2.root           --scale1fb 0.0016280      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbardilep2_results.root     > ${HISTDIR}/log_tt2l_2.txt           " >> .jobs.txt
-# echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt2l_3.root           --scale1fb 0.0016280      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbardilep3_results.root     > ${HISTDIR}/log_tt2l_3.txt           " >> .jobs.txt
-# echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt2l_4.root           --scale1fb 0.0016280      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbardilep4_results.root     > ${HISTDIR}/log_tt2l_4.txt           " >> .jobs.txt
-# echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt2l_5.root           --scale1fb 0.0016280      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbardilep5_results.root     > ${HISTDIR}/log_tt2l_5.txt           " >> .jobs.txt
-# echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt2l_6.root           --scale1fb 0.0016280      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbardilep6_results.root     > ${HISTDIR}/log_tt2l_6.txt           " >> .jobs.txt
-# echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt2l_7.root           --scale1fb 0.0016280      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbardilep7_results.root     > ${HISTDIR}/log_tt2l_7.txt           " >> .jobs.txt
-# echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt2l_8.root           --scale1fb 0.0016280      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbardilep8_results.root     > ${HISTDIR}/log_tt2l_8.txt           " >> .jobs.txt
-# echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt2l_9.root           --scale1fb 0.0016280      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbardilep9_results.root     > ${HISTDIR}/log_tt2l_9.txt           " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_1.root           --scale1fb 0.0033379      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromt10_results.root    > ${HISTDIR}/log_tt1l_1.txt           " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_2.root           --scale1fb 0.0033379      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromt1_results.root     > ${HISTDIR}/log_tt1l_2.txt           " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_3.root           --scale1fb 0.0033379      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromt2_results.root     > ${HISTDIR}/log_tt1l_3.txt           " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_4.root           --scale1fb 0.0033379      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromt3_results.root     > ${HISTDIR}/log_tt1l_4.txt           " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_5.root           --scale1fb 0.0033379      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromt4_results.root     > ${HISTDIR}/log_tt1l_5.txt           " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_6.root           --scale1fb 0.0033379      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromt5_results.root     > ${HISTDIR}/log_tt1l_6.txt           " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_7.root           --scale1fb 0.0033379      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromt7_results.root     > ${HISTDIR}/log_tt1l_7.txt           " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_8.root           --scale1fb 0.0033379      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromt8_results.root     > ${HISTDIR}/log_tt1l_8.txt           " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_9.root           --scale1fb 0.0033379      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromt9_results.root     > ${HISTDIR}/log_tt1l_9.txt           " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_10.root          --scale1fb 0.0032409      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromtbar10_results.root > ${HISTDIR}/log_tt1l_10.txt          " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_11.root          --scale1fb 0.0032409      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromtbar1_results.root  > ${HISTDIR}/log_tt1l_11.txt          " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_12.root          --scale1fb 0.0032409      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromtbar2_results.root  > ${HISTDIR}/log_tt1l_12.txt          " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_13.root          --scale1fb 0.0032409      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromtbar3_results.root  > ${HISTDIR}/log_tt1l_13.txt          " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_14.root          --scale1fb 0.0032409      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromtbar4_results.root  > ${HISTDIR}/log_tt1l_14.txt          " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_15.root          --scale1fb 0.0032409      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromtbar5_results.root  > ${HISTDIR}/log_tt1l_15.txt          " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_16.root          --scale1fb 0.0032409      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromtbar6_results.root  > ${HISTDIR}/log_tt1l_16.txt          " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_17.root          --scale1fb 0.0032409      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromtbar7_results.root  > ${HISTDIR}/log_tt1l_17.txt          " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_18.root          --scale1fb 0.0032409      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromtbar8_results.root  > ${HISTDIR}/log_tt1l_18.txt          " >> .jobs.txt
-echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_tt1l_19.root          --scale1fb 0.0032409      -i /hadoop/cms/store/user/yxiang/Baby/${BABYVERSION}/ttbarfromtbar9_results.root  > ${HISTDIR}/log_tt1l_19.txt          " >> .jobs.txt
+    for YEAR in ${YEARS}; do
+
+        HISTDIR=hists/${STUDY}_${YEAR}
+        mkdir -p ${HISTDIR}
+        rm -rf ${HISTDIR}/*.root
+
+        if [[ ${YEAR} == *"2016"* ]]; then NANOTAG=RunIISummer16NanoAOD*; fi
+        if [[ ${YEAR} == *"2017"* ]]; then NANOTAG=RunIIFall17NanoAOD*; fi
+        if [[ ${YEAR} == *"2018"* ]]; then NANOTAG=RunIIAutumn18NanoAOD*; fi
+
+        if [[ ${SAMPLE}_${YEAR} == *"ttHTobb_2016"* ]]; then SCALE1FB=1.35959e-05; fi
+        if [[ ${SAMPLE}_${YEAR} == *"ttHTobb_2017"* ]]; then SCALE1FB=1.41572e-05; fi
+        if [[ ${SAMPLE}_${YEAR} == *"ttHTobb_2018"* ]]; then SCALE1FB=1.37127e-05; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTWJetsToLNu_2016"* ]]; then SCALE1FB=7.48404e-05; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTWJetsToLNu_2017"* ]]; then SCALE1FB=7.77749e-05; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTWJetsToLNu_2018"* ]]; then SCALE1FB=8.8951e-05; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTZToLLNuNu_2016"* ]]; then SCALE1FB=3.95777e-05; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTZToLLNuNu_2017"* ]]; then SCALE1FB=6.75246e-05; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTZToLLNuNu_2018"* ]]; then SCALE1FB=4.03089e-05; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTJets_DiLept_2016"* ]]; then SCALE1FB=0.0089522; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTJets_DiLept_2017"* ]]; then SCALE1FB=0.00321153; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTJets_DiLept_2018"* ]]; then SCALE1FB=0.00304636; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTJets_SingLept_FromT_2016"* ]]; then SCALE1FB=0.0160886; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTJets_SingLept_FromT_2017"* ]]; then SCALE1FB=0.0030306; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTJets_SingLept_FromT_2018"* ]]; then SCALE1FB=0.00319832; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTJets_SingLept_FromTbar_2016"* ]]; then SCALE1FB=0.0152786; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTJets_SingLept_FromTbar_2017"* ]]; then SCALE1FB=0.0032409; fi
+        if [[ ${SAMPLE}_${YEAR} == *"TTJets_SingLept_FromTbar_2018"* ]]; then SCALE1FB=0.00305585; fi
+        if [[ ${SAMPLE}_${YEAR} == *"WpWpJJ_EWK-QCD_2016"* ]]; then SCALE1FB=0.000360099; fi
+        if [[ ${SAMPLE}_${YEAR} == *"WpWpJJ_EWK-QCD_2017"* ]]; then SCALE1FB=0.000363222; fi
+        if [[ ${SAMPLE}_${YEAR} == *"WpWpJJ_EWK-QCD_2018"* ]]; then SCALE1FB=0.000360854; fi
+        if [[ ${SAMPLE}_${YEAR} == *"WZTo3LNu_2016"* ]]; then SCALE1FB=0.00222241; fi
+        if [[ ${SAMPLE}_${YEAR} == *"WZTo3LNu_2017"* ]]; then SCALE1FB=0.000643159; fi
+        if [[ ${SAMPLE}_${YEAR} == *"WZTo3LNu_2018"* ]]; then SCALE1FB=0.00065728; fi
+        if [[ ${SAMPLE}_${YEAR} == *"VBSHWW_2016"* ]]; then continue; fi # TODO
+        if [[ ${SAMPLE}_${YEAR} == *"VBSHWW_2017"* ]]; then SCALE1FB=0.00000017131; fi
+        if [[ ${SAMPLE}_${YEAR} == *"VBSHWW_2018"* ]]; then continue; fi # TODO
+
+        echo " ${EXECUTABLE} -t newTree -o ${HISTDIR}/output_${SAMPLE}.root --scale1fb ${SCALE1FB} -i ${BABYDIR}/${YEAR}/${SAMPLE}_${NANOTAG}.root > ${HISTDIR}/log_${SAMPLE}.txt " >> .jobs.txt
+
+    done
+
+done
 
 echo "Launching jobs in parallel...."
 xargs.sh .jobs.txt

@@ -22,8 +22,13 @@ except:
 hadd_dir = "hadds/{}".format(study_name)
 
 bkg_labels = ["WZ", "tt1l", "tt2l", "ttw", "ttz", "ttH", "ssww"]
-bkg_labels = ["WZ", "tt1l", "ttw", "ttz", "ttH", "ssww"]
-signal_labels = ["SM", "lam20", "lam-20"]
+signal_labels = ["SM"]
+
+# bkg_labels = ["WZ", "tt1l", "ttw", "ttz", "ttH", "ssww"]
+# signal_labels = ["SM", "lam20", "lam-20"]
+
+#
+lumi = 
 
 ##########################
 
@@ -31,7 +36,7 @@ signal_labels = ["SM", "lam20", "lam-20"]
 p.dump_plot(fnames=[
         "{}/wz.root".format(hadd_dir),
         "{}/tt1l.root".format(hadd_dir),
-        # "{}/tt2l.root".format(hadd_dir),
+        "{}/tt2l.root".format(hadd_dir),
         "{}/ttw.root".format(hadd_dir),
         "{}/ttz.root".format(hadd_dir),
         "{}/tth.root".format(hadd_dir),
@@ -39,8 +44,8 @@ p.dump_plot(fnames=[
         ],
     sig_fnames=[
         "{}/vbshww.root".format(hadd_dir),
-        "{}/lambda20_vbshww.root".format(hadd_dir),
-        "{}/lambdam20_vbshww.root".format(hadd_dir),
+        # "{}/lambda20_vbshww.root".format(hadd_dir),
+        # "{}/lambdam20_vbshww.root".format(hadd_dir),
         ],
     legend_labels=bkg_labels,
     signal_labels=signal_labels,
@@ -62,7 +67,7 @@ p.dump_plot(fnames=[
 p.dump_plot(fnames=[
         "{}/wz.root".format(hadd_dir),
         "{}/tt1l.root".format(hadd_dir),
-        # "{}/tt2l.root".format(hadd_dir),
+        "{}/tt2l.root".format(hadd_dir),
         "{}/ttw.root".format(hadd_dir),
         "{}/ttz.root".format(hadd_dir),
         "{}/tth.root".format(hadd_dir),
@@ -70,8 +75,8 @@ p.dump_plot(fnames=[
         ],
     sig_fnames=[
         "{}/vbshww.root".format(hadd_dir),
-        "{}/lambda20_vbshww.root".format(hadd_dir),
-        "{}/lambdam20_vbshww.root".format(hadd_dir),
+        # "{}/lambda20_vbshww.root".format(hadd_dir),
+        # "{}/lambdam20_vbshww.root".format(hadd_dir),
         ],
     legend_labels=bkg_labels,
     signal_labels=signal_labels,
@@ -93,14 +98,15 @@ p.dump_plot(fnames=[
 p.dump_plot(fnames=[
         "{}/wz.root".format(hadd_dir),
         "{}/tt1l.root".format(hadd_dir),
-        # "{}/tt2l.root".format(hadd_dir),
+        "{}/tt2l.root".format(hadd_dir),
         "{}/ttw.root".format(hadd_dir),
         "{}/ttz.root".format(hadd_dir),
         "{}/tth.root".format(hadd_dir),
         "{}/ssww.root".format(hadd_dir),
         ],
     sig_fnames=[
-        "{}/lambdam20_vbshww.root".format(hadd_dir),
+        "{}/vbshww.root".format(hadd_dir),
+        # "{}/lambdam20_vbshww.root".format(hadd_dir),
         ],
     dirname="plots/cut_opt_scan/{}".format(study_name),
     filter_pattern="{}__".format(cutname_to_plot),

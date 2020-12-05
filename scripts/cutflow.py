@@ -25,7 +25,7 @@ hadd_dir = "hadds/{}".format(study_name)
 p.dump_plot(fnames=[
         "{}/wz.root".format(hadd_dir),
         "{}/tt1l.root".format(hadd_dir),
-        # "{}/tt2l.root".format(hadd_dir),
+        "{}/tt2l.root".format(hadd_dir),
         "{}/ttw.root".format(hadd_dir),
         "{}/ttz.root".format(hadd_dir),
         "{}/tth.root".format(hadd_dir),
@@ -33,10 +33,10 @@ p.dump_plot(fnames=[
         ],
     sig_fnames=[
         "{}/vbshww.root".format(hadd_dir),
-        "{}/lambda20_vbshww.root".format(hadd_dir),
-        "{}/lambdam20_vbshww.root".format(hadd_dir),
+        # "{}/lambda20_vbshww.root".format(hadd_dir),
+        # "{}/lambdam20_vbshww.root".format(hadd_dir),
         ],
-    data_fname="{}/vbshww.root".format(hadd_dir),
+    # data_fname="{}/vbshww.root".format(hadd_dir),
     dirname="plots/cutflow/{}".format(study_name),
     filter_pattern="{}_cutflow".format(cutname_to_plot), # TODO this is not generalized yet
     extraoptions={
@@ -49,7 +49,7 @@ p.dump_plot(fnames=[
 p.dump_plot(fnames=[
         "{}/wz.root".format(hadd_dir),
         "{}/tt1l.root".format(hadd_dir),
-        # "{}/tt2l.root".format(hadd_dir),
+        "{}/tt2l.root".format(hadd_dir),
         "{}/ttw.root".format(hadd_dir),
         "{}/ttz.root".format(hadd_dir),
         "{}/tth.root".format(hadd_dir),
@@ -57,10 +57,10 @@ p.dump_plot(fnames=[
         ],
     sig_fnames=[
         "{}/vbshww.root".format(hadd_dir),
-        "{}/lambda20_vbshww.root".format(hadd_dir),
-        "{}/lambdam20_vbshww.root".format(hadd_dir),
+        # "{}/lambda20_vbshww.root".format(hadd_dir),
+        # "{}/lambdam20_vbshww.root".format(hadd_dir),
         ],
-    data_fname="{}/vbshww.root".format(hadd_dir),
+    # data_fname="{}/vbshww.root".format(hadd_dir),
     dirname="plots/cutflow/{}".format(study_name),
     filter_pattern="{}_rawcutflow".format(cutname_to_plot), # TODO this is not generalized yet
     extraoptions={
