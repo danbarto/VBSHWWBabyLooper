@@ -67,6 +67,7 @@ VBSHWW::VBSHWW(int argc, char** argv) :
 
     // Create vbs tagged jet branches
     tx.createBranch<vector<LV>>("vbs_jets_p4");
+    tx.createBranch<vector<int>>("vbs_jets_good_jets_idx");
 
     // Create number of b-tagged jets branches
     tx.createBranch<int>("nbloose");
@@ -643,14 +644,16 @@ void VBSHWW::initSRCutflow()
             // higgs jet indices
             const int& higgs_jet_0 = tx.getBranch<vector<int>>("higgs_jets_good_jets_idx")[0];
             const int& higgs_jet_1 = tx.getBranch<vector<int>>("higgs_jets_good_jets_idx")[1];
+            // good jets p4
+            const vector<LV>& good_jets_p4 = tx.getBranch<vector<LV>>("good_jets_p4");
 
             // Select VBS candidates
             std::vector<int> vbs_jet_cands_idxs;
-            for (unsigned int i = 0; i < tx.getBranch<vector<LV>>("good_jets_p4").size(); i++)
+            for (unsigned int i = 0; i < good_jets_p4.size(); i++)
             {
                 if ((int) i != higgs_jet_0 and (int) i != higgs_jet_1)
                 {
-                    if (tx.getBranch<vector<LV>>("good_jets_p4")[i].pt() >= 30.)
+                    if (good_jets_p4[i].pt() >= 30.)
                     {
                         vbs_jet_cands_idxs.push_back(i);
                     }
@@ -662,8 +665,10 @@ void VBSHWW::initSRCutflow()
 
             if (vbs_jet_cands_idxs.size() == 2)
             {
-                tx.pushbackToBranch<LV>("vbs_jets_p4", tx.getBranch<vector<LV>>("good_jets_p4")[vbs_jet_cands_idxs[0]]);
-                tx.pushbackToBranch<LV>("vbs_jets_p4", tx.getBranch<vector<LV>>("good_jets_p4")[vbs_jet_cands_idxs[1]]);
+                tx.pushbackToBranch<LV>("vbs_jets_p4", good_jets_p4[vbs_jet_cands_idxs[0]]);
+                tx.pushbackToBranch<LV>("vbs_jets_p4", good_jets_p4[vbs_jet_cands_idxs[1]]);
+                tx.pushbackToBranch<int>("vbs_jets_good_jets_idx", vbs_jet_cands_idxs[0]);
+                tx.pushbackToBranch<int>("vbs_jets_good_jets_idx", vbs_jet_cands_idxs[1]);
                 return true;
             }
 
@@ -672,8 +677,8 @@ void VBSHWW::initSRCutflow()
             std::vector<std::pair<float, int>> vbs_neg_eta_jets;
             for (unsigned int ijet = 0; ijet < vbs_jet_cands_idxs.size(); ijet++)
             {
-                const LV& jet = tx.getBranch<vector<LV>>("good_jets_p4")[vbs_jet_cands_idxs[ijet]];
-                const float& P = tx.getBranch<vector<LV>>("good_jets_p4")[vbs_jet_cands_idxs[ijet]].P();
+                const LV& jet = good_jets_p4[vbs_jet_cands_idxs[ijet]];
+                const float& P = good_jets_p4[vbs_jet_cands_idxs[ijet]].P();
                 if (jet.eta() >= 0)
                 {
                     vbs_pos_eta_jets.push_back(std::make_pair(P, vbs_jet_cands_idxs[ijet]));
@@ -719,8 +724,10 @@ void VBSHWW::initSRCutflow()
             int vbs_jet_idx_0 = vbs_jet_idx_A < vbs_jet_idx_B ? vbs_jet_idx_A : vbs_jet_idx_B;
             int vbs_jet_idx_1 = vbs_jet_idx_A < vbs_jet_idx_B ? vbs_jet_idx_B : vbs_jet_idx_A;
 
-            tx.pushbackToBranch<LV>("vbs_jets_p4", tx.getBranch<vector<LV>>("good_jets_p4")[vbs_jet_idx_0]);
-            tx.pushbackToBranch<LV>("vbs_jets_p4", tx.getBranch<vector<LV>>("good_jets_p4")[vbs_jet_idx_1]);
+            tx.pushbackToBranch<LV>("vbs_jets_p4", good_jets_p4[vbs_jet_idx_0]);
+            tx.pushbackToBranch<LV>("vbs_jets_p4", good_jets_p4[vbs_jet_idx_1]);
+            tx.pushbackToBranch<int>("vbs_jets_good_jets_idx", vbs_jet_idx_0);
+            tx.pushbackToBranch<int>("vbs_jets_good_jets_idx", vbs_jet_idx_1);
 
             return true;
 
