@@ -9,3 +9,5 @@ plots/
 studies/*/doAnalysis
 studies/*/*.o
 .*.history
+*.root
+*.txt
