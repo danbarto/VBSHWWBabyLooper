@@ -22,7 +22,8 @@ TTWJetsToLNu \
 TTZToLLNuNu \
 WZTo3LNu \
 WpWpJJ_EWK-QCD \
-ttHTobb"
+ttHTobb \
+VBSWmpWmpHToLNuLNu_TuneCP5"
 
 NANOSKIMDIR=/hadoop/cms/store/user/phchang/VBSHWWNanoSkim/v6/
 
@@ -48,13 +49,27 @@ for SAMPLE in ${SAMPLES}; do
         if [[ ${SAMPLE} == *"TTJets_SingleLeptFromTbar"* ]]; then XSEC=182.96; fi
         if [[ ${SAMPLE} == *"WpWpJJ_EWK"* ]]; then XSEC=0.0539; fi
         if [[ ${SAMPLE} == *"WZTo3LNu"* ]]; then XSEC=4.4297; fi
+        if [[ ${SAMPLE} == *"VBSWmpWmpHToLNuLNu_TuneCP5"* ]]; then XSEC=0.00001708; fi
 
+        if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_TuneCP5_2016"* ]]; then continue; fi
+        if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_TuneCP5_2018"* ]]; then continue; fi
+
+        NTOTALEVENTS=$(head -n1 ${NANOSKIMDIR}/${SAMPLE}_*${NANOTAG}*/nevents.txt)
         NEFFEVENTS=$(tail -n1 ${NANOSKIMDIR}/${SAMPLE}_*${NANOTAG}*/nevents.txt)
         SCALE1FB=$(echo "${XSEC} / ${NEFFEVENTS} * 1000" | bc -l)
-        # echo ${NANOSKIMDIR}/${SAMPLE}_*${NANOTAG}*/nevents.txt
-        # echo ${SAMPLE}_${YEAR}
-        # echo ${XSEC} ${NEFFEVENTS}
-        # echo ${SCALE1FB}
+
+        echo ""
+        echo "=========================================================================================="
+        echo "Preparing command lines to process ..."
+        echo "Sample                            : "${SAMPLE}
+        echo "Year                              : "${YEAR}
+        echo "Nano tag                          : "${NANOTAG}
+        echo "N events information file         :" ${NANOSKIMDIR}/${SAMPLE}_*${NANOTAG}*/nevents.txt
+        echo "N total events                    :" ${NTOTALEVENTS}
+        echo "N eff total events (i.e. pos-neg) :" ${NEFFEVENTS}
+        echo "Cross section (pb)                :" ${XSEC}
+        echo "Scale1fb                          :" ${SCALE1FB}
+        echo ""
 
         for FILE in $(ls ${NANOSKIMDIR}/${SAMPLE}_*${NANOTAG}*/*.root); do
             BASENAME=$(basename ${FILE})
