@@ -82,7 +82,7 @@ ls -lrth
 
 echo -e "\n--- begin running ---\n" #                           <----- section division
 
-# # Download the file (prefetching) NOTE: The preferred solution is the XCache via "xrootd.t2.ucsd.edu" redirector
+# # Download the file (prefetching) NOTE: The preferred solution is the XCache via "xcache-redirector.t2.ucsd.edu:2040" redirector
 # echo -e "\n--- begin downloading via xrdcp ---\n" #                           <----- section division
 # input=$(echo "${INPUTFILENAMES}" | sed 's/^.*\(\/store.*\).*$/\1/')
 # dest="${input/\/store\//}"
@@ -97,19 +97,54 @@ echo -e "\n--- begin running ---\n" #                           <----- section d
 # xrdcp root://xrootd.unl.edu/$input $dest
 # echo "Done xrdcp"
 # echo -e "\n--- end downloading via xrdcp ---\n" #                           <----- section division
-
 # Get local filepath name
 # localpath=$(echo ${INPUTFILENAMES} | sed 's/^.*\(\/store.*\).*$/\1/')
 # localpath="${localpath/\/store\//}"
 # echo "Input file name:" ${localpath}
 # INPUTFILE=${localpath}
 
-localpath=$(echo ${INPUTFILENAMES} | sed 's/^.*\(\/store.*\).*$/\1/')
-INPUTFILE=root://xrootd.t2.ucsd.edu:2040/${localpath}
+INPUTFILE=""
+for i in $(echo ${INPUTFILENAMES} | tr ',' ' '); do
+    localpath=$(echo ${i} | sed 's/^.*\(\/store.*\).*$/\1/')
+    if [ -z ${INPUTFILE} ]; then
+        INPUTFILE=root://xcache-redirector.t2.ucsd.edu:2040/${localpath}
+    else
+        INPUTFILE=${INPUTFILE},root://xcache-redirector.t2.ucsd.edu:2040/${localpath}
+    fi
+done
 echo ${INPUTFILE}
 
 # Figuring out nevents and neff_weights
-echo 'void count_events(TString filename) { TFile* f = TFile::Open(filename.Data()); TTree* Events = (TTree*) f->Get("Events"); std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "", "goff") << std::endl; std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))>0", "goff") << std::endl;  std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))<0", "goff") << std::endl; }' > count_events.C
+echo 'void count_events(TString filename)                                                                                                                       ' > count_events.C
+echo '{                                                                                                                                                         ' >> count_events.C
+echo '    std::vector<TString> out;                                                                                                                             ' >> count_events.C
+echo '    TObjArray *list = filename.Tokenize(",");                                                                                                             ' >> count_events.C
+echo '    for (unsigned i = 0; i < (unsigned)list->GetEntries(); ++i)                                                                                           ' >> count_events.C
+echo '    {                                                                                                                                                     ' >> count_events.C
+echo '        TString token = ((TObjString*)list->At(i))->GetString();                                                                                          ' >> count_events.C
+echo '        out.push_back(token);                                                                                                                             ' >> count_events.C
+echo '    }                                                                                                                                                     ' >> count_events.C
+echo '                                                                                                                                                          ' >> count_events.C
+echo '    unsigned int ntot = 0;                                                                                                                                ' >> count_events.C
+echo '    unsigned int npos = 0;                                                                                                                                ' >> count_events.C
+echo '    unsigned int nneg = 0;                                                                                                                                ' >> count_events.C
+echo '                                                                                                                                                          ' >> count_events.C
+echo '    for (unsigned int ifilename = 0; ifilename < out.size(); ++ifilename)                                                                                 ' >> count_events.C
+echo '    {                                                                                                                                                     ' >> count_events.C
+echo '         TString fname = out.at(ifilename);                                                                                                               ' >> count_events.C
+echo '         TFile* f = TFile::Open(fname);                                                                                                                   ' >> count_events.C
+echo '         TTree* Events = (TTree*) f->Get("Events");                                                                                                       ' >> count_events.C
+echo '         TTree* t = (TTree*) f->Get("Events");                                                                                                            ' >> count_events.C
+echo '         ntot += Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "", "goff");                                                                   ' >> count_events.C
+echo '         npos += Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))>0", "goff");                      ' >> count_events.C
+echo '         nneg += Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))<0", "goff");                      ' >> count_events.C
+echo '    }                                                                                                                                                     ' >> count_events.C
+echo '                                                                                                                                                          ' >> count_events.C
+echo '    std::cout << ntot << std::endl;                                                                                                                       ' >> count_events.C
+echo '    std::cout << npos-nneg << std::endl;                                                                                                                  ' >> count_events.C
+echo '                                                                                                                                                          ' >> count_events.C
+echo '}                                                                                                                                                         ' >> count_events.C
+# TChain* Events = new TChain("Events"); ch->Add(filename.Data()); std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "", "goff") << std::endl; std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))>0", "goff") << std::endl;  std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))<0", "goff") << std::endl; }' > count_events.C
 root -l -b -q count_events.C\(\"${INPUTFILE}\"\) | tee nevents.txt
 
 # Run the postprocessor
@@ -149,56 +184,56 @@ echo "Sending output file $OUTPUTNAME.root"
 # Get local filepath name
 OUTPUTDIRPATHNEW=$(echo ${OUTPUTDIR} | sed 's/^.*\(\/store.*\).*$/\1/')
 
-# Copying the output file
-COPY_SRC="file://`pwd`/${OUTPUTNAME}.root"
-COPY_DEST="https://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}.root"
-echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
-env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
-COPY_STATUS=$?
-if [[ $COPY_STATUS != 0 ]]; then
-    echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
-    env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
-    REMOVE_STATUS=$?
-    if [[ $REMOVE_STATUS != 0 ]]; then
-        echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
-    fi
-fi
+# # Copying the output file
+# COPY_SRC="file://`pwd`/${OUTPUTNAME}.root"
+# COPY_DEST="https://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}.root"
+# echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
+# env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
+# COPY_STATUS=$?
+# if [[ $COPY_STATUS != 0 ]]; then
+#     echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
+#     env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
+#     REMOVE_STATUS=$?
+#     if [[ $REMOVE_STATUS != 0 ]]; then
+#         echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
+#     fi
+# fi
 
-# Copying n events
-COPY_SRC="file://`pwd`/nevents.txt"
-COPY_DEST="https://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}_nevents.txt"
-echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
-env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
-COPY_STATUS=$?
-if [[ $COPY_STATUS != 0 ]]; then
-    echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
-    env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
-    REMOVE_STATUS=$?
-    if [[ $REMOVE_STATUS != 0 ]]; then
-        echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
-    fi
-fi
+# # Copying n events
+# COPY_SRC="file://`pwd`/nevents.txt"
+# COPY_DEST="https://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}_nevents.txt"
+# echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
+# env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
+# COPY_STATUS=$?
+# if [[ $COPY_STATUS != 0 ]]; then
+#     echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
+#     env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
+#     REMOVE_STATUS=$?
+#     if [[ $REMOVE_STATUS != 0 ]]; then
+#         echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
+#     fi
+# fi
 
-# Copying n events skimmed
-COPY_SRC="file://`pwd`/nevents_skimmed.txt"
-COPY_DEST="https://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}_nevents_skimmed.txt"
-echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
-env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
-COPY_STATUS=$?
-if [[ $COPY_STATUS != 0 ]]; then
-    echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
-    env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
-    REMOVE_STATUS=$?
-    if [[ $REMOVE_STATUS != 0 ]]; then
-        echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
-    fi
-fi
-echo -e "\n--- end copying output ---\n" #                    <----- section division
+# # Copying n events skimmed
+# COPY_SRC="file://`pwd`/nevents_skimmed.txt"
+# COPY_DEST="https://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}_nevents_skimmed.txt"
+# echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
+# env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
+# COPY_STATUS=$?
+# if [[ $COPY_STATUS != 0 ]]; then
+#     echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
+#     env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
+#     REMOVE_STATUS=$?
+#     if [[ $REMOVE_STATUS != 0 ]]; then
+#         echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
+#     fi
+# fi
+# echo -e "\n--- end copying output ---\n" #                    <----- section division
 
 
-echo -e "\n--- begin cleaning area ---\n" #                    <----- section division
+# echo -e "\n--- begin cleaning area ---\n" #                    <----- section division
 
-echo "rm -rf mc/"
-rm -rf mc/
+# echo "rm -rf mc/"
+# rm -rf mc/
 
-echo -e "\n--- end cleaning output ---\n" #                    <----- section division
+# echo -e "\n--- end cleaning output ---\n" #                    <----- section division
