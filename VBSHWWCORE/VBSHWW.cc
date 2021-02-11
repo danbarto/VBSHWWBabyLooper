@@ -56,6 +56,7 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     tx.createBranch<vector<int>>("good_jets_medium_btagged");
     tx.createBranch<vector<int>>("good_jets_tight_btagged");
     tx.createBranch<vector<float>>("good_jets_btag_score");
+    tx.createBranch<vector<float>>("good_jets_qg_disc");
     
     // Create higgs tagged jet branches
     tx.createBranch<vector<LV>>("higgs_jets_p4");
@@ -96,7 +97,7 @@ VBSHWW::VBSHWW(int argc, char** argv) :
             tx.setBranch<int>("run", nt.run());
             tx.setBranch<int>("lumi", nt.luminosityBlock());
             tx.setBranch<unsigned long long>("evt", nt.event());
-            // tx.setBranch<LV>("met_p4", RooUtil::Calc::getLV(nt.MET_pt(), 0, nt.MET_phi(), 0));
+            tx.setBranch<LV>("met_p4", RooUtil::Calc::getLV(nt.MET_pt(), 0, nt.MET_phi(), 0));
             return 1/*set your cut here*/;
         },
         [&]()
@@ -548,6 +549,7 @@ void VBSHWW::initSRCutflow()
                 tx.pushbackToBranch<int>("good_jets_medium_btagged", is_medium_btagged);
                 tx.pushbackToBranch<int>("good_jets_tight_btagged", is_tight_btagged);
                 tx.pushbackToBranch<float>("good_jets_btag_score", nt.Jet_btagDeepFlavB()[ijet]);
+                tx.pushbackToBranch<float>("good_jets_qg_disc", nt.Jet_qgl()[ijet]);
 
                 if (abs(jet_p4.eta()) < 3.0 and jet_p4.pt() > 30.)
                 {
@@ -568,7 +570,7 @@ void VBSHWW::initSRCutflow()
 
             tx.sortVecBranchesByPt(
                     /* name of the 4vector branch to use to pt sort by*/               "good_jets_p4",
-                    /* names of any associated vector<float> branches to sort along */ {"good_jets_btag_score"},
+                    /* names of any associated vector<float> branches to sort along */ {"good_jets_btag_score", "good_jets_qg_disc"},
                     /* names of any associated vector<int>   branches to sort along */ {"good_jets_loose_btagged", "good_jets_medium_btagged", "good_jets_tight_btagged"},
                     /* names of any associated vector<bool>  branches to sort along */ {}
                     );
