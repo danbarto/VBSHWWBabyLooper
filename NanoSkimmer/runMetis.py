@@ -51,7 +51,7 @@ if __name__ == "__main__":
             ]
 
     # submission tag
-    tag = "v6"
+    tag = "v9"
 
     for sample in samples:
         task = CondorTask(
@@ -59,10 +59,11 @@ if __name__ == "__main__":
                 files_per_output = 1,
                 output_name = "output.root",
                 tag = tag,
-                condor_submit_params = {"sites": "T2_US_UCSD", "use_xrootd":True},
-                cmssw_version = "CMSSW_10_5_0",
+                condor_submit_params = {"sites": "T2_US_UCSD", "use_xrootd":True, "classads": [ ["metis_extraargs", "fetch_nano"] ]},
+                cmssw_version = "CMSSW_10_0_0",
+                scram_arch = "slc7_amd64_gcc700",
                 input_executable = "condor_executable_metis.sh", # your condor executable here
-                tarfile = "/nfs-7/userdata/phchang/VBSHWWNanoSkimmer_v1.package.tar.gz", # your tarfile with assorted goodies here
+                tarfile = "/nfs-7/userdata/phchang/VBSHWWNanoSkimmer_v2.package.tar.gz", # your tarfile with assorted goodies here
                 special_dir = "VBSHWWNanoSkim/{}".format(tag), # output files into /hadoop/cms/store/<user>/<special_dir>
         )
         # Straightforward logic

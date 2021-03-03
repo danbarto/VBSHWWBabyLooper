@@ -7,8 +7,8 @@ INPUTFILENAMES=$3
 IFILE=$4
 # CMSSWVERSION=$5 # We will be overriding by hand with the following
 # SCRAMARCH=$6 # We will be overriding by hand with the following
-CMSSWVERSION=CMSSW_10_5_0
-SCRAMARCH=slc6_amd64_gcc700
+CMSSWVERSION=CMSSW_10_0_0
+SCRAMARCH=slc7_amd64_gcc700
 
 function getjobad {
     grep -i "^$1" "$_CONDOR_JOB_AD" | cut -d= -f2- | xargs echo
@@ -71,7 +71,7 @@ fi
 
 # Setup environment and build
 export SCRAM_ARCH=${SCRAMARCH} && scramv1 project CMSSW ${CMSSWVERSION}
-cd CMSSW_10_5_0/src/
+cd CMSSW_10_0_0/src/
 tar xvf ../../package.tar.gz
 cd PhysicsTools/NanoAODTools/
 eval `scramv1 runtime -sh`
@@ -82,70 +82,64 @@ ls -lrth
 
 echo -e "\n--- begin running ---\n" #                           <----- section division
 
-# # Download the file (prefetching) NOTE: The preferred solution is the XCache via "xcache-redirector.t2.ucsd.edu:2040" redirector
-# echo -e "\n--- begin downloading via xrdcp ---\n" #                           <----- section division
-# input=$(echo "${INPUTFILENAMES}" | sed 's/^.*\(\/store.*\).*$/\1/')
-# dest="${input/\/store\//}"
-# dest=$(dirname $dest)
-# mkdir -p $dest
-# echo $dest
-# # if [ $# -gt 1 ]; then
-# #     dest=$2
-# # fi
-# echo "Begin xrdcp"
-# echo "Running... xrdcp root://xrootd.unl.edu/$input $dest"
-# xrdcp root://xrootd.unl.edu/$input $dest
-# echo "Done xrdcp"
-# echo -e "\n--- end downloading via xrdcp ---\n" #                           <----- section division
-# Get local filepath name
-# localpath=$(echo ${INPUTFILENAMES} | sed 's/^.*\(\/store.*\).*$/\1/')
-# localpath="${localpath/\/store\//}"
-# echo "Input file name:" ${localpath}
-# INPUTFILE=${localpath}
 
-INPUTFILE=""
-for i in $(echo ${INPUTFILENAMES} | tr ',' ' '); do
-    localpath=$(echo ${i} | sed 's/^.*\(\/store.*\).*$/\1/')
-    if [ -z ${INPUTFILE} ]; then
-        INPUTFILE=root://xcache-redirector.t2.ucsd.edu:2040/${localpath}
-    else
-        INPUTFILE=${INPUTFILE},root://xcache-redirector.t2.ucsd.edu:2040/${localpath}
-    fi
-done
+#------------------------------------------------------------------------------------------------------------------------------>
+localpath=$(echo ${INPUTFILENAMES} | sed 's/^.*\(\/store.*\).*$/\1/')
+INPUTFILE=root://xcache-redirector.t2.ucsd.edu:2040/${localpath}
 echo ${INPUTFILE}
+#------------------------------------------------------------------------------------------------------------------------------>
+
+echo 'void check_xrd(TString filename) { TFile* f = TFile::Open(filename.Data()); TTree* t = (TTree*) f->Get("Events"); ((TTreePlayer*)(t->GetPlayer()))->SetScanRedirect(true); ((TTreePlayer*)(t->GetPlayer()))->SetScanFileName("output.dat"); t->Scan("*", "", "", 10); }' > check_xrd.C
+echo "Checking xcache health..." | tee >(cat >&2)
+root -l -b -q check_xrd.C\(\"${INPUTFILE}\"\) > >(tee check_xrd.txt) 2> >(tee check_xrd_stderr.txt >&2)
+rm -f output.dat # Delete the file as it is not needed
+
+# If the file had error
+EXTRAARGS="$(getjobad metis_extraargs)" # If force fetch
+echo "EXTRAARGS : ${EXTRAARGS}"
+if grep -q "badread" check_xrd_stderr.txt || [[ "${EXTRAARGS}" == *"fetch_nano"* ]]; then
+    #<------------------------------------------------------------------------------------------------------------------------------
+    # Download the file (prefetching) NOTE: The preferred solution is the XCache via "xcache-redirector.t2.ucsd.edu:2040" redirector
+    echo -e "\n--- begin downloading via xrdcp ---\n" #                           <----- section division
+    input=$(echo "${INPUTFILENAMES}" | sed 's/^.*\(\/store.*\).*$/\1/')
+    dest="${input/\/store\//}"
+    dest=$(dirname $dest)
+    mkdir -p $dest
+    echo $dest
+    # if [ $# -gt 1 ]; then
+    #     dest=$2
+    # fi
+    echo "Begin xrdcp"
+    echo "Running... xrdcp root://xrootd.unl.edu/$input $dest"
+    xrdcp root://xrootd.unl.edu/$input $dest
+    echo "Done xrdcp"
+    echo -e "\n--- end downloading via xrdcp ---\n" #                           <----- section division
+    Get local filepath name
+    localpath=$(echo ${INPUTFILENAMES} | sed 's/^.*\(\/store.*\).*$/\1/')
+    localpath="${localpath/\/store\//}"
+    echo "Input file name:" ${localpath}
+    INPUTFILE=${localpath}
+    #<------------------------------------------------------------------------------------------------------------------------------
+fi
 
 # Figuring out nevents and neff_weights
-echo 'void count_events(TString filename)                                                                                                                       ' > count_events.C
-echo '{                                                                                                                                                         ' >> count_events.C
-echo '    std::vector<TString> out;                                                                                                                             ' >> count_events.C
-echo '    TObjArray *list = filename.Tokenize(",");                                                                                                             ' >> count_events.C
-echo '    for (unsigned i = 0; i < (unsigned)list->GetEntries(); ++i)                                                                                           ' >> count_events.C
-echo '    {                                                                                                                                                     ' >> count_events.C
-echo '        TString token = ((TObjString*)list->At(i))->GetString();                                                                                          ' >> count_events.C
-echo '        out.push_back(token);                                                                                                                             ' >> count_events.C
-echo '    }                                                                                                                                                     ' >> count_events.C
-echo '                                                                                                                                                          ' >> count_events.C
-echo '    unsigned int ntot = 0;                                                                                                                                ' >> count_events.C
-echo '    unsigned int npos = 0;                                                                                                                                ' >> count_events.C
-echo '    unsigned int nneg = 0;                                                                                                                                ' >> count_events.C
-echo '                                                                                                                                                          ' >> count_events.C
-echo '    for (unsigned int ifilename = 0; ifilename < out.size(); ++ifilename)                                                                                 ' >> count_events.C
-echo '    {                                                                                                                                                     ' >> count_events.C
-echo '         TString fname = out.at(ifilename);                                                                                                               ' >> count_events.C
-echo '         TFile* f = TFile::Open(fname);                                                                                                                   ' >> count_events.C
-echo '         TTree* Events = (TTree*) f->Get("Events");                                                                                                       ' >> count_events.C
-echo '         TTree* t = (TTree*) f->Get("Events");                                                                                                            ' >> count_events.C
-echo '         ntot += Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "", "goff");                                                                   ' >> count_events.C
-echo '         npos += Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))>0", "goff");                      ' >> count_events.C
-echo '         nneg += Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))<0", "goff");                      ' >> count_events.C
-echo '    }                                                                                                                                                     ' >> count_events.C
-echo '                                                                                                                                                          ' >> count_events.C
-echo '    std::cout << ntot << std::endl;                                                                                                                       ' >> count_events.C
-echo '    std::cout << npos-nneg << std::endl;                                                                                                                  ' >> count_events.C
-echo '                                                                                                                                                          ' >> count_events.C
-echo '}                                                                                                                                                         ' >> count_events.C
-# TChain* Events = new TChain("Events"); ch->Add(filename.Data()); std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "", "goff") << std::endl; std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))>0", "goff") << std::endl;  std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))<0", "goff") << std::endl; }' > count_events.C
-root -l -b -q count_events.C\(\"${INPUTFILE}\"\) | tee nevents.txt
+if [[ "${INPUTFILE}" == *"/NANOAOD/"* ]]; then # Relies on "/NANOAOD/" being present for data files. Perhaps not the brightest idea, however it seems to work for now.
+    echo 'void count_events(TString filename) { TFile* f = TFile::Open(filename.Data()); TTree* Events = (TTree*) f->Get("Events"); std::cout << Events->GetEntries() << std::endl; std::cout << Events->GetEntries() << std::endl;  std::cout << Events->GetEntries() << std::endl; }' > count_events.C
+    echo "Running count_events on all events" | tee >(cat >&2)
+    root -l -b -q count_events.C\(\"${INPUTFILE}\"\) > >(tee nevents.txt) 2> >(tee nevents_stderr.txt >&2)
+else
+    echo 'void count_events(TString filename) { TFile* f = TFile::Open(filename.Data()); TTree* Events = (TTree*) f->Get("Events"); std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "", "goff") << std::endl; std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))>0", "goff") << std::endl;  std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))<0", "goff") << std::endl; }' > count_events.C
+    echo "Running count_events on all events" | tee >(cat >&2)
+    root -l -b -q count_events.C\(\"${INPUTFILE}\"\) > >(tee nevents.txt) 2> >(tee nevents_stderr.txt >&2)
+fi
+
+RUN_STATUS=$?
+
+if [[ $RUN_STATUS != 0 ]]; then
+    echo "Error: count_nevents.C on all events crashed with exit code $?" | tee >(cat >&2)
+    echo "Exiting..."
+    exit 1
+fi
 
 # Run the postprocessor
 CMD="python scripts/nano_postproc.py \
@@ -153,13 +147,15 @@ CMD="python scripts/nano_postproc.py \
     -b python/postprocessing/examples/keep_and_drop.txt \
     -I PhysicsTools.NanoAODTools.postprocessing.examples.vbsHwwSkimModule vbsHwwSkimModuleConstr"
 echo $CMD
-$CMD
+echo "Running nano_postproc.py" | tee >(cat >&2)
+$CMD > >(tee nano_postproc.txt) 2> >(tee nano_postproc_stderr.txt >&2)
 
 RUN_STATUS=$?
 
 if [[ $RUN_STATUS != 0 ]]; then
     echo "Removing output file because scripts/nano_postproc.py crashed with exit code $?"
     rm ${NANOPOSTPROCOUTPUTFILENAME}_Skim.root
+    echo "Exiting..."
     exit 1
 fi
 
@@ -171,8 +167,28 @@ echo "mv ${NANOPOSTPROCOUTPUTFILENAME}_Skim.root output.root"
 mv ${NANOPOSTPROCOUTPUTFILENAME}_Skim.root output.root
 
 # Figuring out nevents and neff_weights
-echo 'void count_events(TString filename) { TFile* f = TFile::Open(filename.Data()); TTree* Events = (TTree*) f->Get("Events"); std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "", "goff") << std::endl; std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))>0", "goff") << std::endl;  std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))<0", "goff") << std::endl; }' > count_events.C
-root -l -b -q count_events.C\(\"output.root\"\) | tee nevents_skimmed.txt
+if [[ "${INPUTFILE}" == *"/NANOAOD/"* ]]; then # Relies on "/NANOAOD/" being present for data files. Perhaps not the brightest idea, however it seems to work for now.
+    echo 'void count_events(TString filename) { TFile* f = TFile::Open(filename.Data()); TTree* Events = (TTree*) f->Get("Events"); std::cout << Events->GetEntries() << std::endl; std::cout << Events->GetEntries() << std::endl;  std::cout << Events->GetEntries() << std::endl; }' > count_events.C
+    echo "Running count_events on skimmed events" | tee >(cat >&2)
+    root -l -b -q count_events.C\(\"output.root\"\) > >(tee nevents_skimmed.txt) 2> >(tee nevents_skimmed_stderr.txt >&2)
+else
+    echo 'void count_events(TString filename) { TFile* f = TFile::Open(filename.Data()); TTree* Events = (TTree*) f->Get("Events"); std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "", "goff") << std::endl; std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))>0", "goff") << std::endl;  std::cout << Events->Draw("(Generator_weight>0)-(Generator_weight<0)", "((Generator_weight>0)-(Generator_weight<0))<0", "goff") << std::endl; }' > count_events.C
+    echo "Running count_events on skimmed events" | tee >(cat >&2)
+    root -l -b -q count_events.C\(\"output.root\"\) > >(tee nevents_skimmed.txt) 2> >(tee nevents_skimmed_stderr.txt >&2)
+fi
+
+RUN_STATUS=$?
+
+if [[ $RUN_STATUS != 0 ]]; then
+    echo "Error: count_nevents.C on skimmed events crashed with exit code $?" | tee >(cat >&2)
+    echo "Exiting..."
+    exit 1
+fi
+
+# if the file was downloaded clean it up
+if grep -q "badread" check_xrd_stderr.txt; then
+    rm -rf ${INPUTFILE}
+fi
 
 echo -e "\n--- end running ---\n" #                             <----- section division
 
@@ -184,56 +200,56 @@ echo "Sending output file $OUTPUTNAME.root"
 # Get local filepath name
 OUTPUTDIRPATHNEW=$(echo ${OUTPUTDIR} | sed 's/^.*\(\/store.*\).*$/\1/')
 
-# # Copying the output file
-# COPY_SRC="file://`pwd`/${OUTPUTNAME}.root"
-# COPY_DEST="https://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}.root"
-# echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
-# env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
-# COPY_STATUS=$?
-# if [[ $COPY_STATUS != 0 ]]; then
-#     echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
-#     env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
-#     REMOVE_STATUS=$?
-#     if [[ $REMOVE_STATUS != 0 ]]; then
-#         echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
-#     fi
-# fi
+# Copying the output file
+COPY_SRC="file://`pwd`/${OUTPUTNAME}.root"
+COPY_DEST="davs://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}.root"
+echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
+env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
+COPY_STATUS=$?
+if [[ $COPY_STATUS != 0 ]]; then
+    echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
+    env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
+    REMOVE_STATUS=$?
+    if [[ $REMOVE_STATUS != 0 ]]; then
+        echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
+    fi
+fi
 
-# # Copying n events
-# COPY_SRC="file://`pwd`/nevents.txt"
-# COPY_DEST="https://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}_nevents.txt"
-# echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
-# env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
-# COPY_STATUS=$?
-# if [[ $COPY_STATUS != 0 ]]; then
-#     echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
-#     env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
-#     REMOVE_STATUS=$?
-#     if [[ $REMOVE_STATUS != 0 ]]; then
-#         echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
-#     fi
-# fi
+# Copying n events
+COPY_SRC="file://`pwd`/nevents.txt"
+COPY_DEST="davs://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}_nevents.txt"
+echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
+env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
+COPY_STATUS=$?
+if [[ $COPY_STATUS != 0 ]]; then
+    echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
+    env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
+    REMOVE_STATUS=$?
+    if [[ $REMOVE_STATUS != 0 ]]; then
+        echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
+    fi
+fi
 
-# # Copying n events skimmed
-# COPY_SRC="file://`pwd`/nevents_skimmed.txt"
-# COPY_DEST="https://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}_nevents_skimmed.txt"
-# echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
-# env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
-# COPY_STATUS=$?
-# if [[ $COPY_STATUS != 0 ]]; then
-#     echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
-#     env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
-#     REMOVE_STATUS=$?
-#     if [[ $REMOVE_STATUS != 0 ]]; then
-#         echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
-#     fi
-# fi
-# echo -e "\n--- end copying output ---\n" #                    <----- section division
+# Copying n events skimmed
+COPY_SRC="file://`pwd`/nevents_skimmed.txt"
+COPY_DEST="davs://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}_nevents_skimmed.txt"
+echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
+env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
+COPY_STATUS=$?
+if [[ $COPY_STATUS != 0 ]]; then
+    echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
+    env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
+    REMOVE_STATUS=$?
+    if [[ $REMOVE_STATUS != 0 ]]; then
+        echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
+    fi
+fi
+echo -e "\n--- end copying output ---\n" #                    <----- section division
 
 
-# echo -e "\n--- begin cleaning area ---\n" #                    <----- section division
+echo -e "\n--- begin cleaning area ---\n" #                    <----- section division
 
-# echo "rm -rf mc/"
-# rm -rf mc/
+echo "rm -rf mc/"
+rm -rf mc/
 
-# echo -e "\n--- end cleaning output ---\n" #                    <----- section division
+echo -e "\n--- end cleaning output ---\n" #                    <----- section division
