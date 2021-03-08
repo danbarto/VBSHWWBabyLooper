@@ -8,8 +8,8 @@ if __name__ == "__main__":
     # Specify a dataset name and a short name for the output root file on nfs
     samples = [
 
-            DBSSample(dataset="/TTJets_DiLept_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17NanoAODv6-PU2017_12Apr2018_Nano25Oct2019_102X_mc2017_realistic_v7-v1/NANOAODSIM"),
-            DBSSample(dataset="/TTJets_SingleLeptFromT_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17NanoAODv6-PU2017_12Apr2018_Nano25Oct2019_ext_102X_mc2017_realistic_v7-v1/NANOAODSIM"),
+            DBSSample(dataset="/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16NanoAODv7-PUMoriond17_Nano02Apr2020_102X_mcRun2_asymptotic_v8_ext2-v1/NANOAODSIM"),
+            """DBSSample(dataset="/TTJets_SingleLeptFromT_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17NanoAODv6-PU2017_12Apr2018_Nano25Oct2019_ext_102X_mc2017_realistic_v7-v1/NANOAODSIM"),
             DBSSample(dataset="/TTJets_SingleLeptFromTbar_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17NanoAODv6-PU2017_12Apr2018_Nano25Oct2019_102X_mc2017_realistic_v7-v1/NANOAODSIM"),
             DBSSample(dataset="/TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIIFall17NanoAODv7-PU2017_12Apr2018_Nano02Apr2020_102X_mc2017_realistic_v8-v1/NANOAODSIM"),
             DBSSample(dataset="/TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/RunIIFall17NanoAODv7-PU2017_12Apr2018_Nano02Apr2020_EXT_102X_mc2017_realistic_v8-v1/NANOAODSIM"),
@@ -46,12 +46,12 @@ if __name__ == "__main__":
             DirectorySample(
                 location = "/hadoop/cms/store/user/phchang/nanoaod/VBSWmpWmpHToLNuLNu_dKLambda_20_TuneCP5_13TeV-madgraph-pythia8_PRIVATE_RunIIFall17NanoAODv7-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1_NANOAODSIM",
                 dataset = "/VBSWmpWmpHToLNuLNu_dKLambda_20_TuneCP5_13TeV-madgraph-pythia8/PRIVATE_RunIIFall17NanoAODv7-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM",
-                ),
+                ),"""
 
             ]
 
     # submission tag
-    tag = "v6"
+    tag = "ksalyer_fcnc_test1"
 
     for sample in samples:
         task = CondorTask(
@@ -62,7 +62,9 @@ if __name__ == "__main__":
                 condor_submit_params = {"sites": "T2_US_UCSD", "use_xrootd":True},
                 cmssw_version = "CMSSW_10_5_0",
                 input_executable = "condor_executable_metis.sh", # your condor executable here
-                tarfile = "/nfs-7/userdata/phchang/VBSHWWNanoSkimmer_v1.package.tar.gz", # your tarfile with assorted goodies here
+                #tarfile = "/hadoop/cms/store/user/ksalyer/FCNC_NanoSkimmer_v1.package.tar.gz", # your tarfile with assorted goodies here
+                tarfile = "/nfs-7/userdata/phchang/VBSHWWNanoSkimmer_v1.package.tar.gz",
+                #special_dir = "FCNC_NanoSkim/{}".format(tag), # output files into /hadoop/cms/store/<user>/<special_dir>
                 special_dir = "VBSHWWNanoSkim/{}".format(tag), # output files into /hadoop/cms/store/<user>/<special_dir>
         )
         # Straightforward logic
