@@ -7,7 +7,7 @@ INPUTFILENAMES=$3
 IFILE=$4
 # CMSSWVERSION=$5 # We will be overriding by hand with the following
 # SCRAMARCH=$6 # We will be overriding by hand with the following
-CMSSWVERSION=CMSSW_10_5_0
+CMSSWVERSION=CMSSW_10_0_0
 SCRAMARCH=slc6_amd64_gcc700
 
 function getjobad {
@@ -71,7 +71,7 @@ fi
 
 # Setup environment and build
 export SCRAM_ARCH=${SCRAMARCH} && scramv1 project CMSSW ${CMSSWVERSION}
-cd CMSSW_10_5_0/src/
+cd CMSSW_10_0_0/src/
 tar xvf ../../package.tar.gz
 cd PhysicsTools/NanoAODTools/
 eval `scramv1 runtime -sh`
