@@ -371,7 +371,7 @@ void VBSHWW::initSRCutflow()
             // Select muons
             for (unsigned int imu = 0; imu < nt.Muon_pt().size(); ++imu)
             {
-                if (SS::muonID(imu, SS::IDfakable, nt.year()))
+                if (SS::muonID(imu, SS::IDveto, nt.year()))
                 {
                     tx.pushbackToBranch<LV>("good_leptons_p4", nt.Muon_p4()[imu]);
                     tx.pushbackToBranch<int>("good_leptons_pdgid", (-nt.Muon_charge()[imu]) * 13);
@@ -388,11 +388,12 @@ void VBSHWW::initSRCutflow()
             // Select electrons
             for (unsigned int iel = 0; iel < nt.Electron_pt().size(); ++iel)
             {
-                if (SS::electronID(iel, SS::IDfakable, nt.year()))
+                if (SS::electronID(iel, SS::IDveto, nt.year()))
                 {
                     tx.pushbackToBranch<LV>("good_leptons_p4", nt.Electron_p4()[iel]);
                     tx.pushbackToBranch<int>("good_leptons_pdgid", (-nt.Electron_charge()[iel]) * 11);
-                    tx.pushbackToBranch<int>("good_leptons_tight", SS::electronID(iel, SS::IDtight, nt.year()) * (nt.Electron_pfRelIso03_all()[iel] < 0.05));
+                    // tx.pushbackToBranch<int>("good_leptons_tight", SS::electronID(iel, SS::IDtight, nt.year()) * (nt.Electron_pfRelIso03_all()[iel] < 0.05));
+                    tx.pushbackToBranch<int>("good_leptons_tight", SS::electronID(iel, SS::IDtight, nt.year()));
                     tx.pushbackToBranch<int>("good_leptons_jetIdx", nt.Electron_jetIdx()[iel]);
                     tx.pushbackToBranch<float>("good_leptons_pfRelIso03_all", nt.Electron_pfRelIso03_all()[iel]);
                     tx.pushbackToBranch<float>("good_leptons_pfRelIso03_chg", nt.Electron_pfRelIso03_chg()[iel]);
@@ -580,16 +581,22 @@ void VBSHWW::initSRCutflow()
         UNITY);
 
     //*****************************
-    // - Require Two Medium Btag
+    // - Require Two Loose Btag
     //*****************************
     // Description: Select two medium b-tag /* TODO TODO TODO TODO btag scale factor */
-    cutflow.addCutToLastActiveCut("GeqTwoMedBtag", [&]() { return tx.getBranch<int>("nbmedium") >= 2; }, UNITY);
+    cutflow.addCutToLastActiveCut("GeqTwoLooseBtag", [&]() { return tx.getBranch<int>("nbloose") >= 2; }, UNITY);
 
-    //*****************************
-    // - Require Two Tight Btag
-    //*****************************
-    // Description: Select two tight b-tag /* TODO TODO TODO TODO btag scale factor */
-    cutflow.addCutToLastActiveCut("GeqTwoTightBtag", [&]() { return tx.getBranch<int>("nbtight") >= 2; }, UNITY);
+    ////*****************************
+    //// - Require Two Medium Btag
+    ////*****************************
+    //// Description: Select two medium b-tag /* TODO TODO TODO TODO btag scale factor */
+    //cutflow.addCutToLastActiveCut("GeqTwoMedBtag", [&]() { return tx.getBranch<int>("nbmedium") >= 2; }, UNITY);
+
+    ////*****************************
+    //// - Require Two Tight Btag
+    ////*****************************
+    //// Description: Select two tight b-tag /* TODO TODO TODO TODO btag scale factor */
+    //cutflow.addCutToLastActiveCut("GeqTwoTightBtag", [&]() { return tx.getBranch<int>("nbtight") >= 2; }, UNITY);
 
     //*****************************
     // - Tag Hbb jets
