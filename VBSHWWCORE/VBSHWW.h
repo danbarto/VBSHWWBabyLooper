@@ -8,6 +8,7 @@
 #include "Base.h"
 #include "ElectronSelections.h"
 #include "MuonSelections.h"
+#include "TauSelections.h"
 
 class VBSHWW
 {
