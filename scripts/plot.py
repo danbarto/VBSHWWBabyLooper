@@ -128,13 +128,14 @@ p.dump_plot(fnames=[
         ],
     dirname="plots/cut_opt_scan/{}".format(study_name),
     filter_pattern="{}__".format(cutname_to_plot),
+    # filter_pattern="SRMM__ST".format(cutname_to_plot),
     dogrep=True,
     usercolors=colors,
     extraoptions={
         "print_yield": True,
         # "nbins": 60,
         "signal_scale": 1,
-        # "yaxis_range": [0., 5.],
+        # "yaxis_range": [0., 2.],
         },
     _plotter=p.plot_cut_scan,
     )

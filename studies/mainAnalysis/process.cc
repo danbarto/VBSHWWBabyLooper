@@ -69,6 +69,7 @@ int main(int argc, char** argv)
 
     vbs.histograms.addHistogram("MJJ", 180, 0, 4500, [&]() { return vbs.tx.getBranch<float>("mjj"); } );
     vbs.histograms.addHistogram("DEtaJJ", 180, 0, 10, [&]() { return vbs.tx.getBranch<float>("detajj"); } );
+    vbs.histograms.addHistogram("DPhiJJ", 180, 0, 3.1416, [&]() { return vbs.tx.getBranch<float>("dphijj"); } );
     vbs.histograms.addHistogram("HiggsPt", 180, 0, 1000, [&]() { return vbs.tx.getBranch<float>("ptbb"); } );
     vbs.histograms.addHistogram("LeptonPt0", 180, 0, 600, [&]() { return vbs.tx.getBranch<float>("leppt0"); } );
     vbs.histograms.addHistogram("LeptonPt1", 180, 0, 600, [&]() { return vbs.tx.getBranch<float>("leppt1"); } );
@@ -89,6 +90,10 @@ int main(int argc, char** argv)
                                     }
                                     return ht;
                                 } );
+    vbs.histograms.addHistogram("JetPt0", 180, 0, 250, [&]() { return vbs.tx.getBranchLazy<vector<LV>>("vbs_jets_p4").at(0).pt(); } );
+    vbs.histograms.addHistogram("JetPt1", 180, 0, 250, [&]() { return vbs.tx.getBranchLazy<vector<LV>>("vbs_jets_p4").at(1).pt(); } );
+    vbs.histograms.addHistogram("JetEta0", 180, -5, 5, [&]() { return vbs.tx.getBranchLazy<vector<LV>>("vbs_jets_p4").at(0).eta(); } );
+    vbs.histograms.addHistogram("JetEta1", 180, -5, 5, [&]() { return vbs.tx.getBranchLazy<vector<LV>>("vbs_jets_p4").at(1).eta(); } );
 
     vbs.histograms.addHistogram("NBLoose", 5, 0, 5, [&]() { return vbs.tx.getBranchLazy<int>("nbloose"); } );
     vbs.histograms.addHistogram("NBMedium", 5, 0, 5, [&]() { return vbs.tx.getBranchLazy<int>("nbmedium"); } );
