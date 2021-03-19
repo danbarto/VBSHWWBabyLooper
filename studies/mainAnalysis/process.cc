@@ -21,46 +21,19 @@ int main(int argc, char** argv)
     vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SRET", [&]() { return vbs.tx.getBranch<int>("channel") == 3; }, UNITY);
     vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SRMT", [&]() { return vbs.tx.getBranch<int>("channel") == 4; }, UNITY);
 
+    vbs.cutflow.getCut("SREM");
 
-    // vbs.cutflow.addCutToLastActiveCut("SRLepPt0", [&]()
-    //                                   {
-    //                                       if (vbs.tx.getBranchLazy<vector<LV>>("good_leptons_p4").size() < 2)
-    //                                           return false;
-    //                                       return vbs.tx.getBranch<vector<LV>>("good_leptons_p4").at(0).pt() > 160.;
-    //                                   }, UNITY);
-    // vbs.cutflow.addCutToLastActiveCut("SRMbb150", [&]()
-    //                                   {
-    //                                       if (vbs.tx.getBranchLazy<vector<LV>>("higgs_jets_p4").size() < 2)
-    //                                           return false;
-    //                                       LV higgs_0 = vbs.tx.getBranch<vector<LV>>("higgs_jets_p4").at(0);
-    //                                       LV higgs_1 = vbs.tx.getBranch<vector<LV>>("higgs_jets_p4").at(1);
-    //                                       return (higgs_0+higgs_1).mass() < 150.;
-    //                                   }, UNITY);
-    // vbs.cutflow.addCutToLastActiveCut("SRMll200", [&]()
-    //                                   {
-    //                                       if (vbs.tx.getBranchLazy<vector<LV>>("good_leptons_p4").size() < 2)
-    //                                           return false;
-    //                                       LV lepton_0 = vbs.tx.getBranch<vector<LV>>("good_leptons_p4").at(0);
-    //                                       LV lepton_1 = vbs.tx.getBranch<vector<LV>>("good_leptons_p4").at(1);
-    //                                       return (lepton_0+lepton_1).mass() > 200.;
-    //                                   }, UNITY);
-    // vbs.cutflow.addCutToLastActiveCut("SRHiggsPt200", [&]()
-    //                                   {
-    //                                       if (vbs.tx.getBranchLazy<vector<LV>>("higgs_jets_p4").size() < 2)
-    //                                           return false;
-    //                                       LV higgs_0 = vbs.tx.getBranch<vector<LV>>("higgs_jets_p4").at(0);
-    //                                       LV higgs_1 = vbs.tx.getBranch<vector<LV>>("higgs_jets_p4").at(1);
-    //                                       return (higgs_0+higgs_1).pt() > 200.;
-    //                                   }, UNITY);
-    // vbs.cutflow.addCutToLastActiveCut("SRDEtajj4p8", [&]()
-    //                                   {
-    //                                       if (vbs.tx.getBranchLazy<vector<LV>>("vbs_jets_p4").size() < 2)
-    //                                           return false;
-    //                                       LV vbs_jet_0 = vbs.tx.getBranch<vector<LV>>("vbs_jets_p4").at(0);
-    //                                       LV vbs_jet_1 = vbs.tx.getBranch<vector<LV>>("vbs_jets_p4").at(1);
-    //                                       float deta_jj = fabs(vbs_jet_0.eta() - vbs_jet_1.eta());
-    //                                       return deta_jj > 4.8;
-    //                                   }, UNITY);
+    std::vector<TString> channels = {"EE", "EM", "MM", "ET", "MT"};
+    for (auto& channel : channels)
+    {
+        vbs.cutflow.getCut(TString::Format("SR%s", channel.Data()));
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sNB", channel.Data()), [&]() { return vbs.tx.getBranchLazy<int>("nbloose") >= 2.; }, UNITY );
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sLepPt0", channel.Data()), [&]() { return vbs.tx.getBranchLazy<float>("leppt0") > 160.; }, UNITY );
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sMbb", channel.Data()), [&]() { return vbs.tx.getBranchLazy<float>("mbb") < 160.; }, UNITY );
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sMll", channel.Data()), [&]() { return vbs.tx.getBranchLazy<float>("mll") > 200.; }, UNITY );
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sHPt", channel.Data()), [&]() { return vbs.tx.getBranchLazy<float>("ptbb") > 200.; }, UNITY );
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sDEtajj", channel.Data()), [&]() { return vbs.tx.getBranchLazy<float>("detajj") > 4.8; }, UNITY );
+    }
 
     vbs.cutflow.printCuts();
 

@@ -571,7 +571,7 @@ void VBSHWW::initSRCutflow()
             const float& pt0 = tx.getBranch<vector<LV>>("good_leptons_p4")[0].pt();
             const float& pt1 = tx.getBranch<vector<LV>>("good_leptons_p4").size() == 2 ? tx.getBranch<vector<LV>>("good_leptons_p4")[1].pt() : tx.getBranch<vector<LV>>("good_taus_p4")[0].pt();
 
-            return pt0 > 25. and pt1 > 25.;
+            return pt0 > 35. and pt1 > 35.;
 
         },
         UNITY);

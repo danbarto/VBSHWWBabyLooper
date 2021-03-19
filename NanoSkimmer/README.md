@@ -1,3 +1,16 @@
+## Setting up local run of the NanoSkimmer
+
+Following will set up a version of NanoSkimmer for VBSHWW analysis
+
+    source /cvmfs/cms.cern.ch/cmsset_default.sh
+    export SCRAM_ARCH=slc7_amd64_gcc700
+    cmsrel CMSSW_10_2_13
+    cd CMSSW_10_2_13/src/
+    cmsenv
+    tar xvf /nfs-7/userdata/phchang/VBSHWWNanoSkimmer_v2.package.tar.gz
+
+
+
 ## NanoSkimmer
 
 First git clone ProjectMetis
