@@ -114,7 +114,7 @@ if grep -q "badread" check_xrd_stderr.txt || [[ "${EXTRAARGS}" == *"fetch_nano"*
     xrdcp root://xrootd.unl.edu/$input $dest
     echo "Done xrdcp"
     echo -e "\n--- end downloading via xrdcp ---\n" #                           <----- section division
-    Get local filepath name
+    # Get local filepath name
     localpath=$(echo ${INPUTFILENAMES} | sed 's/^.*\(\/store.*\).*$/\1/')
     localpath="${localpath/\/store\//}"
     echo "Input file name:" ${localpath}

@@ -15,24 +15,25 @@ int main(int argc, char** argv)
 
     vbs.initSRCutflow();
 
-    vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SREE", [&]() { return vbs.tx.getBranch<int>("channel") == 0; }, UNITY);
-    vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SREM", [&]() { return vbs.tx.getBranch<int>("channel") == 1; }, UNITY);
-    vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SRMM", [&]() { return vbs.tx.getBranch<int>("channel") == 2; }, UNITY);
-    vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SRET", [&]() { return vbs.tx.getBranch<int>("channel") == 3; }, UNITY);
-    vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SRMT", [&]() { return vbs.tx.getBranch<int>("channel") == 4; }, UNITY);
+    vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SREEChannel", [&]() { return vbs.tx.getBranch<int>("channel") == 0; }, UNITY);
+    vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SREMChannel", [&]() { return vbs.tx.getBranch<int>("channel") == 1; }, UNITY);
+    vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SRMMChannel", [&]() { return vbs.tx.getBranch<int>("channel") == 2; }, UNITY);
+    vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SRETChannel", [&]() { return vbs.tx.getBranch<int>("channel") == 3; }, UNITY);
+    vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SRMTChannel", [&]() { return vbs.tx.getBranch<int>("channel") == 4; }, UNITY);
+    vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SRLLChannel", [&]() { return vbs.tx.getBranch<int>("channel") >= 0 and vbs.tx.getBranch<int>("channel") <= 2; }, UNITY);
+    vbs.cutflow.getCut("KinematicVariables"); vbs.cutflow.addCutToLastActiveCut("SRLTChannel", [&]() { return vbs.tx.getBranch<int>("channel") >= 3 and vbs.tx.getBranch<int>("channel") <= 4; }, UNITY);
 
-    vbs.cutflow.getCut("SREM");
-
-    std::vector<TString> channels = {"EE", "EM", "MM", "ET", "MT"};
+    std::vector<TString> channels = {"EE", "EM", "MM", "ET", "MT", "LL", "LT"};
     for (auto& channel : channels)
     {
-        vbs.cutflow.getCut(TString::Format("SR%s", channel.Data()));
+        vbs.cutflow.getCut(TString::Format("SR%sChannel", channel.Data()));
         vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sNB", channel.Data()), [&]() { return vbs.tx.getBranchLazy<int>("nbloose") >= 2.; }, UNITY );
         vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sLepPt0", channel.Data()), [&]() { return vbs.tx.getBranchLazy<float>("leppt0") > 160.; }, UNITY );
         vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sMbb", channel.Data()), [&]() { return vbs.tx.getBranchLazy<float>("mbb") < 160.; }, UNITY );
         vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sMll", channel.Data()), [&]() { return vbs.tx.getBranchLazy<float>("mll") > 200.; }, UNITY );
         vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sHPt", channel.Data()), [&]() { return vbs.tx.getBranchLazy<float>("ptbb") > 200.; }, UNITY );
         vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sDEtajj", channel.Data()), [&]() { return vbs.tx.getBranchLazy<float>("detajj") > 4.8; }, UNITY );
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%s", channel.Data()), UNITY, UNITY); // Dummy cut to have a clean name for final SR
     }
 
     vbs.cutflow.printCuts();

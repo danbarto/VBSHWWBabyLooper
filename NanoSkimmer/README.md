@@ -8,7 +8,9 @@ Following will set up a version of NanoSkimmer for VBSHWW analysis
     cd CMSSW_10_2_13/src/
     cmsenv
     tar xvf /nfs-7/userdata/phchang/VBSHWWNanoSkimmer_v2.package.tar.gz
-
+    cd PhysicsTools/NanoAODTools/; cd NanoTools/NanoCORE/; make clean; make -j; cd ../# If recompilation is needed (i.e. if the precompiled version has different environment setting)
+    scram b clean; scram b
+    sh test_command.sh
 
 
 ## NanoSkimmer
