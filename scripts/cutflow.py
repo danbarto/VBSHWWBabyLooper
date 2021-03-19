@@ -34,7 +34,9 @@ p.dump_plot(fnames=[
     sig_fnames=[
         "{}/vbshww.root".format(hadd_dir),
         "{}/vbshww_c2v_6.root".format(hadd_dir),
+        "{}/vbshww_c2v_4p5.root".format(hadd_dir),
         "{}/vbshww_c2v_3.root".format(hadd_dir),
+        "{}/vbshww_c2v_m2.root".format(hadd_dir),
         # "{}/lambda20_vbshww.root".format(hadd_dir),
         # "{}/lambdam20_vbshww.root".format(hadd_dir),
         ],
@@ -60,7 +62,9 @@ p.dump_plot(fnames=[
     sig_fnames=[
         "{}/vbshww.root".format(hadd_dir),
         "{}/vbshww_c2v_6.root".format(hadd_dir),
+        "{}/vbshww_c2v_4p5.root".format(hadd_dir),
         "{}/vbshww_c2v_3.root".format(hadd_dir),
+        "{}/vbshww_c2v_m2.root".format(hadd_dir),
         # "{}/lambda20_vbshww.root".format(hadd_dir),
         # "{}/lambdam20_vbshww.root".format(hadd_dir),
         ],

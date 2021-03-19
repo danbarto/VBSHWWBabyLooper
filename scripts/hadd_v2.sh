@@ -47,6 +47,8 @@ for YEAR in ${YEARS}; do
     echo "hadd -f ${HADDDIR}/vbshww.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_TuneCP5*.root > ${HADDDIR}/vbshww.hadd.log 2>&1" >> .jobs.txt
     echo "hadd -f ${HADDDIR}/vbshww_c2v_6.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_C2V_6_TuneCP5*.root > ${HADDDIR}/vbshww_c2v_6.hadd.log 2>&1" >> .jobs.txt
     echo "hadd -f ${HADDDIR}/vbshww_c2v_3.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_C2V_3_TuneCP5*.root > ${HADDDIR}/vbshww_c2v_3.hadd.log 2>&1" >> .jobs.txt
+    echo "hadd -f ${HADDDIR}/vbshww_c2v_4p5.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_C2V_4p5_TuneCP5*.root > ${HADDDIR}/vbshww_c2v_4p5.hadd.log 2>&1" >> .jobs.txt
+    echo "hadd -f ${HADDDIR}/vbshww_c2v_m2.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_C2V_m2_TuneCP5*.root > ${HADDDIR}/vbshww_c2v_m2.hadd.log 2>&1" >> .jobs.txt
 
 done
 
