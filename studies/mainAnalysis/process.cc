@@ -92,6 +92,7 @@ int main(int argc, char** argv)
     genhistograms.addHistogram("genJetEta1", 180, -5, 5, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<LV>("gen_jet1_p4").eta(); return -999.f; } );
 
     vbs.cutflow.bookHistogramsForCut(genhistograms, "SelectGenPart");
+    vbs.cutflow.bookHistogramsForCutAndBelow(genhistograms, "KinematicVariables");
 
     vbs.cutflow.bookHistogramsForCutAndBelow(vbs.histograms, "KinematicVariables");
     vbs.cutflow.bookCutflows();
