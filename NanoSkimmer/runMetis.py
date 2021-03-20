@@ -2,6 +2,7 @@ import os
 
 from metis.Sample import DBSSample, DirectorySample
 from metis.CondorTask import CondorTask
+from metis.StatsParser import StatsParser
 
 
 if __name__ == "__main__":
@@ -185,7 +186,7 @@ if __name__ == "__main__":
             ]
 
     # submission tag
-    tag = "v11"
+    tag = "v12"
 
     task_summary = {}
 
@@ -200,7 +201,7 @@ if __name__ == "__main__":
                 cmssw_version = "CMSSW_10_2_13",
                 scram_arch = "slc7_amd64_gcc700",
                 input_executable = "condor_executable_metis.sh", # your condor executable here
-                tarfile = "/nfs-7/userdata/phchang/VBSHWWNanoSkimmer_v4_CMSSW_10_2_13_slc7_amd64_gcc700.package.tar.gz", # your tarfile with assorted goodies here
+                tarfile = "/nfs-7/userdata/phchang/VBSHWWNanoSkimmer_v5_CMSSW_10_2_13_slc7_amd64_gcc700.package.tar.gz", # your tarfile with assorted goodies here
                 special_dir = "VBSHWWNanoSkim/{}".format(tag), # output files into /hadoop/cms/store/<user>/<special_dir>
         )
         # Straightforward logic
@@ -211,7 +212,8 @@ if __name__ == "__main__":
         task_summary[task.get_sample().get_datasetname()] = task.get_task_summary()
 
     # Parse the summary and make a summary.txt that will be used to pretty status of the jobs
-    os.system("rm web_summary.json")
+    os.system("rm -f web_summary.json")
+    os.system("rm -f summary.json")
     webdir="~/public_html/VBSHWWNanoSkimmerDashboard"
     StatsParser(data=task_summary, webdir=webdir).do()
     os.system("chmod -R 755 {}".format(webdir))

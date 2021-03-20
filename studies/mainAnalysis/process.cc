@@ -73,6 +73,26 @@ int main(int argc, char** argv)
     vbs.histograms.addHistogram("NBMedium", 5, 0, 5, [&]() { return vbs.tx.getBranchLazy<int>("nbmedium"); } );
     vbs.histograms.addHistogram("NBTight", 5, 0, 5, [&]() { return vbs.tx.getBranchLazy<int>("nbtight"); } );
 
+    RooUtil::Histograms genhistograms;
+    genhistograms.addHistogram("genMJJ", 180, 0, 4500, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<float>("genmjj"); return -999.f; } );
+    genhistograms.addHistogram("genDEtaJJ", 180, 0, 10, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<float>("gendetajj"); return -999.f; } );
+    genhistograms.addHistogram("genDPhiJJ", 180, 0, 3.1416, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<float>("gendphijj"); return -999.f; } );
+    genhistograms.addHistogram("genHiggsPt", 180, 0, 1000, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<float>("genptbb"); return -999.f; } );
+    genhistograms.addHistogram("genLeptonPt0", 180, 0, 600, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<float>("genleppt0"); return -999.f; } );
+    genhistograms.addHistogram("genLeptonPt1", 180, 0, 600, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<float>("genleppt1"); return -999.f; } );
+    genhistograms.addHistogram("genMll", 180, 0, 2000, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<float>("genmll"); return -999.f; } );
+    genhistograms.addHistogram("genMbb", 180, 0, 250, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<float>("genmbb"); return -999.f; } );
+    genhistograms.addHistogram("genDRbb", 180, 0, 10, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<float>("gendrbb"); return -999.f; } );
+    genhistograms.addHistogram("genMWWH", 180, 0, 5000, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<float>("genmllbbmet"); return -999.f; } );
+    genhistograms.addHistogram("genMTWWH", 180, 0, 5000, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<float>("genmtllbbmet"); return -999.f; } );
+    genhistograms.addHistogram("genST", 180, 0, 5000, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<float>("genst"); return -999.f; } );
+    genhistograms.addHistogram("genJetPt0", 180, 0, 250, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<LV>("gen_jet0_p4").pt(); return -999.f; } );
+    genhistograms.addHistogram("genJetPt1", 180, 0, 250, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<LV>("gen_jet1_p4").pt(); return -999.f; } );
+    genhistograms.addHistogram("genJetEta0", 180, -5, 5, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<LV>("gen_jet0_p4").eta(); return -999.f; } );
+    genhistograms.addHistogram("genJetEta1", 180, -5, 5, [&]() { if (vbs.tx.getBranchLazy<int>("isvbswwh")) return vbs.tx.getBranchLazy<LV>("gen_jet1_p4").eta(); return -999.f; } );
+
+    vbs.cutflow.bookHistogramsForCut(genhistograms, "SelectGenPart");
+
     vbs.cutflow.bookHistogramsForCutAndBelow(vbs.histograms, "KinematicVariables");
     vbs.cutflow.bookCutflows();
     vbs.cutflow.bookEventLists();

@@ -29,7 +29,7 @@ VBSWmpWmpHToLNuLNu_C2V_4p5_TuneCP5 \
 VBSWmpWmpHToLNuLNu_C2V_m2_TuneCP5 \
 VBSWmpWmpHToLNuLNu_TuneCP5"
 
-NANOSKIMDIR=/hadoop/cms/store/user/phchang/VBSHWWNanoSkim/v9/
+NANOSKIMDIR=/hadoop/cms/store/user/phchang/VBSHWWNanoSkim/v11/
 
 rm -f .jobs.txt
 

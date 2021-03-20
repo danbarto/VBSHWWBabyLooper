@@ -40,6 +40,39 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     // Create met branches
     tx.createBranch<LV>("met_p4");
 
+    // Create gen particle branches
+    tx.createBranch<int>("isvbswwh");
+    tx.createBranch<LV>("gen_jet0_p4");
+    tx.createBranch<LV>("gen_jet1_p4");
+    tx.createBranch<LV>("gen_w0_p4");
+    tx.createBranch<LV>("gen_w1_p4");
+    tx.createBranch<LV>("gen_h_p4");
+    tx.createBranch<LV>("gen_lep0_p4");
+    tx.createBranch<LV>("gen_lep1_p4");
+    tx.createBranch<LV>("gen_nu0_p4");
+    tx.createBranch<LV>("gen_nu1_p4");
+    tx.createBranch<LV>("gen_b0_p4");
+    tx.createBranch<LV>("gen_b1_p4");
+    tx.createBranch<float>("genleppt0");
+    tx.createBranch<float>("genleppt1");
+    tx.createBranch<float>("gentaupt");
+    tx.createBranch<int>("genchannel");
+    tx.createBranch<float>("genmjj");
+    tx.createBranch<float>("genptjj");
+    tx.createBranch<float>("gendetajj");
+    tx.createBranch<float>("gendphijj");
+    tx.createBranch<float>("genmbb");
+    tx.createBranch<float>("genptbb");
+    tx.createBranch<float>("gendphibb");
+    tx.createBranch<float>("gendrbb");
+    tx.createBranch<float>("genmll");
+    tx.createBranch<float>("genptll");
+    tx.createBranch<float>("gendphill");
+    tx.createBranch<float>("gendrll");
+    tx.createBranch<float>("genst");
+    tx.createBranch<float>("genmtllbbmet");
+    tx.createBranch<float>("genmllbbmet");
+
     // Create lepton branches
     tx.createBranch<vector<LV>>("good_leptons_p4");
     tx.createBranch<vector<int>>("good_leptons_pdgid");
@@ -173,14 +206,17 @@ VBSHWW::VBSHWW(int argc, char** argv) :
                 }
             }
 
-            // loop over taus to count taus above 20 GeV
-            for (unsigned int idx = 0; idx < nt.Tau_pt().size(); ++idx)
+            if (do_tau)
             {
-                float tau_pt = nt.Tau_pt()[idx];
-                if (tau_pt > 20)
+                // loop over taus to count taus above 20 GeV
+                for (unsigned int idx = 0; idx < nt.Tau_pt().size(); ++idx)
                 {
-                    ntau20++;
-                    tau20_idx.push_back(idx);
+                    float tau_pt = nt.Tau_pt()[idx];
+                    if (tau_pt > 20)
+                    {
+                        ntau20++;
+                        tau20_idx.push_back(idx);
+                    }
                 }
             }
 
@@ -356,6 +392,8 @@ void VBSHWW::parseCLI(int argc, char** argv)
         }
     }
 
+    do_tau = false;
+
     //
     // Printing out the option settings overview
     //
@@ -401,6 +439,187 @@ void VBSHWW::process(TString final_cutname)
 
 void VBSHWW::initSRCutflow() 
 {
+
+    //********************************
+    // - Selecting Gen Level Particles
+    //********************************
+    // Description: If signal sample, select the gen level particles
+    cutflow.addCutToLastActiveCut("SelectGenPart",
+        [&]()
+        {
+            if (looper.getCurrentFileName().Contains("VBSWmpWmpHToLNuLNu_C2V"))
+            {
+                bool isvbswwh = nt.GenPart_status()[2] == 23;
+                tx.setBranch<int>("isvbswwh", isvbswwh);
+                if (isvbswwh)
+                {
+                    const LV& ijet = nt.GenPart_p4()[2];
+                    const LV& jjet = nt.GenPart_p4()[3];
+                    const LV& jet0 = ijet.pt() > jjet.pt() ? ijet : jjet;
+                    const LV& jet1 = ijet.pt() > jjet.pt() ? jjet : ijet;
+                    tx.setBranch<LV>("gen_jet0_p4", jet0);
+                    tx.setBranch<LV>("gen_jet1_p4", jet1);
+                    const LV& iW = nt.GenPart_p4()[4];
+                    const LV& jW = nt.GenPart_p4()[5];
+                    const LV& W0 = iW.pt() > jW.pt() ? iW : jW;
+                    const LV& W1 = iW.pt() > jW.pt() ? jW : iW;
+                    tx.setBranch<LV>("gen_w0_p4", W0);
+                    tx.setBranch<LV>("gen_w1_p4", W1);
+                    const LV& h = nt.GenPart_p4()[6];
+                    tx.setBranch<LV>("gen_h_p4", h);
+
+                    std::vector<LV> leptons;
+                    std::vector<int> lepton_pdgids;
+                    for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
+                    {
+                        int midx = nt.GenPart_genPartIdxMother()[igen];
+                        if (midx > 1)
+                        {
+                            if (abs(nt.GenPart_pdgId()[midx]) == 24 and abs(nt.GenPart_status()[midx]) == 62
+                                and (
+                                    ((nt.GenPart_status()[igen] == 1 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 11 or abs(nt.GenPart_pdgId()[igen]) == 13))
+                                    or
+                                    ((nt.GenPart_status()[igen] == 2 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 15))
+                                    )
+                               )
+                            {
+                                leptons.push_back(nt.GenPart_p4()[igen]);
+                                lepton_pdgids.push_back(nt.GenPart_pdgId()[igen]);
+                            }
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (leptons.size() != 2)
+                    {
+                        std::cout <<  " leptons.size(): " << leptons.size() <<  std::endl;
+                        for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
+                        {
+                            int pdgid = nt.GenPart_pdgId()[igen];
+                            int status = nt.GenPart_status()[igen];
+                            int midx = nt.GenPart_genPartIdxMother()[igen];
+                            int mid = midx > -1 ? nt.GenPart_pdgId()[midx] : -1;
+                            int mstatus = midx > -1 ? nt.GenPart_status()[midx] : -1;
+                            std::cout <<  " pdgid: " << pdgid <<  " status: " << status <<  " midx: " << midx <<  " mid: " << mid <<  " mstatus: " << mstatus <<  std::endl;
+                        }
+                    }
+                    const LV& lep0 = leptons[0].pt() > leptons[1].pt() ? leptons[0] : leptons[1];
+                    const LV& lep1 = leptons[0].pt() > leptons[1].pt() ? leptons[1] : leptons[0];
+
+                    std::vector<LV> nus;
+                    for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
+                    {
+                        int midx = nt.GenPart_genPartIdxMother()[igen];
+                        if (midx > 1)
+                        {
+                            if (abs(nt.GenPart_pdgId()[midx]) == 24 and abs(nt.GenPart_status()[midx]) == 62
+                                and (
+                                    ((nt.GenPart_status()[igen] == 1 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 12 or abs(nt.GenPart_pdgId()[igen]) == 14))
+                                    or
+                                    ((nt.GenPart_status()[igen] == 1 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 16))
+                                    )
+                               )
+                            {
+                                nus.push_back(nt.GenPart_p4()[igen]);
+                            }
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (nus.size() != 2)
+                    {
+                        std::cout <<  " nus.size(): " << nus.size() <<  std::endl;
+                    }
+                    const LV& nu0 = nus[0].pt() > nus[1].pt() ? nus[0] : nus[1];
+                    const LV& nu1 = nus[0].pt() > nus[1].pt() ? nus[1] : nus[0];
+
+                    std::vector<LV> bs;
+                    for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
+                    {
+                        if (abs(nt.GenPart_pdgId()[igen]) == 5 and nt.GenPart_status()[igen] == 23)
+                        {
+                            bs.push_back(nt.GenPart_p4()[igen]);
+                        }
+                    }
+
+                    if (bs.size() != 2)
+                    {
+                        std::cout <<  " bs.size(): " << bs.size() <<  std::endl;
+                    }
+                    const LV& b0 = bs[0].pt() > bs[1].pt() ? bs[0] : bs[1];
+                    const LV& b1 = bs[0].pt() > bs[1].pt() ? bs[1] : bs[0];
+
+                    tx.setBranch<LV>("gen_lep0_p4", lep0);
+                    tx.setBranch<LV>("gen_lep1_p4", lep1);
+                    tx.setBranch<LV>("gen_nu0_p4", nu0);
+                    tx.setBranch<LV>("gen_nu1_p4", nu1);
+                    tx.setBranch<LV>("gen_b0_p4", b0);
+                    tx.setBranch<LV>("gen_b1_p4", b1);
+
+                    int channel = -1;
+                    if (lepton_pdgids[0] * lepton_pdgids[1] == 121)
+                    {
+                        channel = 0;
+                    }
+                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 143)
+                    {
+                        channel = 1;
+                    }
+                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 169)
+                    {
+                        channel = 2;
+                    }
+                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 165)
+                    {
+                        channel = 3;
+                    }
+                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 195)
+                    {
+                        channel = 4;
+                    }
+                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 225)
+                    {
+                        channel = 5;
+                    }
+
+                    tx.setBranch<float>("genleppt0", lep0.pt());
+                    tx.setBranch<float>("genleppt1", lep1.pt());
+                    tx.setBranch<float>("gentaupt", -999.);
+                    tx.setBranch<int>("genchannel", channel);
+                    tx.setBranch<float>("genmjj", (jet0+jet1).mass());
+                    tx.setBranch<float>("genptjj", (jet0+jet1).pt());
+                    tx.setBranch<float>("gendetajj", abs(RooUtil::Calc::DeltaEta(jet0, jet1)));
+                    tx.setBranch<float>("gendphijj", abs(RooUtil::Calc::DeltaPhi(jet0, jet1)));
+                    tx.setBranch<float>("genmbb", (b0+b1).mass());
+                    tx.setBranch<float>("genptbb", (b0+b1).pt());
+                    tx.setBranch<float>("gendphibb", abs(RooUtil::Calc::DeltaPhi(b0, b1)));
+                    tx.setBranch<float>("gendrbb", RooUtil::Calc::DeltaR(b0, b1));
+                    tx.setBranch<float>("genmll", (lep0+lep1).mass());
+                    tx.setBranch<float>("genptll", (lep0+lep1).pt());
+                    tx.setBranch<float>("gendphill", abs(RooUtil::Calc::DeltaPhi(lep0, lep1)));
+                    tx.setBranch<float>("gendrll", RooUtil::Calc::DeltaR(lep0, lep1));
+                    tx.setBranch<float>("genst", (lep0.pt() + lep1.pt() + b0.pt() + b1.pt() + (nu0 + nu1).pt()));
+                    tx.setBranch<float>("genmtllbbmet", (lep0 + lep1 + b0 + b1 + nu0 + nu1).mt());
+                    tx.setBranch<float>("genmllbbmet", (lep0 + lep1 + b0 + b1 + nu0 + nu1).mass());
+
+                    return true;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                return true;
+            }
+        }, UNITY);
 
     //*****************************
     // - Selecting Analysis Leptons
@@ -467,55 +686,58 @@ void VBSHWW::initSRCutflow()
                 {}
             );
 
-            // Select taus
-            const vector<LV>& good_leptons_p4 = tx.getBranchLazy<vector<LV>>("good_leptons_p4");
-            const vector<int>& good_leptons_pdgid = tx.getBranchLazy<vector<int>>("good_leptons_pdgid");
-            for (unsigned int itau = 0; itau < nt.nTau(); ++itau)
+            if (do_tau)
             {
-                if (SS::tauID(itau, SS::IDfakable, nt.year()))
+                // Select taus
+                const vector<LV>& good_leptons_p4 = tx.getBranchLazy<vector<LV>>("good_leptons_p4");
+                const vector<int>& good_leptons_pdgid = tx.getBranchLazy<vector<int>>("good_leptons_pdgid");
+                for (unsigned int itau = 0; itau < nt.nTau(); ++itau)
                 {
-                    // tau-(non-tau lep) overlap removal
-                    bool save_this_tau = true;
-
-                    for (unsigned int ilep = 0; ilep < good_leptons_p4.size(); ++ilep)
+                    if (SS::tauID(itau, SS::IDfakable, nt.year()))
                     {
-                        if (RooUtil::Calc::DeltaR(nt.Tau_p4().at(itau), good_leptons_p4.at(ilep)) < 0.4)
+                        // tau-(non-tau lep) overlap removal
+                        bool save_this_tau = true;
+
+                        for (unsigned int ilep = 0; ilep < good_leptons_p4.size(); ++ilep)
                         {
-                            save_this_tau = false;
-                            break;
+                            if (RooUtil::Calc::DeltaR(nt.Tau_p4().at(itau), good_leptons_p4.at(ilep)) < 0.4)
+                            {
+                                save_this_tau = false;
+                                break;
+                            }
                         }
+
+                        if (!save_this_tau)
+                        {
+                            continue;
+                        }
+
+                        // Only save >= loose taus that do not overlap w/ a 'good' lepton
+                        tx.pushbackToBranch<LV>("good_taus_p4", nt.Tau_p4()[itau]);
+                        tx.pushbackToBranch<int>("good_taus_genPartFlav", nt.Tau_genPartFlav()[itau]);
+                        tx.pushbackToBranch<int>("good_taus_pdgid", (-nt.Tau_charge()[itau]) * 15);
+                        tx.pushbackToBranch<int>("good_taus_tight", SS::tauID(itau, SS::IDtight, nt.year()));
+                        tx.pushbackToBranch<int>("good_taus_jetIdx", nt.Tau_jetIdx()[itau]);
+
                     }
-
-                    if (!save_this_tau)
-                    {
-                        continue;
-                    }
-
-                    // Only save >= loose taus that do not overlap w/ a 'good' lepton
-                    tx.pushbackToBranch<LV>("good_taus_p4", nt.Tau_p4()[itau]);
-                    tx.pushbackToBranch<int>("good_taus_genPartFlav", nt.Tau_genPartFlav()[itau]);
-                    tx.pushbackToBranch<int>("good_taus_pdgid", (-nt.Tau_charge()[itau]) * 15);
-                    tx.pushbackToBranch<int>("good_taus_tight", SS::tauID(itau, SS::IDtight, nt.year()));
-                    tx.pushbackToBranch<int>("good_taus_jetIdx", nt.Tau_jetIdx()[itau]);
-
                 }
-            }
 
-            tx.sortVecBranchesByPt(
-                /* name of the 4vector branch to use to pt sort by*/
-                "good_taus_p4",
-                /* names of any associated vector<float> branches to sort along */ 
-                {},
-                /* names of any associated vector<int>   branches to sort along */ 
-                {
-                    "good_taus_pdgid", 
-                    "good_taus_tight", 
-                    "good_taus_jetIdx",
-                    "good_taus_genPartFlav"
-                },
-                /* names of any associated vector<bool>  branches to sort along */ 
-                {}
-            );
+                tx.sortVecBranchesByPt(
+                    /* name of the 4vector branch to use to pt sort by*/
+                    "good_taus_p4",
+                    /* names of any associated vector<float> branches to sort along */ 
+                    {},
+                    /* names of any associated vector<int>   branches to sort along */ 
+                    {
+                        "good_taus_pdgid", 
+                        "good_taus_tight", 
+                        "good_taus_jetIdx",
+                        "good_taus_genPartFlav"
+                    },
+                    /* names of any associated vector<bool>  branches to sort along */ 
+                    {}
+                    );
+            }
 
             return true;
 
@@ -561,15 +783,15 @@ void VBSHWW::initSRCutflow()
                 return false;
 
             // Therefore I will only have two leptons in the good_leptons container
-            const int& pdgid0 = tx.getBranch<vector<int>>("good_leptons_pdgid")[0];
-            const int& pdgid1 = tx.getBranch<vector<int>>("good_leptons_pdgid").size() == 2 ? tx.getBranch<vector<int>>("good_leptons_pdgid")[1] : tx.getBranch<vector<int>>("good_taus_pdgid")[0];
+            const int& pdgid0 = tx.getBranchLazy<vector<int>>("good_leptons_pdgid")[0];
+            const int& pdgid1 = tx.getBranchLazy<vector<int>>("good_leptons_pdgid").size() == 2 ? tx.getBranchLazy<vector<int>>("good_leptons_pdgid")[1] : tx.getBranchLazy<vector<int>>("good_taus_pdgid")[0];
 
             // Require same sign
             if (not (pdgid0 * pdgid1 > 0))
                 return false;
 
-            const float& pt0 = tx.getBranch<vector<LV>>("good_leptons_p4")[0].pt();
-            const float& pt1 = tx.getBranch<vector<LV>>("good_leptons_p4").size() == 2 ? tx.getBranch<vector<LV>>("good_leptons_p4")[1].pt() : tx.getBranch<vector<LV>>("good_taus_p4")[0].pt();
+            const float& pt0 = tx.getBranchLazy<vector<LV>>("good_leptons_p4")[0].pt();
+            const float& pt1 = tx.getBranchLazy<vector<LV>>("good_leptons_p4").size() == 2 ? tx.getBranchLazy<vector<LV>>("good_leptons_p4")[1].pt() : tx.getBranchLazy<vector<LV>>("good_taus_p4")[0].pt();
 
             return pt0 > 35. and pt1 > 35.;
 

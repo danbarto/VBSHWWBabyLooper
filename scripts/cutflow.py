@@ -21,6 +21,10 @@ except:
 
 hadd_dir = "hadds/{}".format(study_name)
 
+bkg_labels = ["WZ", "t#bar{t}(1l)", "t#bar{t}(2l)", "t#bar{t}W", "t#bar{t}Z", "t#bar{t}H", "W^{#pm}W^{#pm}jj"]
+signal_labels = ["C2V=3", "C2V=-2"]
+colors = [4022, 4020, 4023, 4021, 4024, 4101, 4201]
+
 # cutflow
 p.dump_plot(fnames=[
         "{}/wz.root".format(hadd_dir),
@@ -32,15 +36,12 @@ p.dump_plot(fnames=[
         "{}/ssww.root".format(hadd_dir),
         ],
     sig_fnames=[
-        "{}/vbshww.root".format(hadd_dir),
-        "{}/vbshww_c2v_6.root".format(hadd_dir),
-        "{}/vbshww_c2v_4p5.root".format(hadd_dir),
         "{}/vbshww_c2v_3.root".format(hadd_dir),
         "{}/vbshww_c2v_m2.root".format(hadd_dir),
-        # "{}/lambda20_vbshww.root".format(hadd_dir),
-        # "{}/lambdam20_vbshww.root".format(hadd_dir),
         ],
-    # data_fname="{}/vbshww.root".format(hadd_dir),
+    legend_labels=bkg_labels,
+    signal_labels=signal_labels,
+    usercolors=colors,
     dirname="plots/cutflow/{}".format(study_name),
     filter_pattern="{}_cutflow".format(cutname_to_plot), # TODO this is not generalized yet
     extraoptions={
@@ -60,15 +61,12 @@ p.dump_plot(fnames=[
         "{}/ssww.root".format(hadd_dir),
         ],
     sig_fnames=[
-        "{}/vbshww.root".format(hadd_dir),
-        "{}/vbshww_c2v_6.root".format(hadd_dir),
-        "{}/vbshww_c2v_4p5.root".format(hadd_dir),
         "{}/vbshww_c2v_3.root".format(hadd_dir),
         "{}/vbshww_c2v_m2.root".format(hadd_dir),
-        # "{}/lambda20_vbshww.root".format(hadd_dir),
-        # "{}/lambdam20_vbshww.root".format(hadd_dir),
         ],
-    # data_fname="{}/vbshww.root".format(hadd_dir),
+    legend_labels=bkg_labels,
+    signal_labels=signal_labels,
+    usercolors=colors,
     dirname="plots/cutflow/{}".format(study_name),
     filter_pattern="{}_rawcutflow".format(cutname_to_plot), # TODO this is not generalized yet
     extraoptions={

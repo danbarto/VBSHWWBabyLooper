@@ -39,6 +39,9 @@ public:
     // Debug boolean
     bool debug;
 
+    // Tau boolean
+    bool do_tau;
+
     // TChain that holds the input TTree's
     TChain* events_tchain;
 
