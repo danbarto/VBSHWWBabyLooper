@@ -186,7 +186,7 @@ if __name__ == "__main__":
             ]
 
     # submission tag
-    tag = "v12"
+    tag = "v13"
 
     task_summary = {}
 
@@ -201,7 +201,7 @@ if __name__ == "__main__":
                 cmssw_version = "CMSSW_10_2_13",
                 scram_arch = "slc7_amd64_gcc700",
                 input_executable = "condor_executable_metis.sh", # your condor executable here
-                tarfile = "/nfs-7/userdata/phchang/VBSHWWNanoSkimmer_v5_CMSSW_10_2_13_slc7_amd64_gcc700.package.tar.gz", # your tarfile with assorted goodies here
+                tarfile = "/nfs-7/userdata/phchang/VBSHWWNanoSkimmer_v6_CMSSW_10_2_13_slc7_amd64_gcc700.package.tar.gz", # your tarfile with assorted goodies here
                 special_dir = "VBSHWWNanoSkim/{}".format(tag), # output files into /hadoop/cms/store/<user>/<special_dir>
         )
         # Straightforward logic

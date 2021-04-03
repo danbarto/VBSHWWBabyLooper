@@ -9,6 +9,7 @@
 #include "ElectronSelections.h"
 #include "MuonSelections.h"
 #include "TauSelections.h"
+#include "Tools/goodrun.h"
 
 class VBSHWW
 {
