@@ -1,5 +1,17 @@
 # Quick Instructions
 
+    git clone --recursive git@github.com:sgnoohc/VBSHWWBabyLooper.git
+    cd VBSHWWBabyLooper
+    source setup.sh
+    make clean
+    make -j
+    sh scripts/run_v3.sh -s mainAnalysis
+    python scripts/cutflow.py mainAnalysis_Run2 SRLL
+    python rooutil/yield_for_keynote.py plots/cutflow/mainAnalysis_Run2/SRLL_cutflow.txt > table/data.csv
+    python scripts/plot.py mainAnalysis_Run2
+
+# Quick Instructions
+
 First fork the following repo to user's area.  
 Then, clone the repository to local area.
 

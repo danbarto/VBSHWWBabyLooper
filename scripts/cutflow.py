@@ -21,8 +21,17 @@ except:
 
 hadd_dir = "hadds/{}".format(study_name)
 
-bkg_labels = ["WZ", "t#bar{t}(1l)", "t#bar{t}(2l)", "t#bar{t}W", "t#bar{t}Z", "t#bar{t}H", "W^{#pm}W^{#pm}jj", "W", "DY"]
-# signal_labels = ["C2V=3", "C2V=-2"]
+bkg_labels = [
+        "WZ",
+        "t#bar{t}(1l)",
+        "t#bar{t}(2l)",
+        "t#bar{t}W",
+        "t#bar{t}Z",
+        "W^{#pm}W^{#pm}jj",
+        "V",
+        "ZZ",
+        "Rare t#bar{t}+X(Y)",
+        "VVV"]
 signal_labels = ["C2V=6", "C2V=4.5", "C2V=-2", "C2V=3"]
 colors = [4022, 4020, 4023, 4021, 4024, 4101, 4201]
 
@@ -33,10 +42,11 @@ p.dump_plot(fnames=[
         "{}/tt2l.root".format(hadd_dir),
         "{}/ttw.root".format(hadd_dir),
         "{}/ttz.root".format(hadd_dir),
-        "{}/tth.root".format(hadd_dir),
         "{}/ssww.root".format(hadd_dir),
-        "{}/wjet.root".format(hadd_dir),
         "{}/dy.root".format(hadd_dir),
+        "{}/zz.root".format(hadd_dir),
+        "{}/raretop.root".format(hadd_dir),
+        "{}/vvv.root".format(hadd_dir),
         ],
     sig_fnames=[
         "{}/vbshww_c2v_6.root".format(hadd_dir),
