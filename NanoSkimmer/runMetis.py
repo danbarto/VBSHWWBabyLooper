@@ -182,11 +182,15 @@ if __name__ == "__main__":
                 location = "/hadoop/cms/store/user/phchang/VBSHWWSignalGeneration/VBSWWH_C2V_4p5_RunIIAutumn18NanoAOD_VBSWWH_C2V_4p5_v3/merged",
                 dataset = "/VBSWmpWmpHToLNuLNu_C2V_4p5_TuneCP5_13TeV-madgraph-pythia8/PRIVATE_RunIIAutumn18NanoAODv6-Nano25Oct2019_102X_upgrade2018_realistic_v20-v1/NANOAODSIM",
                 ),
+            DirectorySample(
+                location = "/hadoop/cms/store/user/phchang/VBSHWWSignalGeneration/VBSWWH_C2V_4p5_RunIIAutumn18NanoAOD_VBSWWH_C2V_4p5_v3_ext1/merged/",
+                dataset = "/VBSWmpWmpHToLNuLNu_C2V_4p5_TuneCP5_13TeV-madgraph-pythia8/PRIVATE_RunIIAutumn18NanoAODv6-Nano25Oct2019_102X_upgrade2018_realistic_v20-v1_ext1/NANOAODSIM",
+                ),
 
             ]
 
     # submission tag
-    tag = "v13"
+    tag = "v12"
 
     task_summary = {}
 
@@ -201,7 +205,7 @@ if __name__ == "__main__":
                 cmssw_version = "CMSSW_10_2_13",
                 scram_arch = "slc7_amd64_gcc700",
                 input_executable = "condor_executable_metis.sh", # your condor executable here
-                tarfile = "/nfs-7/userdata/phchang/VBSHWWNanoSkimmer_v6_CMSSW_10_2_13_slc7_amd64_gcc700.package.tar.gz", # your tarfile with assorted goodies here
+                tarfile = "/nfs-7/userdata/phchang/VBSHWWNanoSkimmer_v5_CMSSW_10_2_13_slc7_amd64_gcc700.package.tar.gz", # your tarfile with assorted goodies here
                 special_dir = "VBSHWWNanoSkim/{}".format(tag), # output files into /hadoop/cms/store/<user>/<special_dir>
         )
         # Straightforward logic

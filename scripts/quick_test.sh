@@ -1,0 +1,3 @@
+ ./studies/mainAnalysis/doAnalysis -t Events -o hists/mainAnalysis_2018/VBSWmpWmpHToLNuLNu_C2V_6_TuneCP5_output.root --scale1fb .00026767592550483000 -i /nfs-7/userdata/phchang/VBSHWWNanoSkim_v12//VBSWmpWmpHToLNuLNu_C2V_6_TuneCP5_13TeV-madgraph-pythia8_PRIVATE_RunIIAutumn18NanoAODv6-Nano25Oct2019_102X_upgrade2018_realistic_v20-v1_NANOAODSIM_v12/merged/output.root, -d
+ ./studies/mainAnalysis/doAnalysis -t Events -o hists/mainAnalysis_2018/TTJets_SingleLeptFromTbar_output.root --scale1fb .00305584814692857000 -i /nfs-7/userdata/phchang/VBSHWWNanoSkim_v12//TTJets_SingleLeptFromTbar_TuneCP5_13TeV-madgraphMLM-pythia8_RunIIAutumn18NanoAODv6-Nano25Oct2019_102X_upgrade2018_realistic_v20-v1_NANOAODSIM_v12/merged/output.root, -d
+ rm debug.root

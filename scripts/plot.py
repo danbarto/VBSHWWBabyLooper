@@ -49,7 +49,8 @@ bkg_labels = [
         "V",
         "ZZ",
         "Rare t#bar{t}+X(Y)",
-        "VVV"]
+        "VVV",
+        ]
 colors = [
         4022,
         4020,
