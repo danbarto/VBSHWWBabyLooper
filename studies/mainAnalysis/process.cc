@@ -18,37 +18,61 @@ int main(int argc, char** argv)
 
     vbs.initSRCutflow();
 
-    vbs.cutflow.getCut("AK4CategObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SREEChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 0 and vbs.tx.getBranch<int>("mee_noZ"); }, UNITY);
-    vbs.cutflow.getCut("AK4CategObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SREMChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 1; }, UNITY);
-    vbs.cutflow.getCut("AK4CategObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SRMMChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 2; }, UNITY);
-    vbs.cutflow.getCut("AK4CategObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SRETChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 3; }, UNITY);
-    vbs.cutflow.getCut("AK4CategObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SRMTChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 4; }, UNITY);
-    vbs.cutflow.getCut("AK4CategObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SRLLChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") >= 0 and vbs.tx.getBranch<int>("channel") <= 2 and vbs.tx.getBranch<int>("mee_noZ"); }, UNITY);
-    vbs.cutflow.getCut("AK4CategObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SRLTChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") >= 3 and vbs.tx.getBranch<int>("channel") <= 4; }, UNITY);
+    vbs.cutflow.getCut("AK4CategTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SREEChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 0 and vbs.tx.getBranch<int>("mee_noZ"); }, UNITY);
+    vbs.cutflow.getCut("AK4CategTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SREMChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 1; }, UNITY);
+    vbs.cutflow.getCut("AK4CategTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SRMMChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 2; }, UNITY);
+    vbs.cutflow.getCut("AK4CategTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SRETChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 3; }, UNITY);
+    vbs.cutflow.getCut("AK4CategTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SRMTChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 4; }, UNITY);
+    vbs.cutflow.getCut("AK4CategTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SRLLChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") >= 0 and vbs.tx.getBranch<int>("channel") <= 2 and vbs.tx.getBranch<int>("mee_noZ"); }, UNITY);
+    vbs.cutflow.getCut("AK4CategTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("SRLTChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") >= 3 and vbs.tx.getBranch<int>("channel") <= 4; }, UNITY);
 
+    vbs.cutflow.getCut("AK4CategLooseObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LooseSREEChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 0 and vbs.tx.getBranch<int>("mee_noZ"); }, UNITY);
+    vbs.cutflow.getCut("AK4CategLooseObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LooseSREMChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 1; }, UNITY);
+    vbs.cutflow.getCut("AK4CategLooseObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LooseSRMMChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 2; }, UNITY);
+    vbs.cutflow.getCut("AK4CategLooseObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LooseSRETChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 3; }, UNITY);
+    vbs.cutflow.getCut("AK4CategLooseObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LooseSRMTChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 4; }, UNITY);
+    vbs.cutflow.getCut("AK4CategLooseObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LooseSRLLChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") >= 0 and vbs.tx.getBranch<int>("channel") <= 2 and vbs.tx.getBranch<int>("mee_noZ"); }, UNITY);
+    vbs.cutflow.getCut("AK4CategLooseObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LooseSRLTChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") >= 3 and vbs.tx.getBranch<int>("channel") <= 4; }, UNITY);
+
+    vbs.cutflow.getCut("AK4CategLooseButNotTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LbntSREEChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 0 and vbs.tx.getBranch<int>("mee_noZ"); }, UNITY);
+    vbs.cutflow.getCut("AK4CategLooseButNotTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LbntSREMChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 1; }, UNITY);
+    vbs.cutflow.getCut("AK4CategLooseButNotTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LbntSRMMChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 2; }, UNITY);
+    vbs.cutflow.getCut("AK4CategLooseButNotTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LbntSRETChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 3; }, UNITY);
+    vbs.cutflow.getCut("AK4CategLooseButNotTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LbntSRMTChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") == 4; }, UNITY);
+    vbs.cutflow.getCut("AK4CategLooseButNotTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LbntSRLLChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") >= 0 and vbs.tx.getBranch<int>("channel") <= 2 and vbs.tx.getBranch<int>("mee_noZ"); }, UNITY);
+    vbs.cutflow.getCut("AK4CategLooseButNotTightObjectPreselection"); vbs.cutflow.addCutToLastActiveCut("LbntSRLTChannel", [&]() { return (vbs.tx.getBranch<int>("pass_blind")) and vbs.tx.getBranch<int>("channel") >= 3 and vbs.tx.getBranch<int>("channel") <= 4; }, UNITY);
+
+    std::vector<TString> categories = {"", "Loose", "Lbnt"};
     std::vector<TString> channels = {"LL"};
-    for (auto& channel : channels)
+    for (auto& category : categories)
     {
-        vbs.cutflow.getCut(TString::Format("SR%sChannel", channel.Data()));
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sMbb", channel.Data()), [&]() { return (vbs.tx.getBranch<LV>("b0")+vbs.tx.getBranch<LV>("b1")).mass() < 150.; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sLepPt0", channel.Data()), [&, lep_pt0_threshold]() { return vbs.tx.getBranch<LV>("leadlep").pt() > lep_pt0_threshold; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sLepPt1", channel.Data()), [&, lep_pt1_threshold]() { return vbs.tx.getBranch<LV>("subllep").pt() > lep_pt1_threshold; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%sMjj", channel.Data()), [&]() { return (vbs.tx.getBranch<LV>("j0")+vbs.tx.getBranch<LV>("j1")).mass() > 500.; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("SR%s", channel.Data()), UNITY, UNITY); // Dummy cut to have a clean name for final SR
+        for (auto& channel : channels)
+        {
+            vbs.cutflow.getCut(TString::Format("%sSR%sChannel", category.Data(), channel.Data()));
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%sSR%sMbb", category.Data(), channel.Data()), [&]() { return (vbs.tx.getBranch<LV>("b0")+vbs.tx.getBranch<LV>("b1")).mass() < 150.; }, UNITY );
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%sSR%sLepPt0", category.Data(), channel.Data()), [&, lep_pt0_threshold]() { return vbs.tx.getBranch<LV>("leadlep").pt() > lep_pt0_threshold; }, UNITY );
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%sSR%sLepPt1", category.Data(), channel.Data()), [&, lep_pt1_threshold]() { return vbs.tx.getBranch<LV>("subllep").pt() > lep_pt1_threshold; }, UNITY );
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%sSR%sMjj", category.Data(), channel.Data()), [&]() { return (vbs.tx.getBranch<LV>("j0")+vbs.tx.getBranch<LV>("j1")).mass() > 500.; }, UNITY );
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%sSR%s", category.Data(), channel.Data()), UNITY, UNITY); // Dummy cut to have a clean name for final SR
+        }
     }
 
+    std::vector<TString> categories_cr = {"", "Loose", "Lbnt"};
     std::vector<TString> channels_cr = {"LL", "EE", "EM", "MM"};
-    for (auto& channel : channels_cr)
+    for (auto& category : categories_cr)
     {
-        vbs.cutflow.getCut(TString::Format("SR%sChannel", channel.Data()));
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("CR%sChannel", channel.Data()), UNITY, UNITY);
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("CR%sMbb", channel.Data()), [&]() { return (vbs.tx.getBranch<LV>("b0")+vbs.tx.getBranch<LV>("b1")).mass() > 150.; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("CR%sLepPt0", channel.Data()), [&, lep_pt0_threshold]() { return vbs.tx.getBranch<LV>("leadlep").pt() > lep_pt0_threshold; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("CR%sLepPt1", channel.Data()), [&, lep_pt1_threshold]() { return vbs.tx.getBranch<LV>("subllep").pt() > lep_pt1_threshold; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("CR%sMjj", channel.Data()), [&]() { return (vbs.tx.getBranch<LV>("j0")+vbs.tx.getBranch<LV>("j1")).mass() > 500.; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("CR%s", channel.Data()), UNITY, UNITY );
-        vbs.cutflow.getCut(TString::Format("CR%sMbb", channel.Data()));
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("CR%sLowLep", channel.Data()), [&, lep_pt0_threshold, lep_pt1_threshold]() { return (vbs.tx.getBranch<LV>("leadlep").pt() < lep_pt0_threshold or vbs.tx.getBranch<LV>("subllep").pt() < lep_pt1_threshold) and ((vbs.tx.getBranch<LV>("j0")+vbs.tx.getBranch<LV>("j1")).mass() > 500.); }, UNITY );
+        for (auto& channel : channels_cr)
+        {
+        vbs.cutflow.getCut( TString::Format("%sSR%sChannel" , category.Data(), channel.Data()));
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sCR%sChannel" , category.Data(), channel.Data()), UNITY, UNITY);
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sCR%sMbb" , category.Data(), channel.Data()), [&]() { return (vbs.tx.getBranch<LV>("b0")+vbs.tx.getBranch<LV>("b1")).mass() > 150.; }, UNITY);
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sCR%sLepPt0" , category.Data(), channel.Data()), [&, lep_pt0_threshold]() { return vbs.tx.getBranch<LV>("leadlep").pt() > lep_pt0_threshold; }, UNITY);
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sCR%sLepPt1" , category.Data(), channel.Data()), [&, lep_pt1_threshold]() { return vbs.tx.getBranch<LV>("subllep").pt() > lep_pt1_threshold; }, UNITY);
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sCR%sMjj" , category.Data(), channel.Data()), [&]() { return (vbs.tx.getBranch<LV>("j0")+vbs.tx.getBranch<LV>("j1")).mass() > 500.; }, UNITY);
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sCR%s" , category.Data(), channel.Data()), UNITY, UNITY );
+        vbs.cutflow.getCut( TString::Format("%sCR%sMbb" , category.Data(), channel.Data()));
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sCR%sLowLep" , category.Data(), channel.Data()), [&, lep_pt0_threshold, lep_pt1_threshold]() { return (vbs.tx.getBranch<LV>("leadlep").pt() < lep_pt0_threshold or vbs.tx.getBranch<LV>("subllep").pt() < lep_pt1_threshold) and ((vbs.tx.getBranch<LV>("j0")+vbs.tx.getBranch<LV>("j1")).mass() > 500.); }, UNITY);
+        }
     }
 
     vbs.cutflow.printCuts();
@@ -154,7 +178,7 @@ int main(int argc, char** argv)
     vbs.cutflow.saveOutput();
 
     // Write the data structure to the root file
-    // vbs.tx.write();
+    vbs.tx.write();
 
     // Write out the "run:lumi:evt" of the events passing a certain cut into a text file
     // If the output.root is "output/path/dir/name.root"

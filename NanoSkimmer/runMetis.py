@@ -200,8 +200,8 @@ if __name__ == "__main__":
                 files_per_output = 1,
                 output_name = "output.root",
                 tag = tag,
-                # condor_submit_params = {"sites": "T2_US_UCSD", "use_xrootd":True, "classads": [ ["metis_extraargs", "fetch_nano"] ]},
-                condor_submit_params = {"sites": "T2_US_UCSD", "use_xrootd":True},
+                condor_submit_params = {"sites": "T2_US_UCSD", "use_xrootd":True, "classads": [ ["metis_extraargs", "fetch_nano"] ]},
+                # condor_submit_params = {"sites": "T2_US_UCSD", "use_xrootd":True},
                 cmssw_version = "CMSSW_10_2_13",
                 scram_arch = "slc7_amd64_gcc700",
                 input_executable = "condor_executable_metis.sh", # your condor executable here

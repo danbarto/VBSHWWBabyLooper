@@ -35,6 +35,12 @@ bkg_labels = [
 signal_labels = ["C2V=6", "C2V=4.5", "C2V=-2", "C2V=3"]
 colors = [4022, 4020, 4023, 4021, 4024, 4101, 4201]
 
+histxaxislabeloptions = {
+        "SRLL_cutflow" : {"print_yield_bin_indices" : range(13,21)},
+        "LooseSRLLChannel_cutflow" : {"print_yield_bin_indices" : range(13,21)},
+        "LbntSRLLChannel_cutflow" : {"print_yield_bin_indices" : range(13,21)},
+        }
+
 # cutflow
 p.dump_plot(fnames=[
         "{}/wz.root".format(hadd_dir),
@@ -58,8 +64,9 @@ p.dump_plot(fnames=[
     legend_labels=bkg_labels,
     signal_labels=signal_labels,
     usercolors=colors,
-    dirname="plots/cutflow/{}".format(study_name),
+    dirname="cutflow/{}".format(study_name),
     filter_pattern="{}_cutflow".format(cutname_to_plot), # TODO this is not generalized yet
+    histxaxislabeloptions=histxaxislabeloptions,
     extraoptions={
         "print_yield": True,
         "yield_prec": 3,

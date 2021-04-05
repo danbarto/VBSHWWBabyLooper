@@ -8,7 +8,7 @@ r.gROOT.SetBatch(True)
 def usage():
     print("Usage:")
     print("")
-    print("   python {} STUDYNAME [PLOTNAMES]".format(sys.argv[0]))
+    print("   python {} [STUDYNAME=mainAnalysis_Run2] [PLOTNAMES]".format(sys.argv[0]))
     print("")
     print("")
     sys.exit()
@@ -17,8 +17,7 @@ def usage():
 try:
     study_name = sys.argv[1]
 except:
-    usage()
-    sys.exit()
+    study_name = "mainAnalysis_Run2"
 
 try:
     cutname_to_plot = sys.argv[2]
@@ -59,6 +58,9 @@ colors = [
         4024,
         4101,
         4201,
+        2005,
+        2001,
+        2003,
         ]
 
 sigs = [
@@ -161,7 +163,7 @@ p.dump_plot(fnames=bkgs,
     data_fname=data_fname,
     legend_labels=bkg_labels,
     signal_labels=signal_labels,
-    dirname="plots/plots/{}".format(study_name),
+    dirname="plots/{}".format(study_name),
     filter_pattern=filter_pattern,
     dogrep=dogrep,
     usercolors=colors,

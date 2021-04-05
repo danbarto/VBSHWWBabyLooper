@@ -442,11 +442,11 @@ void VBSHWW::process(TString final_cutname)
     // Run all the cutflow selections and filling histograms
     cutflow.fill();
 
-    // // Writing skimmed event tree for the data structure we created
-    // if (cutflow.getCut(final_cutname).pass)
-    // {
-    //     tx.fill();
-    // }
+    // Writing skimmed event tree for the data structure we created
+    if (cutflow.getCut(final_cutname).pass)
+    {
+        tx.fill();
+    }
 }
 
 void VBSHWW::initSRCutflow()
@@ -1218,14 +1218,6 @@ void VBSHWW::initSRCutflow()
             int higgs_jet_0 = btag_jets[0].second < btag_jets[1].second ? btag_jets[0].second : btag_jets[1].second;
             int higgs_jet_1 = btag_jets[0].second < btag_jets[1].second ? btag_jets[1].second : btag_jets[0].second;
 
-            // Require leading in b-tag score to be tight and the subleading to be tight
-            if (not (tx.getBranch<vector<int>>("good_jets_tight_btagged")[btag_jets[0].second]))
-                return false;
-
-            // Require leading in b-tag score to be tight and the subleading to be tight
-            if (not (tx.getBranch<vector<int>>("good_jets_tight_btagged")[btag_jets[1].second]))
-                return false;
-
             tx.pushbackToBranch<LV>("higgs_jets_p4", tx.getBranch<vector<LV>>("good_jets_p4")[higgs_jet_0]);
             tx.pushbackToBranch<int>("higgs_jets_loose_btagged", tx.getBranch<vector<int>>("good_jets_loose_btagged")[higgs_jet_0]);
             tx.pushbackToBranch<int>("higgs_jets_medium_btagged", tx.getBranch<vector<int>>("good_jets_medium_btagged")[higgs_jet_0]);
@@ -1362,6 +1354,58 @@ void VBSHWW::initSRCutflow()
         UNITY);
 
     cutflow.addCutToLastActiveCut("AK4CategObjectPreselection", UNITY, UNITY);
+
+    cutflow.getCut("AK4CategObjectPreselection");
+    cutflow.addCutToLastActiveCut("AK4CategTightObjectPreselection",
+        [&]()
+        {
+            // Require leading in b-tag score to be tight and the subleading to be tight
+            if (not (tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[0]))
+                return false;
+
+            // Require leading in b-tag score to be tight and the subleading to be tight
+            if (not (tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[1]))
+                return false;
+
+            return true;
+
+        }, UNITY);
+
+    cutflow.getCut("AK4CategObjectPreselection");
+    cutflow.addCutToLastActiveCut("AK4CategLooseObjectPreselection",
+        [&]()
+        {
+            // Require leading in b-tag score to be loose and the subleading to be loose
+            if (not (tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[0]))
+                return false;
+
+            // Require leading in b-tag score to be loose and the subleading to be loose
+            if (not (tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[1]))
+                return false;
+
+            return true;
+
+        }, UNITY);
+
+    cutflow.getCut("AK4CategObjectPreselection");
+    cutflow.addCutToLastActiveCut("AK4CategLooseButNotTightObjectPreselection",
+        [&]()
+        {
+            // Require leading in b-tag score to be loose and the subleading to be loose
+            if (not (tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[0]))
+                return false;
+
+            // Require leading in b-tag score to be loose and the subleading to be loose
+            if (not (tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[1]))
+                return false;
+
+            // Require leading in b-tag score to be tight and the subleading to be tight
+            if ((tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[0] and tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[1]))
+                return false;
+
+            return true;
+
+        }, UNITY);
 
     return;
 }

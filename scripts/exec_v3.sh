@@ -144,6 +144,9 @@ for SAMPLE in ${SAMPLES}; do
         if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_C2V_m2_TuneCP5_2016"* ]]; then continue; fi
         if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_C2V_m2_TuneCP5_2017"* ]]; then continue; fi
 
+        EXTRATAG=""
+        if [[ ${SAMPLE} == *"VBSWmpWmpHToLNuLNu_C2V_4p5_TuneCP5"* ]]; then EXTRATAG=ext1; fi
+
         # Last bit modification
         if [[ ${SAMPLE} == *"Run201"* ]]; then
             XSEC=1;
@@ -153,32 +156,31 @@ for SAMPLE in ${SAMPLES}; do
             SAMPLEWITHUNDERSCORE=${SAMPLE}_
         fi
 
+        NEVENTSINFOFILE=${NANOSKIMDIR}/${SAMPLEWITHUNDERSCORE}*${NANOTAG}*${EXTRATAG}*/merged/nevents.txt
         if [[ ${SAMPLE} == *"Run201"* ]]; then
             NTOTALEVENTS=1
             NEFFEVENTS=1
             SCALE1FB=1
         else
-            NTOTALEVENTS=$(head -n1 ${NANOSKIMDIR}/${SAMPLEWITHUNDERSCORE}*${NANOTAG}*/merged/nevents.txt)
-            NEFFEVENTS=$(tail -n1 ${NANOSKIMDIR}/${SAMPLEWITHUNDERSCORE}*${NANOTAG}*/merged/nevents.txt)
+            NTOTALEVENTS=$(head -n1 ${NEVENTSINFOFILE})
+            NEFFEVENTS=$(tail -n1 ${NEVENTSINFOFILE})
             SCALE1FB=$(echo "${XSEC} / ${NEFFEVENTS} * 1000" | bc -l)
         fi
 
         echo ""
         echo "=========================================================================================="
         echo "Preparing command lines to process ..."
-        echo "Sample                            : "${SAMPLE}
-        echo "Year                              : "${YEAR}
-        echo "Nano tag                          : "${NANOTAG}
-        echo "N events information file         :" ${NANOSKIMDIR}/${SAMPLEWITHUNDERSCORE}*${NANOTAG}*/nevents.txt
+        echo "Sample                            :" ${SAMPLE}
+        echo "Year                              :" ${YEAR}
+        echo "Nano tag                          :" ${NANOTAG}
+        echo "N events information file         :" ${NEVENTSINFOFILE}
         echo "N total events                    :" ${NTOTALEVENTS}
         echo "N eff total events (i.e. pos-neg) :" ${NEFFEVENTS}
         echo "Cross section (pb)                :" ${XSEC}
         echo "Scale1fb                          :" ${SCALE1FB}
         echo ""
 
-        FILELIST=$(ls ${NANOSKIMDIR}/${SAMPLEWITHUNDERSCORE}*${NANOTAG}*/merged/output.root | tr '\n' ',')
-        # BASENAME=$(basename ${FILE})
-        # FILENAME=${BASENAME%.*}
+        FILELIST=$(ls ${NANOSKIMDIR}/${SAMPLEWITHUNDERSCORE}*${NANOTAG}*${EXTRATAG}*/merged/output.root | tr '\n' ',')
         FILENAME=output
         echo " ${EXECUTABLE} -t Events -o ${HISTDIR}/${SAMPLE}_${FILENAME}.root --scale1fb ${SCALE1FB} -i ${FILELIST} > ${HISTDIR}/${SAMPLE}_${FILENAME}.log 2>&1" >> .jobs.txt
 
