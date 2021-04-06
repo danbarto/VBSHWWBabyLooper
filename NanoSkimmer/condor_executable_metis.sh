@@ -7,7 +7,7 @@ INPUTFILENAMES=$3
 IFILE=$4
 # CMSSWVERSION=$5 # We will be overriding by hand with the following
 # SCRAMARCH=$6 # We will be overriding by hand with the following
-CMSSWVERSION=CMSSW_10_0_0
+CMSSWVERSION=CMSSW_10_2_13
 SCRAMARCH=slc7_amd64_gcc700
 
 function getjobad {
@@ -71,7 +71,7 @@ fi
 
 # Setup environment and build
 export SCRAM_ARCH=${SCRAMARCH} && scramv1 project CMSSW ${CMSSWVERSION}
-cd CMSSW_10_0_0/src/
+cd CMSSW_10_2_13/src/
 tar xvf ../../package.tar.gz
 cd PhysicsTools/NanoAODTools/
 eval `scramv1 runtime -sh`
@@ -114,7 +114,7 @@ if grep -q "badread" check_xrd_stderr.txt || [[ "${EXTRAARGS}" == *"fetch_nano"*
     xrdcp root://xrootd.unl.edu/$input $dest
     echo "Done xrdcp"
     echo -e "\n--- end downloading via xrdcp ---\n" #                           <----- section division
-    Get local filepath name
+    # Get local filepath name
     localpath=$(echo ${INPUTFILENAMES} | sed 's/^.*\(\/store.*\).*$/\1/')
     localpath="${localpath/\/store\//}"
     echo "Input file name:" ${localpath}

@@ -8,6 +8,8 @@
 #include "Base.h"
 #include "ElectronSelections.h"
 #include "MuonSelections.h"
+#include "TauSelections.h"
+#include "Tools/goodrun.h"
 
 class VBSHWW
 {
@@ -37,6 +39,9 @@ public:
 
     // Debug boolean
     bool debug;
+
+    // Tau boolean
+    bool do_tau;
 
     // TChain that holds the input TTree's
     TChain* events_tchain;

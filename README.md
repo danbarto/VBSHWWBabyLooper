@@ -1,5 +1,17 @@
 # Quick Instructions
 
+    git clone --recursive git@github.com:sgnoohc/VBSHWWBabyLooper.git
+    cd VBSHWWBabyLooper
+    source setup.sh
+    make clean
+    make -j
+    sh scripts/run_v3.sh -s mainAnalysis
+    python scripts/cutflow.py mainAnalysis_Run2 SRLL
+    python rooutil/yield_for_keynote.py plots/cutflow/mainAnalysis_Run2/SRLL_cutflow.txt > table/data.csv
+    python scripts/plot.py mainAnalysis_Run2
+
+# Quick Instructions
+
 First fork the following repo to user's area.  
 Then, clone the repository to local area.
 
@@ -12,8 +24,8 @@ Then, clone the repository to local area.
     make clean
     make -j
     sh scripts/run_v2.sh -s mainAnalysis # for more info, $ sh scripts/run.sh -h
-    python scripts/cutflow.py mainAnalysis_2017 SignalRegionPreselection # To make cutflow for SignalRegionPreselection for year 2017
-    python scripts/plot.py mainAnalysis_2017 SignalRegionPreselection # To make plots at SignalRegionPreselection cut selection level year 2017
+    python scripts/cutflow.py mainAnalysis_Run2 SRLLDEtajj # To make cutflow for SignalRegionPreselection for full Run2
+    python scripts/plot.py mainAnalysis_Run2 SRLLDEtajj # To make plots at SignalRegionPreselection cut selection level full Run2
 
 # Running BDT input preparation code
 

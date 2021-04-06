@@ -25,6 +25,12 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     // Set up the NanoCORE's common configuration service tool
     gconf.GetConfigs(nt.year());
 
+    // Setting up good runs list
+    // TString vbsHwwNanoLooperDirPath = gSystem->Getenv("VBSHWWNANOLOOPERDIR");
+    // const char* json_file = TString::Format("%s/NanoTools/NanoCORE/Tools/data/Cert_271036-325175_13TeV_Combined161718_JSON_snt.txt", vbsHwwNanoLooperDirPath.Data()).Data();
+    // cout << "Setting grl: " << json_file << endl;
+    set_goodrun_file("/nfs-7/userdata/phchang/analysis_data/grl/Cert_271036-325175_13TeV_Combined161718_JSON_snt.txt");
+
 //=============================
 //
 // Analysis Data Structure
@@ -35,9 +41,43 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     tx.createBranch<int>("run");
     tx.createBranch<int>("lumi");
     tx.createBranch<unsigned long long>("evt");
+    tx.createBranch<float>("wgt");
 
     // Create met branches
     tx.createBranch<LV>("met_p4");
+
+    // Create gen particle branches
+    tx.createBranch<int>("isvbswwh");
+    tx.createBranch<LV>("gen_jet0_p4");
+    tx.createBranch<LV>("gen_jet1_p4");
+    tx.createBranch<LV>("gen_w0_p4");
+    tx.createBranch<LV>("gen_w1_p4");
+    tx.createBranch<LV>("gen_h_p4");
+    tx.createBranch<LV>("gen_lep0_p4");
+    tx.createBranch<LV>("gen_lep1_p4");
+    tx.createBranch<LV>("gen_nu0_p4");
+    tx.createBranch<LV>("gen_nu1_p4");
+    tx.createBranch<LV>("gen_b0_p4");
+    tx.createBranch<LV>("gen_b1_p4");
+    tx.createBranch<float>("genleppt0");
+    tx.createBranch<float>("genleppt1");
+    tx.createBranch<float>("gentaupt");
+    tx.createBranch<int>("genchannel");
+    tx.createBranch<float>("genmjj");
+    tx.createBranch<float>("genptjj");
+    tx.createBranch<float>("gendetajj");
+    tx.createBranch<float>("gendphijj");
+    tx.createBranch<float>("genmbb");
+    tx.createBranch<float>("genptbb");
+    tx.createBranch<float>("gendphibb");
+    tx.createBranch<float>("gendrbb");
+    tx.createBranch<float>("genmll");
+    tx.createBranch<float>("genptll");
+    tx.createBranch<float>("gendphill");
+    tx.createBranch<float>("gendrll");
+    tx.createBranch<float>("genst");
+    tx.createBranch<float>("genmtllbbmet");
+    tx.createBranch<float>("genmllbbmet");
 
     // Create lepton branches
     tx.createBranch<vector<LV>>("good_leptons_p4");
@@ -50,6 +90,13 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     tx.createBranch<vector<float>>("good_leptons_jetRelIso");
     tx.createBranch<vector<float>>("good_leptons_miniPFRelIso_all");
 
+    // Create tau branches
+    tx.createBranch<vector<LV>>("good_taus_p4");
+    tx.createBranch<vector<int>>("good_taus_pdgid");
+    tx.createBranch<vector<int>>("good_taus_tight");
+    tx.createBranch<vector<int>>("good_taus_jetIdx");
+    tx.createBranch<vector<int>>("good_taus_genPartFlav");
+
     // Create jet branches (NOTE: > 20 GeV jets are saved)
     tx.createBranch<vector<LV>>("good_jets_p4");
     tx.createBranch<vector<int>>("good_jets_loose_btagged");
@@ -57,7 +104,14 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     tx.createBranch<vector<int>>("good_jets_tight_btagged");
     tx.createBranch<vector<float>>("good_jets_btag_score");
     tx.createBranch<vector<float>>("good_jets_qg_disc");
-    
+
+    // Create fatjet branches (NOTE: > 20 GeV jets are saved)
+    tx.createBranch<vector<LV>>("good_fatjets_p4");
+    tx.createBranch<vector<int>>("good_fatjets_loose");
+    tx.createBranch<vector<int>>("good_fatjets_medium");
+    tx.createBranch<vector<int>>("good_fatjets_tight");
+    tx.createBranch<vector<float>>("good_fatjets_msd");
+
     // Create higgs tagged jet branches
     tx.createBranch<vector<LV>>("higgs_jets_p4");
     tx.createBranch<vector<int>>("higgs_jets_loose_btagged");
@@ -78,6 +132,19 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     // Create jet multiplicity branches
     tx.createBranch<int>("ncenjet30");
     tx.createBranch<int>("njet30");
+
+    // Create 6 fermion vectors
+    tx.createBranch<LV>("lep0");
+    tx.createBranch<LV>("lep1");
+    tx.createBranch<LV>("leadlep");
+    tx.createBranch<LV>("subllep");
+    tx.createBranch<LV>("b0");
+    tx.createBranch<LV>("b1");
+    tx.createBranch<LV>("j0");
+    tx.createBranch<LV>("j1");
+    tx.createBranch<int>("channel");
+    tx.createBranch<int>("mee_noZ");
+    tx.createBranch<int>("pass_blind");
 
 //=============================
 //
@@ -102,8 +169,16 @@ VBSHWW::VBSHWW(int argc, char** argv) :
         },
         [&]()
         {
-            float wgt = ((nt.Generator_weight() > 0) - (nt.Generator_weight() < 0)) * scale1fb;
-            return wgt * gconf.lumi;
+            if (nt.isData())
+            {
+                tx.setBranch<float>("wgt", 1.);
+            }
+            else
+            {
+                float wgt = ((nt.Generator_weight() > 0) - (nt.Generator_weight() < 0)) * scale1fb;
+                tx.setBranch<float>("wgt", wgt * gconf.lumi);
+            }
+            return tx.getBranch<float>("wgt");
         });
 
     //*****************************
@@ -116,10 +191,12 @@ VBSHWW::VBSHWW(int argc, char** argv) :
 
             int nel20 = 0;
             int nmu20 = 0;
+            int ntau20 = 0;
             std::vector<int> el20_idx;
             std::vector<int> mu20_idx;
+            std::vector<int> tau20_idx;
 
-            // loop over electrons to count electrons above 20 GeV, and store indices
+            // loop over electrons to count electrons above 20 GeV
             for (unsigned int idx = 0; idx < nt.Electron_pt().size(); ++idx)
             {
                 float el_pt = nt.Electron_pt()[idx];
@@ -130,7 +207,7 @@ VBSHWW::VBSHWW(int argc, char** argv) :
                 }
             }
 
-            // loop over muons to count muons above 20 GeV, and store indices
+            // loop over muons to count muons above 20 GeV
             for (unsigned int idx = 0; idx < nt.Muon_pt().size(); ++idx)
             {
                 float mu_pt = nt.Muon_pt()[idx];
@@ -141,8 +218,22 @@ VBSHWW::VBSHWW(int argc, char** argv) :
                 }
             }
 
+            if (do_tau)
+            {
+                // loop over taus to count taus above 20 GeV
+                for (unsigned int idx = 0; idx < nt.Tau_pt().size(); ++idx)
+                {
+                    float tau_pt = nt.Tau_pt()[idx];
+                    if (tau_pt > 20)
+                    {
+                        ntau20++;
+                        tau20_idx.push_back(idx);
+                    }
+                }
+            }
+
             // return true if more than or equals to 2 leptons
-            return nel20 + nmu20 >= 2;
+            return nel20 + nmu20 + ntau20 >= 2;
         },
         UNITY);
 }
@@ -313,6 +404,8 @@ void VBSHWW::parseCLI(int argc, char** argv)
         }
     }
 
+    do_tau = true;
+
     //
     // Printing out the option settings overview
     //
@@ -343,7 +436,7 @@ void VBSHWW::process(TString final_cutname)
     // Clear the data structure for the event
     tx.clear();
 
-    // Set the run lumi and event for this event
+    // // Set the run lumi and event for this event
     cutflow.setEventID(nt.run(), nt.luminosityBlock(), nt.event()); // Setting event ID in case we need to keep track of event id
 
     // Run all the cutflow selections and filling histograms
@@ -356,14 +449,252 @@ void VBSHWW::process(TString final_cutname)
     }
 }
 
-void VBSHWW::initSRCutflow() 
+void VBSHWW::initSRCutflow()
 {
+
+    //********************************
+    // - Selecting Gen Level Particles
+    //********************************
+    // Description: If signal sample, select the gen level particles
+    cutflow.addCutToLastActiveCut("SelectGenPart",
+        [&]()
+        {
+            if (looper.getCurrentFileName().Contains("VBSWmpWmpHToLNuLNu_C2V"))
+            {
+                bool isvbswwh = nt.GenPart_status()[2] == 23;
+                tx.setBranch<int>("isvbswwh", isvbswwh);
+                if (isvbswwh)
+                {
+                    const LV& ijet = nt.GenPart_p4()[2];
+                    const LV& jjet = nt.GenPart_p4()[3];
+                    const LV& jet0 = ijet.pt() > jjet.pt() ? ijet : jjet;
+                    const LV& jet1 = ijet.pt() > jjet.pt() ? jjet : ijet;
+                    tx.setBranch<LV>("gen_jet0_p4", jet0);
+                    tx.setBranch<LV>("gen_jet1_p4", jet1);
+                    const LV& iW = nt.GenPart_p4()[4];
+                    const LV& jW = nt.GenPart_p4()[5];
+                    const LV& W0 = iW.pt() > jW.pt() ? iW : jW;
+                    const LV& W1 = iW.pt() > jW.pt() ? jW : iW;
+                    tx.setBranch<LV>("gen_w0_p4", W0);
+                    tx.setBranch<LV>("gen_w1_p4", W1);
+                    const LV& h = nt.GenPart_p4()[6];
+                    tx.setBranch<LV>("gen_h_p4", h);
+
+                    std::vector<LV> leptons;
+                    std::vector<int> lepton_pdgids;
+                    for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
+                    {
+                        int midx = nt.GenPart_genPartIdxMother()[igen];
+                        if (midx > 1)
+                        {
+                            if (abs(nt.GenPart_pdgId()[midx]) == 24 and abs(nt.GenPart_status()[midx]) == 62
+                                and (
+                                    ((nt.GenPart_status()[igen] == 1 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 11 or abs(nt.GenPart_pdgId()[igen]) == 13))
+                                    or
+                                    ((nt.GenPart_status()[igen] == 2 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 15))
+                                    )
+                               )
+                            {
+                                leptons.push_back(nt.GenPart_p4()[igen]);
+                                lepton_pdgids.push_back(nt.GenPart_pdgId()[igen]);
+                            }
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (leptons.size() != 2)
+                    {
+                        std::cout <<  " leptons.size(): " << leptons.size() <<  std::endl;
+                        for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
+                        {
+                            int pdgid = nt.GenPart_pdgId()[igen];
+                            int status = nt.GenPart_status()[igen];
+                            int midx = nt.GenPart_genPartIdxMother()[igen];
+                            int mid = midx > -1 ? nt.GenPart_pdgId()[midx] : -1;
+                            int mstatus = midx > -1 ? nt.GenPart_status()[midx] : -1;
+                            std::cout <<  " pdgid: " << pdgid <<  " status: " << status <<  " midx: " << midx <<  " mid: " << mid <<  " mstatus: " << mstatus <<  std::endl;
+                        }
+                    }
+                    const LV& lep0 = leptons[0].pt() > leptons[1].pt() ? leptons[0] : leptons[1];
+                    const LV& lep1 = leptons[0].pt() > leptons[1].pt() ? leptons[1] : leptons[0];
+
+                    std::vector<LV> nus;
+                    for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
+                    {
+                        int midx = nt.GenPart_genPartIdxMother()[igen];
+                        if (midx > 1)
+                        {
+                            if (abs(nt.GenPart_pdgId()[midx]) == 24 and abs(nt.GenPart_status()[midx]) == 62
+                                and (
+                                    ((nt.GenPart_status()[igen] == 1 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 12 or abs(nt.GenPart_pdgId()[igen]) == 14))
+                                    or
+                                    ((nt.GenPart_status()[igen] == 1 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 16))
+                                    )
+                               )
+                            {
+                                nus.push_back(nt.GenPart_p4()[igen]);
+                            }
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (nus.size() != 2)
+                    {
+                        std::cout <<  " nus.size(): " << nus.size() <<  std::endl;
+                    }
+                    const LV& nu0 = nus[0].pt() > nus[1].pt() ? nus[0] : nus[1];
+                    const LV& nu1 = nus[0].pt() > nus[1].pt() ? nus[1] : nus[0];
+
+                    std::vector<LV> bs;
+                    for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
+                    {
+                        if (abs(nt.GenPart_pdgId()[igen]) == 5 and nt.GenPart_status()[igen] == 23)
+                        {
+                            bs.push_back(nt.GenPart_p4()[igen]);
+                        }
+                    }
+
+                    if (bs.size() != 2)
+                    {
+                        std::cout <<  " bs.size(): " << bs.size() <<  std::endl;
+                    }
+                    const LV& b0 = bs[0].pt() > bs[1].pt() ? bs[0] : bs[1];
+                    const LV& b1 = bs[0].pt() > bs[1].pt() ? bs[1] : bs[0];
+
+                    tx.setBranch<LV>("gen_lep0_p4", lep0);
+                    tx.setBranch<LV>("gen_lep1_p4", lep1);
+                    tx.setBranch<LV>("gen_nu0_p4", nu0);
+                    tx.setBranch<LV>("gen_nu1_p4", nu1);
+                    tx.setBranch<LV>("gen_b0_p4", b0);
+                    tx.setBranch<LV>("gen_b1_p4", b1);
+
+                    int channel = -1;
+                    if (lepton_pdgids[0] * lepton_pdgids[1] == 121)
+                    {
+                        channel = 0;
+                    }
+                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 143)
+                    {
+                        channel = 1;
+                    }
+                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 169)
+                    {
+                        channel = 2;
+                    }
+                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 165)
+                    {
+                        channel = 3;
+                    }
+                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 195)
+                    {
+                        channel = 4;
+                    }
+                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 225)
+                    {
+                        channel = 5;
+                    }
+
+                    tx.setBranch<float>("genleppt0", lep0.pt());
+                    tx.setBranch<float>("genleppt1", lep1.pt());
+                    tx.setBranch<float>("gentaupt", -999.);
+                    tx.setBranch<int>("genchannel", channel);
+                    tx.setBranch<float>("genmjj", (jet0+jet1).mass());
+                    tx.setBranch<float>("genptjj", (jet0+jet1).pt());
+                    tx.setBranch<float>("gendetajj", abs(RooUtil::Calc::DeltaEta(jet0, jet1)));
+                    tx.setBranch<float>("gendphijj", abs(RooUtil::Calc::DeltaPhi(jet0, jet1)));
+                    tx.setBranch<float>("genmbb", (b0+b1).mass());
+                    tx.setBranch<float>("genptbb", (b0+b1).pt());
+                    tx.setBranch<float>("gendphibb", abs(RooUtil::Calc::DeltaPhi(b0, b1)));
+                    tx.setBranch<float>("gendrbb", RooUtil::Calc::DeltaR(b0, b1));
+                    tx.setBranch<float>("genmll", (lep0+lep1).mass());
+                    tx.setBranch<float>("genptll", (lep0+lep1).pt());
+                    tx.setBranch<float>("gendphill", abs(RooUtil::Calc::DeltaPhi(lep0, lep1)));
+                    tx.setBranch<float>("gendrll", RooUtil::Calc::DeltaR(lep0, lep1));
+                    tx.setBranch<float>("genst", (lep0.pt() + lep1.pt() + b0.pt() + b1.pt() + (nu0 + nu1).pt()));
+                    tx.setBranch<float>("genmtllbbmet", (lep0 + lep1 + b0 + b1 + nu0 + nu1).mt());
+                    tx.setBranch<float>("genmllbbmet", (lep0 + lep1 + b0 + b1 + nu0 + nu1).mass());
+
+                    return true;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                return true;
+            }
+        }, UNITY);
+
+    //************************************
+    // - Selecting Good Runs List for data
+    //************************************
+    cutflow.addCutToLastActiveCut("GoodRunsList",
+        [&]()
+        {
+            if (nt.isData())
+            {
+                if (goodrun(nt.run(), nt.luminosityBlock()))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return true;
+            }
+        }, UNITY);
+
+    //*****************************
+    // - Applying MET event filters
+    //*****************************
+    cutflow.addCutToLastActiveCut("EventFilters",
+        [&]()
+        {
+
+            bool filterflag   = false;
+            bool filterflagMC = false;
+            switch (nt.year())
+            {
+                case 2016:
+                    filterflag   = nt.Flag_goodVertices() and nt.Flag_globalSuperTightHalo2016Filter() and nt.Flag_HBHENoiseFilter() and nt.Flag_HBHENoiseIsoFilter() and nt.Flag_EcalDeadCellTriggerPrimitiveFilter() and nt.Flag_BadPFMuonFilter();
+                    filterflagMC = nt.Flag_goodVertices() and                                              nt.Flag_HBHENoiseFilter() and nt.Flag_HBHENoiseIsoFilter() and nt.Flag_EcalDeadCellTriggerPrimitiveFilter() and nt.Flag_BadPFMuonFilter();
+                    break;
+                case 2017:
+                    filterflag   = nt.Flag_goodVertices() and nt.Flag_globalSuperTightHalo2016Filter() and nt.Flag_HBHENoiseFilter() and nt.Flag_HBHENoiseIsoFilter() and nt.Flag_EcalDeadCellTriggerPrimitiveFilter() and nt.Flag_BadPFMuonFilter() and nt.Flag_ecalBadCalibFilterV2();
+                    filterflagMC = nt.Flag_goodVertices() and                                              nt.Flag_HBHENoiseFilter() and nt.Flag_HBHENoiseIsoFilter() and nt.Flag_EcalDeadCellTriggerPrimitiveFilter() and nt.Flag_BadPFMuonFilter() and nt.Flag_ecalBadCalibFilterV2();
+                    break;
+                case 2018:
+                    filterflag   = nt.Flag_goodVertices() and nt.Flag_globalSuperTightHalo2016Filter() and nt.Flag_HBHENoiseFilter() and nt.Flag_HBHENoiseIsoFilter() and nt.Flag_EcalDeadCellTriggerPrimitiveFilter() and nt.Flag_BadPFMuonFilter() and nt.Flag_ecalBadCalibFilterV2();
+                    filterflagMC = nt.Flag_goodVertices() and                                              nt.Flag_HBHENoiseFilter() and nt.Flag_HBHENoiseIsoFilter() and nt.Flag_EcalDeadCellTriggerPrimitiveFilter() and nt.Flag_BadPFMuonFilter() and nt.Flag_ecalBadCalibFilterV2();
+                    break;
+            }
+            if (nt.isData())
+            {
+                return filterflag;
+            }
+            else
+            {
+                return filterflagMC;
+            }
+        }, UNITY);
 
     //*****************************
     // - Selecting Analysis Leptons
     //*****************************
     // Description: Select leptons used for the analysis
-    //              The electrons / muons definitions are in NanoCORE/Electron(Muon)Selections.cc
+    //              The electrons / muons / taus definitions are in NanoCORE/Electron(Muon/Tau)Selections.cc
     cutflow.addCutToLastActiveCut("SelectLeptons",
         [&]()
         {
@@ -371,7 +702,7 @@ void VBSHWW::initSRCutflow()
             // Select muons
             for (unsigned int imu = 0; imu < nt.Muon_pt().size(); ++imu)
             {
-                if (SS::muonID(imu, SS::IDfakable, nt.year()))
+                if (SS::muonID(imu, SS::IDveto, nt.year()))
                 {
                     tx.pushbackToBranch<LV>("good_leptons_p4", nt.Muon_p4()[imu]);
                     tx.pushbackToBranch<int>("good_leptons_pdgid", (-nt.Muon_charge()[imu]) * 13);
@@ -388,11 +719,11 @@ void VBSHWW::initSRCutflow()
             // Select electrons
             for (unsigned int iel = 0; iel < nt.Electron_pt().size(); ++iel)
             {
-                if (SS::electronID(iel, SS::IDfakable, nt.year()))
+                if (SS::electronID(iel, SS::IDveto, nt.year()))
                 {
                     tx.pushbackToBranch<LV>("good_leptons_p4", nt.Electron_p4()[iel]);
                     tx.pushbackToBranch<int>("good_leptons_pdgid", (-nt.Electron_charge()[iel]) * 11);
-                    tx.pushbackToBranch<int>("good_leptons_tight", SS::electronID(iel, SS::IDtight, nt.year()) * (nt.Electron_pfRelIso03_all()[iel] < 0.05));
+                    tx.pushbackToBranch<int>("good_leptons_tight", SS::electronID(iel, SS::IDtight, nt.year()));
                     tx.pushbackToBranch<int>("good_leptons_jetIdx", nt.Electron_jetIdx()[iel]);
                     tx.pushbackToBranch<float>("good_leptons_pfRelIso03_all", nt.Electron_pfRelIso03_all()[iel]);
                     tx.pushbackToBranch<float>("good_leptons_pfRelIso03_chg", nt.Electron_pfRelIso03_chg()[iel]);
@@ -403,35 +734,107 @@ void VBSHWW::initSRCutflow()
             }
 
             tx.sortVecBranchesByPt(
-                    /* name of the 4vector branch to use to pt sort by*/               "good_leptons_p4",
-                    /* names of any associated vector<float> branches to sort along */ {"good_leptons_pfRelIso03_all", "good_leptons_pfRelIso03_chg", "good_leptons_jetPtRelv2", "good_leptons_jetRelIso", "good_leptons_miniPFRelIso_all"},
-                    /* names of any associated vector<int>   branches to sort along */ {"good_leptons_pdgid", "good_leptons_tight", "good_leptons_jetIdx"},
-                    /* names of any associated vector<bool>  branches to sort along */ {}
+                /* name of the 4vector branch to use to pt sort by*/
+                "good_leptons_p4",
+                /* names of any associated vector<float> branches to sort along */
+                {
+                    "good_leptons_pfRelIso03_all",
+                    "good_leptons_pfRelIso03_chg",
+                    "good_leptons_jetPtRelv2",
+                    "good_leptons_jetRelIso",
+                    "good_leptons_miniPFRelIso_all"
+                },
+                /* names of any associated vector<int>   branches to sort along */
+                {
+                    "good_leptons_pdgid",
+                    "good_leptons_tight",
+                    "good_leptons_jetIdx",
+                },
+                /* names of any associated vector<bool>  branches to sort along */
+                {}
+            );
+
+            if (do_tau)
+            {
+                // Select taus
+                const vector<LV>& good_leptons_p4 = tx.getBranchLazy<vector<LV>>("good_leptons_p4");
+                const vector<int>& good_leptons_pdgid = tx.getBranchLazy<vector<int>>("good_leptons_pdgid");
+                for (unsigned int itau = 0; itau < nt.nTau(); ++itau)
+                {
+                    if (SS::tauID(itau, SS::IDfakable, nt.year()))
+                    {
+                        // tau-(non-tau lep) overlap removal
+                        bool save_this_tau = true;
+
+                        for (unsigned int ilep = 0; ilep < good_leptons_p4.size(); ++ilep)
+                        {
+                            if (RooUtil::Calc::DeltaR(nt.Tau_p4().at(itau), good_leptons_p4.at(ilep)) < 0.4)
+                            {
+                                save_this_tau = false;
+                                break;
+                            }
+                        }
+
+                        if (!save_this_tau)
+                        {
+                            continue;
+                        }
+
+                        // Only save >= loose taus that do not overlap w/ a 'good' lepton
+                        tx.pushbackToBranch<LV>("good_taus_p4", nt.Tau_p4()[itau]);
+                        tx.pushbackToBranch<int>("good_taus_genPartFlav", nt.isData() ? -999 : nt.Tau_genPartFlav()[itau]);
+                        tx.pushbackToBranch<int>("good_taus_pdgid", (-nt.Tau_charge()[itau]) * 15);
+                        tx.pushbackToBranch<int>("good_taus_tight", SS::tauID(itau, SS::IDtight, nt.year()));
+                        tx.pushbackToBranch<int>("good_taus_jetIdx", nt.Tau_jetIdx()[itau]);
+
+                    }
+                }
+
+                tx.sortVecBranchesByPt(
+                    /* name of the 4vector branch to use to pt sort by*/
+                    "good_taus_p4",
+                    /* names of any associated vector<float> branches to sort along */
+                    {},
+                    /* names of any associated vector<int>   branches to sort along */
+                    {
+                        "good_taus_pdgid",
+                        "good_taus_tight",
+                        "good_taus_jetIdx",
+                        "good_taus_genPartFlav"
+                    },
+                    /* names of any associated vector<bool>  branches to sort along */
+                    {}
                     );
+            }
 
             return true;
 
         },
         UNITY);
 
-    //*****************************
-    // - Same Sign Preselection
-    //*****************************
-    // Description: Pass events only when we have:
-    //              - two loose
-    //              - two tight
-    //              - they are same sign
-    //              - pt > 25 or 20 depending on flavor (see below for detail)
+    //*******************************
+    // - Select Two Same-Sign Leptons
+    //*******************************
     cutflow.addCutToLastActiveCut("SSPreselection",
         [&]()
         {
 
-            // Select only two loose leptons
-            if (not (tx.getBranchLazy<vector<LV>>("good_leptons_p4").size() == 2))
+            // At least one loose light lepton
+            if (not (tx.getBranchLazy<vector<LV>>("good_leptons_p4").size() >= 1))
+                return false;
+
+            // Only two loose leptons
+            if (not (tx.getBranchLazy<vector<LV>>("good_leptons_p4").size() + tx.getBranchLazy<vector<LV>>("good_taus_p4").size() == 2))
                 return false;
 
             int ntight = 0;
             for (auto& istight : tx.getBranch<vector<int>>("good_leptons_tight"))
+            {
+                if (istight)
+                    ntight++;
+            }
+
+            for (auto& istight : tx.getBranchLazy<vector<int>>("good_taus_tight"))
             {
                 if (istight)
                     ntight++;
@@ -442,47 +845,175 @@ void VBSHWW::initSRCutflow()
                 return false;
 
             // Therefore I will only have two leptons in the good_leptons container
-            const int& pdgid0 = tx.getBranch<vector<int>>("good_leptons_pdgid")[0];
-            const int& pdgid1 = tx.getBranch<vector<int>>("good_leptons_pdgid")[1];
+            const int& pdgid0 = tx.getBranchLazy<vector<int>>("good_leptons_pdgid")[0];
+            const int& pdgid1 = tx.getBranchLazy<vector<int>>("good_leptons_pdgid").size() == 2 ? tx.getBranchLazy<vector<int>>("good_leptons_pdgid")[1] : tx.getBranchLazy<vector<int>>("good_taus_pdgid")[0];
 
             // Require same sign
             if (not (pdgid0 * pdgid1 > 0))
                 return false;
 
-            const float& pt0 = tx.getBranch<vector<LV>>("good_leptons_p4")[0].pt();
-            const float& pt1 = tx.getBranch<vector<LV>>("good_leptons_p4")[1].pt();
+            const float& pt0 = tx.getBranchLazy<vector<LV>>("good_leptons_p4")[0].pt();
+            const float& pt1 = tx.getBranchLazy<vector<LV>>("good_leptons_p4").size() == 2 ? tx.getBranchLazy<vector<LV>>("good_leptons_p4")[1].pt() : tx.getBranchLazy<vector<LV>>("good_taus_p4")[0].pt();
 
-            // Apply Pt selections
-            if (abs(pdgid0) == 11 and abs(pdgid1) == 11)
+            // Set the channel
+            int channel = -1;
+            if (tx.getBranch<vector<LV>>("good_leptons_p4").size() == 2)
             {
-                return ((pt0 > 25.) and (pt1 > 25.));
+                if (tx.getBranch<vector<int>>("good_leptons_pdgid")[0] * tx.getBranch<vector<int>>("good_leptons_pdgid")[1] == 121)
+                    channel = 0;
+                else if (tx.getBranch<vector<int>>("good_leptons_pdgid")[0] * tx.getBranch<vector<int>>("good_leptons_pdgid")[1] == 143)
+                    channel = 1;
+                else if (tx.getBranch<vector<int>>("good_leptons_pdgid")[0] * tx.getBranch<vector<int>>("good_leptons_pdgid")[1] == 169)
+                    channel = 2;
             }
-            else if (abs(pdgid0) == 11 and abs(pdgid1) == 13)
+            else // It has to be good_leptons_p4.size() == 1 by now
             {
-                return ((pt0 > 25.) and (pt1 > 20.));
+                if (abs(tx.getBranch<vector<int>>("good_leptons_pdgid")[0]) == 11)
+                    channel = 3;
+                else if (abs(tx.getBranch<vector<int>>("good_leptons_pdgid")[0]) == 13)
+                    channel = 4;
             }
-            else if (abs(pdgid0) == 13 and abs(pdgid1) == 11)
+
+            tx.setBranch<int>("channel", channel);
+
+            // lep0 is lead if same flavor
+            // lep1 is sublead if same flavor
+            // lep0 is electron if emu
+            // lep1 is muon if emu
+            // lep0 is e or mu if lep-tau
+            // lep1 is tau if lep-tau
+            switch (channel)
             {
-                return ((pt0 > 25.) and (pt1 > 25.));
+                case 0:
+                    tx.setBranch<LV>("lep0", tx.getBranch<vector<LV>>("good_leptons_p4")[0]);
+                    tx.setBranch<LV>("lep1", tx.getBranch<vector<LV>>("good_leptons_p4")[1]);
+                    break;
+                case 1:
+                    tx.setBranch<LV>("lep0", abs(tx.getBranch<vector<int>>("good_leptons_pdgid")[0]) == 11 ? tx.getBranch<vector<LV>>("good_leptons_p4")[0] : tx.getBranch<vector<LV>>("good_leptons_p4")[1]);
+                    tx.setBranch<LV>("lep1", abs(tx.getBranch<vector<int>>("good_leptons_pdgid")[0]) == 11 ? tx.getBranch<vector<LV>>("good_leptons_p4")[1] : tx.getBranch<vector<LV>>("good_leptons_p4")[0]);
+                    break;
+                case 2:
+                    tx.setBranch<LV>("lep0", tx.getBranch<vector<LV>>("good_leptons_p4")[0]);
+                    tx.setBranch<LV>("lep1", tx.getBranch<vector<LV>>("good_leptons_p4")[1]);
+                    break;
+                case 3:
+                    tx.setBranch<LV>("lep0", tx.getBranch<vector<LV>>("good_leptons_p4")[0]);
+                    tx.setBranch<LV>("lep1", tx.getBranch<vector<LV>>("good_taus_p4")[0]);
+                    break;
+                case 4:
+                    tx.setBranch<LV>("lep0", tx.getBranch<vector<LV>>("good_leptons_p4")[0]);
+                    tx.setBranch<LV>("lep1", tx.getBranch<vector<LV>>("good_taus_p4")[0]);
+                    break;
             }
-            else if (abs(pdgid0) == 13 and abs(pdgid1) == 13)
+            tx.setBranch<LV>("leadlep", tx.getBranch<LV>("lep0").pt() > tx.getBranch<LV>("lep1").pt() ? tx.getBranch<LV>("lep0") : tx.getBranch<LV>("lep1"));
+            tx.setBranch<LV>("subllep", tx.getBranch<LV>("lep0").pt() > tx.getBranch<LV>("lep1").pt() ? tx.getBranch<LV>("lep1") : tx.getBranch<LV>("lep0"));
+
+            // To veto same-sign dielectron on-Z (charge flip)
+            int mee_noZ = (not (channel == 0 and abs((tx.getBranch<LV>("lep0")+tx.getBranch<LV>("lep1")).mass() - 91.1876) < 15.)); // if ee channel and mll is on-Z
+            tx.setBranch<int>("mee_noZ", mee_noZ);
+
+            return pt0 > 35. and pt1 > 35.;
+
+        },
+        UNITY);
+
+    //**************************************************
+    // - Selecting Trigger and removing duplicate events
+    //**************************************************
+    cutflow.addCutToLastActiveCut("Trigger",
+        [&]()
+        {
+            if (tx.getBranch<int>("channel") <= 2)
             {
-                return ((pt0 > 25.) and (pt1 > 20.));
+                bool is_pd_ee = looper.getCurrentFileName().Contains("DoubleEG") or looper.getCurrentFileName().Contains("EGamma");
+                bool is_pd_em = looper.getCurrentFileName().Contains("MuonEG");
+                bool is_pd_mm = looper.getCurrentFileName().Contains("DoubleMuon");
+                bool pass_duplicate_ee_em_mm = false;
+                bool pass_duplicate_mm_em_ee = false;
+
+                bool trig_ee = false;
+                bool trig_em = false;
+                bool trig_mm = false;
+
+                bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ = false;
+                bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL = false;
+                bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8 = false;
+                bool Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ = false;
+                bool Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL = false;
+                bool Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ = false;
+                bool Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL = false;
+                bool Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ = false;
+                bool Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL = false;
+
+                try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ                 = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ();                } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ                 = false; } // Lowest unprescaled
+                try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL                    = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL();                   } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL                    = false; } // Lowest unprescaled
+                try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8         = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8();        } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8         = false; } // Lowest unprescaled for >= 2017C
+                try { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ           = nt.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ();          } catch (std::runtime_error) { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ           = false; }
+                try { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL              = nt.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL();             } catch (std::runtime_error) { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL              = false; } // Lowest unprescaled
+                try { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ  = nt.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ(); } catch (std::runtime_error) { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ  = false; } // Lowest unprescaled
+                try { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL     = nt.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL();    } catch (std::runtime_error) { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL     = false; }
+                try { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ   = nt.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ();  } catch (std::runtime_error) { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ   = false; } // Lowest unprescaled
+                try { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL      = nt.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL();     } catch (std::runtime_error) { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL      = false; }
+
+                switch (nt.year())
+                {
+                    case 2016:
+                        trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ;
+                        trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL or
+                            Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
+                        trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ or
+                            Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL;
+                        break;
+                    case 2017:
+                        trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL;
+                        trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
+                        trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8;
+                        break;
+                    case 2018:
+                        trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL;
+                        trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
+                        trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8;
+                        break;
+                }
+
+                if (is_pd_ee)
+                {
+                    if (trig_ee)
+                        pass_duplicate_ee_em_mm = true;
+                    if (not trig_mm and not trig_em and trig_ee)
+                        pass_duplicate_mm_em_ee = true;
+                }
+                else if (is_pd_em)
+                {
+                    if (not trig_ee and trig_em)
+                        pass_duplicate_ee_em_mm = true;
+                    if (not trig_mm and trig_em)
+                        pass_duplicate_mm_em_ee = true;
+                }
+                else if (is_pd_mm)
+                {
+                    if (not trig_ee and not trig_em and trig_mm)
+                        pass_duplicate_ee_em_mm = true;
+                    if (trig_mm)
+                        pass_duplicate_mm_em_ee = true;
+                }
+
+
+                bool pass_trigger = trig_ee or trig_em or trig_mm;
+                bool duplicate = nt.isData() ? pass_duplicate_ee_em_mm : 1.;
+                return (pass_trigger and duplicate);
             }
             else
             {
-                // I should not be here
-                std::cout << "I should not be here!!!! " << std::endl;
-                return false;
+                return (not nt.isData());
             }
-        },
-        UNITY);
+
+        }, UNITY);
 
     //*****************************
     // - Select Good Reco Jets
     //*****************************
     // Description: Select Good Reco Jets
-    //              - (TODO?) CURRENTLY NO ID APPLIED TO THE JETS
     //              - TODO TODO TODO TODO : Check pileup jet ID for year 2017
     //              - Perform overlap removal against loose leptons
     //              - Accept jets above 20 GeV for the container
@@ -504,14 +1035,27 @@ void VBSHWW::initSRCutflow()
             // Loop over the jets
             for (unsigned int ijet = 0; ijet < nt.Jet_pt().size(); ++ijet)
             {
+
                 // Read jet p4
                 const LV& jet_p4 = nt.Jet_p4()[ijet];
+
+                if (nt.Jet_jetId()[ijet] < 2) // "Tight" ID requirement
+                    continue;
 
                 // Overlap check against good leptons
                 bool isOverlap = false;
                 for (unsigned int ilep = 0; ilep < tx.getBranch<vector<LV>>("good_leptons_p4").size(); ++ilep)
                 {
                     if (tx.getBranch<vector<int>>("good_leptons_jetIdx").at(ilep) == (int) ijet)
+                    {
+                        isOverlap = true;
+                        break;
+                    }
+                }
+
+                for (unsigned int itau = 0; itau < tx.getBranchLazy<vector<LV>>("good_taus_p4").size(); ++itau)
+                {
+                    if (RooUtil::Calc::DeltaR(tx.getBranchLazy<vector<LV>>("good_taus_p4").at(itau), jet_p4) < 0.4)
                     {
                         isOverlap = true;
                         break;
@@ -531,7 +1075,7 @@ void VBSHWW::initSRCutflow()
                 bool is_tight_btagged = false;
 
                 // B-tagging is also done up to 2.5 in eta only
-                if (abs(jet_p4.eta()) < 2.4)
+                if (abs(jet_p4.eta()) < 2.5)
                 {
                     // Check if it passes btagging
                     is_loose_btagged = nt.Jet_btagDeepFlavB()[ijet] > gconf.WP_DeepFlav_loose;
@@ -575,34 +1119,98 @@ void VBSHWW::initSRCutflow()
                     /* names of any associated vector<bool>  branches to sort along */ {}
                     );
 
+            // Loop over the jets
+            for (unsigned int ifatjet = 0; ifatjet < nt.FatJet_pt().size(); ++ifatjet)
+            {
+
+                // Read jet p4
+                const LV& jet_p4 = nt.FatJet_p4()[ifatjet];
+
+                // Overlap check against good leptons
+                bool isOverlap = false;
+                for (unsigned int ilep = 0; ilep < tx.getBranch<vector<LV>>("good_leptons_p4").size(); ++ilep)
+                {
+                    if (RooUtil::Calc::DeltaR(tx.getBranchLazy<vector<LV>>("good_leptons_p4")[ilep], jet_p4) < 0.8)
+                    {
+                        isOverlap = true;
+                        break;
+                    }
+                }
+
+                for (unsigned int itau = 0; itau < tx.getBranchLazy<vector<LV>>("good_taus_p4").size(); ++itau)
+                {
+                    if (RooUtil::Calc::DeltaR(tx.getBranchLazy<vector<LV>>("good_taus_p4").at(itau), jet_p4) < 0.4)
+                    {
+                        isOverlap = true;
+                        break;
+                    }
+                }
+
+                // Then skip
+                if (isOverlap)
+                    continue;
+
+                // FatJet pt preselection is 250 GeV as Hbb tagger SF starts at 250 GeV.
+                if (not (jet_p4.pt() > 250.))
+                    continue;
+
+                bool is_loose_btagged = false;
+                bool is_medium_btagged = false;
+                bool is_tight_btagged = false;
+
+                // B-tagging is also done up to 2.5 in eta only
+                if (abs(jet_p4.eta()) < 2.5)
+                {
+                    // Check if it passes btagging
+                    if (nt.year() == 2018)
+                    {
+                        is_loose_btagged = nt.FatJet_btagDDBvL()[ifatjet] > 0.7; // 85% after SF
+                        is_medium_btagged = nt.FatJet_btagDDBvL()[ifatjet] > 0.86; // 55% after SF
+                        is_tight_btagged = nt.FatJet_btagDDBvL()[ifatjet] > 0.91; // 30% after SF
+                    }
+                }
+
+                tx.pushbackToBranch<LV>("good_fatjets_p4", jet_p4);
+                tx.pushbackToBranch<int>("good_fatjets_loose", is_loose_btagged);
+                tx.pushbackToBranch<int>("good_fatjets_medium", is_medium_btagged);
+                tx.pushbackToBranch<int>("good_fatjets_tight", is_tight_btagged);
+                tx.pushbackToBranch<float>("good_fatjets_msd", nt.FatJet_msoftdrop()[ifatjet]);
+
+
+            }
+
+            tx.sortVecBranchesByPt(
+                    /* name of the 4vector branch to use to pt sort by*/               "good_fatjets_p4",
+                    /* names of any associated vector<float> branches to sort along */ {"good_fatjets_msd"},
+                    /* names of any associated vector<int>   branches to sort along */ {"good_fatjets_loose", "good_fatjets_medium", "good_fatjets_tight"},
+                    /* names of any associated vector<bool>  branches to sort along */ {}
+                    );
+
             return true;
         },
         UNITY);
 
     //*****************************
-    // - Require Two Medium Btag
-    //*****************************
-    // Description: Select two medium b-tag /* TODO TODO TODO TODO btag scale factor */
-    cutflow.addCutToLastActiveCut("GeqTwoMedBtag", [&]() { return tx.getBranch<int>("nbmedium") >= 2; }, UNITY);
-
-    //*****************************
-    // - Require Two Tight Btag
-    //*****************************
-    // Description: Select two tight b-tag /* TODO TODO TODO TODO btag scale factor */
-    cutflow.addCutToLastActiveCut("GeqTwoTightBtag", [&]() { return tx.getBranch<int>("nbtight") >= 2; }, UNITY);
-
-    //*****************************
     // - Tag Hbb jets
     //*****************************
-    // Description: Select the two b-tagged jets with highest btagging score as Hbb jets
-    cutflow.addCutToLastActiveCut("TagHiggsJets",
+    // Description: Select the two b-tagged jets with highest btagging score as Hbb jets and require two highest bjets pass tight
+    cutflow.addCutToLastActiveCut("AK4CategTagHiggsJets",
         [&]()
         {
+           // If less than two jets skip entirely
+           if (tx.getBranchLazy<vector<LV>>("good_jets_p4").size() < 2)
+               return false;
+
             // get scores and indices pairs
             std::vector<std::pair<float, int>> btag_jets;
             for (unsigned int i = 0; i < tx.getBranch<vector<LV>>("good_jets_p4").size(); i++)
             {
-                const float& btag_score = tx.getBranch<vector<float>>("good_jets_btag_score")[i];
+                const LV& bp4 = tx.getBranch<vector<LV>>("good_jets_p4")[i];
+                float btag_score = tx.getBranch<vector<float>>("good_jets_btag_score")[i];
+                if (abs(bp4.eta()) > 2.4) // If the jet is outside of 2.4 set the btag score to -999 so that we don't choose them
+                {
+                    btag_score = -999.f;
+                }
                 btag_jets.push_back(std::make_pair(btag_score, i));
             }
 
@@ -629,6 +1237,12 @@ void VBSHWW::initSRCutflow()
             tx.pushbackToBranch<int>("higgs_jets_tight_btagged", tx.getBranch<vector<int>>("good_jets_tight_btagged")[higgs_jet_1]);
             tx.pushbackToBranch<float>("higgs_jets_btag_score", tx.getBranch<vector<float>>("good_jets_btag_score")[higgs_jet_1]);
             tx.pushbackToBranch<int>("higgs_jets_good_jets_idx", higgs_jet_1);
+
+            // Set the tagged higgs jets
+            tx.setBranch<LV>("b0", tx.getBranch<vector<LV>>("higgs_jets_p4")[0]);
+            tx.setBranch<LV>("b1", tx.getBranch<vector<LV>>("higgs_jets_p4")[1]);
+            tx.setBranch<int>("pass_blind", nt.isData() ? (tx.getBranch<LV>("b0")+tx.getBranch<LV>("b1")).mass() > 140. or (tx.getBranch<LV>("b0")+tx.getBranch<LV>("b1")).mass() < 90.: 1.);
+
             return true;
 
         }, UNITY);
@@ -639,7 +1253,7 @@ void VBSHWW::initSRCutflow()
     // Description: Select two jets that are not part of the Hbb jets to be VBS jets with following algorithm
     //              - If all jets are in same hemisphere (eta > 0 or eta < 0) then choose the two leading jets in P (N.B. not pt!)
     //              - If not choose the leading jet in each hemisphere leading in P (N.B. not pt!)
-    cutflow.addCutToLastActiveCut("TagVBSJets",
+    cutflow.addCutToLastActiveCut("AK4CategTagVBSJets",
         [&]()
         {
 
@@ -671,92 +1285,122 @@ void VBSHWW::initSRCutflow()
                 tx.pushbackToBranch<LV>("vbs_jets_p4", good_jets_p4[vbs_jet_cands_idxs[1]]);
                 tx.pushbackToBranch<int>("vbs_jets_good_jets_idx", vbs_jet_cands_idxs[0]);
                 tx.pushbackToBranch<int>("vbs_jets_good_jets_idx", vbs_jet_cands_idxs[1]);
+                // Set the vbs jets
+                tx.setBranch<LV>("j0", good_jets_p4[vbs_jet_cands_idxs[0]]);
+                tx.setBranch<LV>("j1", good_jets_p4[vbs_jet_cands_idxs[1]]);
                 return true;
-            }
-
-            // Otherwise, I have 3 or more vbs candidate jets
-            std::vector<std::pair<float, int>> vbs_pos_eta_jets;
-            std::vector<std::pair<float, int>> vbs_neg_eta_jets;
-            for (unsigned int ijet = 0; ijet < vbs_jet_cands_idxs.size(); ijet++)
-            {
-                const LV& jet = good_jets_p4[vbs_jet_cands_idxs[ijet]];
-                const float& P = good_jets_p4[vbs_jet_cands_idxs[ijet]].P();
-                if (jet.eta() >= 0)
-                {
-                    vbs_pos_eta_jets.push_back(std::make_pair(P, vbs_jet_cands_idxs[ijet]));
-                }
-                if (jet.eta() < 0)
-                {
-                    vbs_neg_eta_jets.push_back(std::make_pair(P, vbs_jet_cands_idxs[ijet]));
-                }
-            }
-
-            // Sort the pairs
-            std::sort(vbs_pos_eta_jets.begin(), vbs_pos_eta_jets.end(),
-                    [](const std::pair<float, int> & a, const std::pair<float, int> & b) -> bool
-                    { 
-                    return a.first > b.first;
-                    });
-
-            // Sort the pairs
-            std::sort(vbs_neg_eta_jets.begin(), vbs_neg_eta_jets.end(),
-                    [](const std::pair<float, int> & a, const std::pair<float, int> & b) -> bool
-                    { 
-                    return a.first > b.first;
-                    });
-
-            int vbs_jet_idx_A = -999;
-            int vbs_jet_idx_B = -999;
-            if (vbs_pos_eta_jets.size() == 0)
-            {
-                vbs_jet_idx_A = vbs_neg_eta_jets[0].second;
-                vbs_jet_idx_B = vbs_neg_eta_jets[1].second;
-            }
-            else if (vbs_neg_eta_jets.size() == 0)
-            {
-                vbs_jet_idx_A = vbs_pos_eta_jets[0].second;
-                vbs_jet_idx_B = vbs_pos_eta_jets[1].second;
             }
             else
             {
-                vbs_jet_idx_A = vbs_pos_eta_jets[0].second;
-                vbs_jet_idx_B = vbs_neg_eta_jets[0].second;
+
+                // Otherwise, I have 3 or more vbs candidate jets
+                std::vector<std::pair<float, int>> vbs_pos_eta_jets;
+                std::vector<std::pair<float, int>> vbs_neg_eta_jets;
+                for (unsigned int ijet = 0; ijet < vbs_jet_cands_idxs.size(); ijet++)
+                {
+                    const LV& jet = good_jets_p4[vbs_jet_cands_idxs[ijet]];
+                    const float& P = good_jets_p4[vbs_jet_cands_idxs[ijet]].P();
+                    if (jet.eta() >= 0)
+                    {
+                        vbs_pos_eta_jets.push_back(std::make_pair(P, vbs_jet_cands_idxs[ijet]));
+                    }
+                    if (jet.eta() < 0)
+                    {
+                        vbs_neg_eta_jets.push_back(std::make_pair(P, vbs_jet_cands_idxs[ijet]));
+                    }
+                }
+
+                // Sort the pairs
+                std::sort(vbs_pos_eta_jets.begin(), vbs_pos_eta_jets.end(),
+                          [](const std::pair<float, int> & a, const std::pair<float, int> & b) -> bool
+                          {
+                              return a.first > b.first;
+                          });
+
+                // Sort the pairs
+                std::sort(vbs_neg_eta_jets.begin(), vbs_neg_eta_jets.end(),
+                          [](const std::pair<float, int> & a, const std::pair<float, int> & b) -> bool
+                          {
+                              return a.first > b.first;
+                          });
+
+                int vbs_jet_idx_A = -999;
+                int vbs_jet_idx_B = -999;
+                if (vbs_pos_eta_jets.size() == 0)
+                {
+                    vbs_jet_idx_A = vbs_neg_eta_jets[0].second;
+                    vbs_jet_idx_B = vbs_neg_eta_jets[1].second;
+                }
+                else if (vbs_neg_eta_jets.size() == 0)
+                {
+                    vbs_jet_idx_A = vbs_pos_eta_jets[0].second;
+                    vbs_jet_idx_B = vbs_pos_eta_jets[1].second;
+                }
+                else
+                {
+                    vbs_jet_idx_A = vbs_pos_eta_jets[0].second;
+                    vbs_jet_idx_B = vbs_neg_eta_jets[0].second;
+                }
+
+                int vbs_jet_idx_0 = vbs_jet_idx_A < vbs_jet_idx_B ? vbs_jet_idx_A : vbs_jet_idx_B;
+                int vbs_jet_idx_1 = vbs_jet_idx_A < vbs_jet_idx_B ? vbs_jet_idx_B : vbs_jet_idx_A;
+
+                tx.pushbackToBranch<LV>("vbs_jets_p4", good_jets_p4[vbs_jet_idx_0]);
+                tx.pushbackToBranch<LV>("vbs_jets_p4", good_jets_p4[vbs_jet_idx_1]);
+                tx.pushbackToBranch<int>("vbs_jets_good_jets_idx", vbs_jet_idx_0);
+                tx.pushbackToBranch<int>("vbs_jets_good_jets_idx", vbs_jet_idx_1);
+
+                // Set the vbs jets
+                tx.setBranch<LV>("j0", good_jets_p4[vbs_jet_idx_0]);
+                tx.setBranch<LV>("j1", good_jets_p4[vbs_jet_idx_1]);
+                return true;
             }
 
-            int vbs_jet_idx_0 = vbs_jet_idx_A < vbs_jet_idx_B ? vbs_jet_idx_A : vbs_jet_idx_B;
-            int vbs_jet_idx_1 = vbs_jet_idx_A < vbs_jet_idx_B ? vbs_jet_idx_B : vbs_jet_idx_A;
+        },
+        UNITY);
 
-            tx.pushbackToBranch<LV>("vbs_jets_p4", good_jets_p4[vbs_jet_idx_0]);
-            tx.pushbackToBranch<LV>("vbs_jets_p4", good_jets_p4[vbs_jet_idx_1]);
-            tx.pushbackToBranch<int>("vbs_jets_good_jets_idx", vbs_jet_idx_0);
-            tx.pushbackToBranch<int>("vbs_jets_good_jets_idx", vbs_jet_idx_1);
+    cutflow.addCutToLastActiveCut("AK4CategObjectPreselection", UNITY, UNITY);
+
+    cutflow.getCut("AK4CategObjectPreselection");
+    cutflow.addCutToLastActiveCut("AK4CategTight",
+        [&]()
+        {
+            // Require leading in b-tag score to be tight and the subleading to be tight
+            if (not (tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[0]))
+                return false;
+
+            // Require leading in b-tag score to be tight and the subleading to be tight
+            if (not (tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[1]))
+                return false;
 
             return true;
 
-        }, 
-        UNITY);
+        }, UNITY);
 
-    cutflow.addCutToLastActiveCut("VBSJetPreselection",
+    cutflow.getCut("AK4CategObjectPreselection");
+    cutflow.addCutToLastActiveCut("AK4CategLoose",
         [&]()
         {
-            LV vbs_jet_0 = tx.getBranch<vector<LV>>("vbs_jets_p4").at(0);
-            LV vbs_jet_1 = tx.getBranch<vector<LV>>("vbs_jets_p4").at(1);
-            float M_jj = (vbs_jet_0 + vbs_jet_1).M();
-            float deta_jj = vbs_jet_0.eta() - vbs_jet_1.eta();
-            return (M_jj >= 500 && fabs(deta_jj) >= 3);
-        }, 
-        UNITY);
+            // Require leading in b-tag score to be loose and the subleading to be loose
+            if (not (tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[0]))
+                return false;
 
-    //*****************************
-    // - SR Preselection Dummy Cut Node
-    //*****************************
-    // Description: This is a dummy cut node to indicate that this node represents where all the SR preselection is applied
-    cutflow.addCutToLastActiveCut("SignalRegionPreselection", UNITY, UNITY);
+            // Require leading in b-tag score to be loose and the subleading to be loose
+            if (not (tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[1]))
+                return false;
+
+            // Require leading in b-tag score to be tight and the subleading to be tight
+            if (not ((tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[0] and not tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[1]) or (not tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[0] and tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[1])))
+                return false;
+
+            return true;
+
+        }, UNITY);
 
     return;
 }
 
-void VBSHWW::initBDTInputComputation() 
+void VBSHWW::initBDTInputComputation()
 {
 
     tx.createBranch<float>("lepton1pt");

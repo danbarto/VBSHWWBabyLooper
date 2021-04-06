@@ -23,9 +23,13 @@ TTZToLLNuNu \
 WZTo3LNu \
 WpWpJJ_EWK-QCD \
 ttHTobb \
+VBSWmpWmpHToLNuLNu_C2V_6_TuneCP5 \
+VBSWmpWmpHToLNuLNu_C2V_3_TuneCP5 \
+VBSWmpWmpHToLNuLNu_C2V_4p5_TuneCP5 \
+VBSWmpWmpHToLNuLNu_C2V_m2_TuneCP5 \
 VBSWmpWmpHToLNuLNu_TuneCP5"
 
-NANOSKIMDIR=/hadoop/cms/store/user/phchang/VBSHWWNanoSkim/v6/
+NANOSKIMDIR=/hadoop/cms/store/user/phchang/VBSHWWNanoSkim/v9/
 
 rm -f .jobs.txt
 
@@ -50,9 +54,25 @@ for SAMPLE in ${SAMPLES}; do
         if [[ ${SAMPLE} == *"WpWpJJ_EWK"* ]]; then XSEC=0.0539; fi
         if [[ ${SAMPLE} == *"WZTo3LNu"* ]]; then XSEC=4.4297; fi
         if [[ ${SAMPLE} == *"VBSWmpWmpHToLNuLNu_TuneCP5"* ]]; then XSEC=0.00001708; fi
+        if [[ ${SAMPLE} == *"VBSWmpWmpHToLNuLNu_C2V_6_TuneCP5"* ]]; then XSEC=0.00116*137/59.97; fi
+        if [[ ${SAMPLE} == *"VBSWmpWmpHToLNuLNu_C2V_3_TuneCP5"* ]]; then XSEC=0.000203237376*137/59.97; fi
+        if [[ ${SAMPLE} == *"VBSWmpWmpHToLNuLNu_C2V_4p5_TuneCP5"* ]]; then XSEC=0.0005865984*137/59.97; fi
+        if [[ ${SAMPLE} == *"VBSWmpWmpHToLNuLNu_C2V_m2_TuneCP5"* ]]; then XSEC=0.000418440192*137/59.97; fi
 
         if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_TuneCP5_2016"* ]]; then continue; fi
         if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_TuneCP5_2018"* ]]; then continue; fi
+
+        if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_C2V_6_TuneCP5_2016"* ]]; then continue; fi
+        if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_C2V_6_TuneCP5_2017"* ]]; then continue; fi
+
+        if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_C2V_3_TuneCP5_2016"* ]]; then continue; fi
+        if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_C2V_3_TuneCP5_2017"* ]]; then continue; fi
+
+        if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_C2V_4p5_TuneCP5_2016"* ]]; then continue; fi
+        if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_C2V_4p5_TuneCP5_2017"* ]]; then continue; fi
+
+        if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_C2V_m2_TuneCP5_2016"* ]]; then continue; fi
+        if [[ ${SAMPLE}_${YEAR} == *"VBSWmpWmpHToLNuLNu_C2V_m2_TuneCP5_2017"* ]]; then continue; fi
 
         NTOTALEVENTS=$(head -n1 ${NANOSKIMDIR}/${SAMPLE}_*${NANOTAG}*/nevents.txt)
         NEFFEVENTS=$(tail -n1 ${NANOSKIMDIR}/${SAMPLE}_*${NANOTAG}*/nevents.txt)

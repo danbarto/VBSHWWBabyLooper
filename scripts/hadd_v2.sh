@@ -22,7 +22,7 @@ WZTo3LNu \
 WpWpJJ_EWK-QCD \
 ttHTobb"
 
-rm .jobs.txt
+rm .haddjobs.txt
 
 for YEAR in ${YEARS}; do
 
@@ -37,17 +37,21 @@ for YEAR in ${YEARS}; do
     mkdir -p ${HADDDIR}
     rm -rf ${HADDDIR}/*.root
 
-    echo "hadd -f ${HADDDIR}/ssww.root ${HISTDIR}/WpWp*.root > ${HADDDIR}/ssww.hadd.log 2>&1" >> .jobs.txt
-    echo "hadd -f ${HADDDIR}/tt1l.root ${HISTDIR}/TTJets_Sing*.root > ${HADDDIR}/tt1l.hadd.log 2>&1" >> .jobs.txt
-    echo "hadd -f ${HADDDIR}/tt2l.root ${HISTDIR}/TTJets_Di*.root > ${HADDDIR}/tt2l.hadd.log 2>&1" >> .jobs.txt
-    echo "hadd -f ${HADDDIR}/tth.root ${HISTDIR}/ttHTobb*.root > ${HADDDIR}/tth.hadd.log 2>&1" >> .jobs.txt
-    echo "hadd -f ${HADDDIR}/ttw.root ${HISTDIR}/TTW*.root > ${HADDDIR}/ttw.hadd.log 2>&1" >> .jobs.txt
-    echo "hadd -f ${HADDDIR}/ttz.root ${HISTDIR}/TTZ*.root > ${HADDDIR}/ttz.hadd.log 2>&1" >> .jobs.txt
-    echo "hadd -f ${HADDDIR}/wz.root ${HISTDIR}/WZ*.root > ${HADDDIR}/wz.hadd.log 2>&1" >> .jobs.txt
-    echo "hadd -f ${HADDDIR}/vbshww.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_TuneCP5*.root > ${HADDDIR}/vbshww.hadd.log 2>&1" >> .jobs.txt
+    echo "hadd -f ${HADDDIR}/ssww.root ${HISTDIR}/WpWp*.root > ${HADDDIR}/ssww.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/tt1l.root ${HISTDIR}/TTJets_Sing*.root > ${HADDDIR}/tt1l.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/tt2l.root ${HISTDIR}/TTJets_Di*.root > ${HADDDIR}/tt2l.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/tth.root ${HISTDIR}/ttHTobb*.root > ${HADDDIR}/tth.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/ttw.root ${HISTDIR}/TTW*.root > ${HADDDIR}/ttw.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/ttz.root ${HISTDIR}/TTZ*.root > ${HADDDIR}/ttz.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/wz.root ${HISTDIR}/WZ*.root > ${HADDDIR}/wz.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/vbshww.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_TuneCP5*.root > ${HADDDIR}/vbshww.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/vbshww_c2v_6.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_C2V_6_TuneCP5*.root > ${HADDDIR}/vbshww_c2v_6.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/vbshww_c2v_3.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_C2V_3_TuneCP5*.root > ${HADDDIR}/vbshww_c2v_3.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/vbshww_c2v_4p5.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_C2V_4p5_TuneCP5*.root > ${HADDDIR}/vbshww_c2v_4p5.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/vbshww_c2v_m2.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_C2V_m2_TuneCP5*.root > ${HADDDIR}/vbshww_c2v_m2.hadd.log 2>&1" >> .haddjobs.txt
 
 done
 
 echo "Launching hadd jobs in parallel...."
-xargs.sh .jobs.txt
+xargs.sh .haddjobs.txt
 echo "Done!"
