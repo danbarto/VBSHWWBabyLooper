@@ -74,7 +74,7 @@ if "2018" in hadd_dir: lumi = 59.97
 if "Run2" in hadd_dir: lumi = 137
 
 histxaxislabeloptions = {
-        "Mbb"                      : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 18, "signal_scale":   5                },
+        "Mbb"                      : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins":  6, "signal_scale":   5                },
         "LeptonPt0"                : {"xaxis_label"      : "p_{T,lead-lep} [GeV]"    , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto"            },
         "LeptonPt1"                : {"xaxis_label"      : "p_{T,sublead-lep} [GeV]" , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto"            },
         "LeptonPtFlavor0"          : {"xaxis_label"      : "p_{T,type0} [GeV]"       , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto"            },
@@ -101,6 +101,7 @@ histxaxislabeloptions = {
         "JetPhi1"                  : {"xaxis_label"      : "#phi_{sublead-jet}"      , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         "BJetPhi0"                 : {"xaxis_label"      : "#phi_{lead-b}"           , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         "BJetPhi1"                 : {"xaxis_label"      : "#phi_{sublead-b}"        , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
+        "Channels"                 : {"xaxis_label"      : "Channels"                , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         }
 
 dogrep = True

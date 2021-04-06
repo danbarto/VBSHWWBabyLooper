@@ -143,7 +143,10 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     tx.createBranch<LV>("j0");
     tx.createBranch<LV>("j1");
     tx.createBranch<int>("channel");
+    tx.createBranch<int>("lepchannel");
+    tx.createBranch<int>("btagchannel");
     tx.createBranch<int>("mee_noZ");
+    tx.createBranch<int>("mbbIn");
     tx.createBranch<int>("pass_blind");
 
 //=============================
@@ -856,25 +859,25 @@ void VBSHWW::initSRCutflow()
             const float& pt1 = tx.getBranchLazy<vector<LV>>("good_leptons_p4").size() == 2 ? tx.getBranchLazy<vector<LV>>("good_leptons_p4")[1].pt() : tx.getBranchLazy<vector<LV>>("good_taus_p4")[0].pt();
 
             // Set the channel
-            int channel = -1;
+            int lepchannel = -1;
             if (tx.getBranch<vector<LV>>("good_leptons_p4").size() == 2)
             {
                 if (tx.getBranch<vector<int>>("good_leptons_pdgid")[0] * tx.getBranch<vector<int>>("good_leptons_pdgid")[1] == 121)
-                    channel = 0;
+                    lepchannel = 0;
                 else if (tx.getBranch<vector<int>>("good_leptons_pdgid")[0] * tx.getBranch<vector<int>>("good_leptons_pdgid")[1] == 143)
-                    channel = 1;
+                    lepchannel = 1;
                 else if (tx.getBranch<vector<int>>("good_leptons_pdgid")[0] * tx.getBranch<vector<int>>("good_leptons_pdgid")[1] == 169)
-                    channel = 2;
+                    lepchannel = 2;
             }
             else // It has to be good_leptons_p4.size() == 1 by now
             {
                 if (abs(tx.getBranch<vector<int>>("good_leptons_pdgid")[0]) == 11)
-                    channel = 3;
+                    lepchannel = 3;
                 else if (abs(tx.getBranch<vector<int>>("good_leptons_pdgid")[0]) == 13)
-                    channel = 4;
+                    lepchannel = 4;
             }
 
-            tx.setBranch<int>("channel", channel);
+            tx.setBranch<int>("lepchannel", lepchannel);
 
             // lep0 is lead if same flavor
             // lep1 is sublead if same flavor
@@ -882,7 +885,7 @@ void VBSHWW::initSRCutflow()
             // lep1 is muon if emu
             // lep0 is e or mu if lep-tau
             // lep1 is tau if lep-tau
-            switch (channel)
+            switch (lepchannel)
             {
                 case 0:
                     tx.setBranch<LV>("lep0", tx.getBranch<vector<LV>>("good_leptons_p4")[0]);
@@ -909,8 +912,11 @@ void VBSHWW::initSRCutflow()
             tx.setBranch<LV>("subllep", tx.getBranch<LV>("lep0").pt() > tx.getBranch<LV>("lep1").pt() ? tx.getBranch<LV>("lep1") : tx.getBranch<LV>("lep0"));
 
             // To veto same-sign dielectron on-Z (charge flip)
-            int mee_noZ = (not (channel == 0 and abs((tx.getBranch<LV>("lep0")+tx.getBranch<LV>("lep1")).mass() - 91.1876) < 15.)); // if ee channel and mll is on-Z
+            int mee_noZ = (not (lepchannel == 0 and abs((tx.getBranch<LV>("lep0")+tx.getBranch<LV>("lep1")).mass() - 91.1876) < 15.)); // if ee channel and mll is on-Z
             tx.setBranch<int>("mee_noZ", mee_noZ);
+
+            if (not mee_noZ) // reject events with dielectrons being on-Z (charge flip from likely Z+jets)
+                return false;
 
             return pt0 > 35. and pt1 > 35.;
 
@@ -923,7 +929,7 @@ void VBSHWW::initSRCutflow()
     cutflow.addCutToLastActiveCut("Trigger",
         [&]()
         {
-            if (tx.getBranch<int>("channel") <= 2)
+            if (tx.getBranch<int>("lepchannel") <= 2)
             {
                 bool is_pd_ee = looper.getCurrentFileName().Contains("DoubleEG") or looper.getCurrentFileName().Contains("EGamma");
                 bool is_pd_em = looper.getCurrentFileName().Contains("MuonEG");
@@ -1241,9 +1247,29 @@ void VBSHWW::initSRCutflow()
             // Set the tagged higgs jets
             tx.setBranch<LV>("b0", tx.getBranch<vector<LV>>("higgs_jets_p4")[0]);
             tx.setBranch<LV>("b1", tx.getBranch<vector<LV>>("higgs_jets_p4")[1]);
-            tx.setBranch<int>("pass_blind", nt.isData() ? (tx.getBranch<LV>("b0")+tx.getBranch<LV>("b1")).mass() > 140. or (tx.getBranch<LV>("b0")+tx.getBranch<LV>("b1")).mass() < 90.: 1.);
+            float mbb = (tx.getBranch<LV>("b0")+tx.getBranch<LV>("b1")).mass();
+            int mbbIn = mbb > 90. and mbb < 140.;
+            int mbbOut = (not mbbIn);
+            tx.setBranch<int>("pass_blind", nt.isData() ? mbbOut: 1.);
+            tx.setBranch<int>("mbbIn", mbbIn);
 
-            return true;
+            // Require at least one of them pass a tight and another pass loose
+            const int& btight0 = tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[0];
+            const int& btight1 = tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[1];
+            const int& bloose0 = tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[0];
+            const int& bloose1 = tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[1];
+            int btagchannel = -999;
+            if (btight0 and btight1)
+                btagchannel = 0;
+            else if ((btight0 and bloose1) or (bloose0 and btight1))
+                btagchannel = 1;
+            else
+                btagchannel = -1;
+            tx.setBranch<int>("btagchannel", btagchannel);
+            if (btagchannel == 0 or btagchannel == 1)
+                return true;
+            else
+                return false;
 
         }, UNITY);
 
@@ -1359,42 +1385,27 @@ void VBSHWW::initSRCutflow()
         },
         UNITY);
 
-    cutflow.addCutToLastActiveCut("AK4CategObjectPreselection", UNITY, UNITY);
-
-    cutflow.getCut("AK4CategObjectPreselection");
-    cutflow.addCutToLastActiveCut("AK4CategTight",
+    cutflow.addCutToLastActiveCut("AK4CategPresel",
         [&]()
         {
-            // Require leading in b-tag score to be tight and the subleading to be tight
-            if (not (tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[0]))
+            const int& pass_blind = tx.getBranch<int>("pass_blind");
+            const int& btagchannel = tx.getBranch<int>("btagchannel");
+            const int& lepchannel = tx.getBranch<int>("lepchannel");
+            const int& mbbIn = tx.getBranch<int>("mbbIn");
+            int channel = -1;
+            if (pass_blind and btagchannel == 0 and lepchannel <= 2 and     mbbIn) channel = 0;
+            if (pass_blind and btagchannel == 0 and lepchannel <= 2 and not mbbIn) channel = 1;
+            if (pass_blind and btagchannel == 1 and lepchannel <= 2 and     mbbIn) channel = 2;
+            if (pass_blind and btagchannel == 1 and lepchannel <= 2 and not mbbIn) channel = 3;
+            if (pass_blind and btagchannel == 0 and lepchannel == 3 and     mbbIn) channel = 4;
+            if (pass_blind and btagchannel == 0 and lepchannel == 3 and not mbbIn) channel = 5;
+            if (pass_blind and btagchannel == 0 and lepchannel == 4 and     mbbIn) channel = 6;
+            if (pass_blind and btagchannel == 0 and lepchannel == 4 and not mbbIn) channel = 7;
+            tx.setBranch<int>("channel", channel);
+            if (channel < 0)
                 return false;
-
-            // Require leading in b-tag score to be tight and the subleading to be tight
-            if (not (tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[1]))
-                return false;
-
-            return true;
-
-        }, UNITY);
-
-    cutflow.getCut("AK4CategObjectPreselection");
-    cutflow.addCutToLastActiveCut("AK4CategLoose",
-        [&]()
-        {
-            // Require leading in b-tag score to be loose and the subleading to be loose
-            if (not (tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[0]))
-                return false;
-
-            // Require leading in b-tag score to be loose and the subleading to be loose
-            if (not (tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[1]))
-                return false;
-
-            // Require leading in b-tag score to be tight and the subleading to be tight
-            if (not ((tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[0] and not tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[1]) or (not tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[0] and tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[1])))
-                return false;
-
-            return true;
-
+            else
+                return true;
         }, UNITY);
 
     return;
