@@ -45,6 +45,7 @@ for YEAR in ${YEARS}; do
     echo "hadd -f ${HADDDIR}/wz.root ${HISTDIR}/WZTo3LNu*.root > ${HADDDIR}/wz.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/wzg.root ${HISTDIR}/WZG*.root > ${HADDDIR}/wzg.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/zz.root ${HISTDIR}/ZZTo4L*.root ${HISTDIR}/GluGluHToZZTo4L*.root > ${HADDDIR}/zz.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/bosons.root ${HISTDIR}/WJetsTo*.root ${HISTDIR}/DY*.root ${HISTDIR}/WpWp*.root ${HISTDIR}/WZTo3LNu*.root ${HISTDIR}/ZZTo4L*.root ${HISTDIR}/GluGluHToZZTo4L*.root ${HISTDIR}/WWW_4F*.root ${HISTDIR}/WWZ*.root ${HISTDIR}/WZZ*.root ${HISTDIR}/ZZZ*.root > ${HADDDIR}/wz.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/vbshww.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_TuneCP5*.root > ${HADDDIR}/vbshww.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/vbshww_c2v_6.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_C2V_6_TuneCP5*.root > ${HADDDIR}/vbshww_c2v_6.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/vbshww_c2v_3.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_C2V_3_TuneCP5*.root > ${HADDDIR}/vbshww_c2v_3.hadd.log 2>&1" >> .haddjobs.txt

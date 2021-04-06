@@ -404,7 +404,7 @@ void VBSHWW::parseCLI(int argc, char** argv)
         }
     }
 
-    do_tau = false;
+    do_tau = true;
 
     //
     // Printing out the option settings overview
@@ -437,7 +437,7 @@ void VBSHWW::process(TString final_cutname)
     tx.clear();
 
     // // Set the run lumi and event for this event
-    // cutflow.setEventID(nt.run(), nt.luminosityBlock(), nt.event()); // Setting event ID in case we need to keep track of event id
+    cutflow.setEventID(nt.run(), nt.luminosityBlock(), nt.event()); // Setting event ID in case we need to keep track of event id
 
     // Run all the cutflow selections and filling histograms
     cutflow.fill();
@@ -633,92 +633,6 @@ void VBSHWW::initSRCutflow()
             }
         }, UNITY);
 
-    //**************************************************
-    // - Selecting Trigger and removing duplicate events
-    //**************************************************
-    cutflow.addCutToLastActiveCut("Trigger",
-        [&]()
-        {
-            bool is_pd_ee = looper.getCurrentFileName().Contains("DoubleEG") or looper.getCurrentFileName().Contains("EGamma");
-            bool is_pd_em = looper.getCurrentFileName().Contains("MuonEG");
-            bool is_pd_mm = looper.getCurrentFileName().Contains("DoubleMuon");
-            bool pass_duplicate_ee_em_mm = false;
-            bool pass_duplicate_mm_em_ee = false;
-
-            bool trig_ee = false;
-            bool trig_em = false;
-            bool trig_mm = false;
-
-            bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ = false;
-            bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL = false;
-            bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8 = false;
-            bool Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ = false;
-            bool Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL = false;
-            bool Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ = false;
-            bool Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL = false;
-            bool Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ = false;
-            bool Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL = false;
-
-            try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ                 = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ();                } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ                 = false; } // Lowest unprescaled
-            try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL                    = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL();                   } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL                    = false; } // Lowest unprescaled
-            try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8         = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8();        } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8         = false; } // Lowest unprescaled for >= 2017C
-            try { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ           = nt.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ();          } catch (std::runtime_error) { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ           = false; }
-            try { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL              = nt.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL();             } catch (std::runtime_error) { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL              = false; } // Lowest unprescaled
-            try { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ  = nt.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ(); } catch (std::runtime_error) { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ  = false; } // Lowest unprescaled
-            try { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL     = nt.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL();    } catch (std::runtime_error) { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL     = false; }
-            try { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ   = nt.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ();  } catch (std::runtime_error) { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ   = false; } // Lowest unprescaled
-            try { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL      = nt.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL();     } catch (std::runtime_error) { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL      = false; }
-
-            switch (nt.year())
-            {
-                case 2016:
-                    trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ;
-                    trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL or
-                              Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
-                    trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ or
-                              Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL;
-                    break;
-                case 2017:
-                    trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL;
-                    trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
-                    trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8;
-                    break;
-                case 2018:
-                    trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL;
-                    trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
-                    trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8;
-                    break;
-            }
-
-            if (is_pd_ee)
-            {
-                if (trig_ee)
-                    pass_duplicate_ee_em_mm = true;
-                if (not trig_mm and not trig_em and trig_ee)
-                    pass_duplicate_mm_em_ee = true;
-            }
-            else if (is_pd_em)
-            {
-                if (not trig_ee and trig_em)
-                    pass_duplicate_ee_em_mm = true;
-                if (not trig_mm and trig_em)
-                    pass_duplicate_mm_em_ee = true;
-            }
-            else if (is_pd_mm)
-            {
-                if (not trig_ee and not trig_em and trig_mm)
-                    pass_duplicate_ee_em_mm = true;
-                if (trig_mm)
-                    pass_duplicate_mm_em_ee = true;
-            }
-
-
-            bool pass_trigger = trig_ee or trig_em or trig_mm;
-            bool duplicate = nt.isData() ? pass_duplicate_ee_em_mm : 1.;
-            return (pass_trigger and duplicate);
-
-        }, UNITY);
-
     //************************************
     // - Selecting Good Runs List for data
     //************************************
@@ -835,7 +749,6 @@ void VBSHWW::initSRCutflow()
                     "good_leptons_pdgid",
                     "good_leptons_tight",
                     "good_leptons_jetIdx",
-                    "good_leptons_genPartFlav"
                 },
                 /* names of any associated vector<bool>  branches to sort along */
                 {}
@@ -869,7 +782,7 @@ void VBSHWW::initSRCutflow()
 
                         // Only save >= loose taus that do not overlap w/ a 'good' lepton
                         tx.pushbackToBranch<LV>("good_taus_p4", nt.Tau_p4()[itau]);
-                        tx.pushbackToBranch<int>("good_taus_genPartFlav", nt.Tau_genPartFlav()[itau]);
+                        tx.pushbackToBranch<int>("good_taus_genPartFlav", nt.isData() ? -999 : nt.Tau_genPartFlav()[itau]);
                         tx.pushbackToBranch<int>("good_taus_pdgid", (-nt.Tau_charge()[itau]) * 15);
                         tx.pushbackToBranch<int>("good_taus_tight", SS::tauID(itau, SS::IDtight, nt.year()));
                         tx.pushbackToBranch<int>("good_taus_jetIdx", nt.Tau_jetIdx()[itau]);
@@ -906,7 +819,7 @@ void VBSHWW::initSRCutflow()
         [&]()
         {
 
-            // At least one light lepton
+            // At least one loose light lepton
             if (not (tx.getBranchLazy<vector<LV>>("good_leptons_p4").size() >= 1))
                 return false;
 
@@ -1003,6 +916,99 @@ void VBSHWW::initSRCutflow()
 
         },
         UNITY);
+
+    //**************************************************
+    // - Selecting Trigger and removing duplicate events
+    //**************************************************
+    cutflow.addCutToLastActiveCut("Trigger",
+        [&]()
+        {
+            if (tx.getBranch<int>("channel") <= 2)
+            {
+                bool is_pd_ee = looper.getCurrentFileName().Contains("DoubleEG") or looper.getCurrentFileName().Contains("EGamma");
+                bool is_pd_em = looper.getCurrentFileName().Contains("MuonEG");
+                bool is_pd_mm = looper.getCurrentFileName().Contains("DoubleMuon");
+                bool pass_duplicate_ee_em_mm = false;
+                bool pass_duplicate_mm_em_ee = false;
+
+                bool trig_ee = false;
+                bool trig_em = false;
+                bool trig_mm = false;
+
+                bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ = false;
+                bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL = false;
+                bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8 = false;
+                bool Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ = false;
+                bool Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL = false;
+                bool Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ = false;
+                bool Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL = false;
+                bool Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ = false;
+                bool Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL = false;
+
+                try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ                 = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ();                } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ                 = false; } // Lowest unprescaled
+                try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL                    = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL();                   } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL                    = false; } // Lowest unprescaled
+                try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8         = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8();        } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8         = false; } // Lowest unprescaled for >= 2017C
+                try { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ           = nt.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ();          } catch (std::runtime_error) { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ           = false; }
+                try { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL              = nt.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL();             } catch (std::runtime_error) { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL              = false; } // Lowest unprescaled
+                try { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ  = nt.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ(); } catch (std::runtime_error) { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ  = false; } // Lowest unprescaled
+                try { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL     = nt.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL();    } catch (std::runtime_error) { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL     = false; }
+                try { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ   = nt.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ();  } catch (std::runtime_error) { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ   = false; } // Lowest unprescaled
+                try { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL      = nt.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL();     } catch (std::runtime_error) { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL      = false; }
+
+                switch (nt.year())
+                {
+                    case 2016:
+                        trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ;
+                        trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL or
+                            Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
+                        trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ or
+                            Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL;
+                        break;
+                    case 2017:
+                        trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL;
+                        trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
+                        trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8;
+                        break;
+                    case 2018:
+                        trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL;
+                        trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
+                        trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8;
+                        break;
+                }
+
+                if (is_pd_ee)
+                {
+                    if (trig_ee)
+                        pass_duplicate_ee_em_mm = true;
+                    if (not trig_mm and not trig_em and trig_ee)
+                        pass_duplicate_mm_em_ee = true;
+                }
+                else if (is_pd_em)
+                {
+                    if (not trig_ee and trig_em)
+                        pass_duplicate_ee_em_mm = true;
+                    if (not trig_mm and trig_em)
+                        pass_duplicate_mm_em_ee = true;
+                }
+                else if (is_pd_mm)
+                {
+                    if (not trig_ee and not trig_em and trig_mm)
+                        pass_duplicate_ee_em_mm = true;
+                    if (trig_mm)
+                        pass_duplicate_mm_em_ee = true;
+                }
+
+
+                bool pass_trigger = trig_ee or trig_em or trig_mm;
+                bool duplicate = nt.isData() ? pass_duplicate_ee_em_mm : 1.;
+                return (pass_trigger and duplicate);
+            }
+            else
+            {
+                return (not nt.isData());
+            }
+
+        }, UNITY);
 
     //*****************************
     // - Select Good Reco Jets
@@ -1235,7 +1241,7 @@ void VBSHWW::initSRCutflow()
             // Set the tagged higgs jets
             tx.setBranch<LV>("b0", tx.getBranch<vector<LV>>("higgs_jets_p4")[0]);
             tx.setBranch<LV>("b1", tx.getBranch<vector<LV>>("higgs_jets_p4")[1]);
-            tx.setBranch<int>("pass_blind", nt.isData() ? (tx.getBranch<LV>("b0")+tx.getBranch<LV>("b1")).mass() > 150. : 1.);
+            tx.setBranch<int>("pass_blind", nt.isData() ? (tx.getBranch<LV>("b0")+tx.getBranch<LV>("b1")).mass() > 140. or (tx.getBranch<LV>("b0")+tx.getBranch<LV>("b1")).mass() < 90.: 1.);
 
             return true;
 
@@ -1356,7 +1362,7 @@ void VBSHWW::initSRCutflow()
     cutflow.addCutToLastActiveCut("AK4CategObjectPreselection", UNITY, UNITY);
 
     cutflow.getCut("AK4CategObjectPreselection");
-    cutflow.addCutToLastActiveCut("AK4CategTightObjectPreselection",
+    cutflow.addCutToLastActiveCut("AK4CategTight",
         [&]()
         {
             // Require leading in b-tag score to be tight and the subleading to be tight
@@ -1372,23 +1378,7 @@ void VBSHWW::initSRCutflow()
         }, UNITY);
 
     cutflow.getCut("AK4CategObjectPreselection");
-    cutflow.addCutToLastActiveCut("AK4CategLooseObjectPreselection",
-        [&]()
-        {
-            // Require leading in b-tag score to be loose and the subleading to be loose
-            if (not (tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[0]))
-                return false;
-
-            // Require leading in b-tag score to be loose and the subleading to be loose
-            if (not (tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[1]))
-                return false;
-
-            return true;
-
-        }, UNITY);
-
-    cutflow.getCut("AK4CategObjectPreselection");
-    cutflow.addCutToLastActiveCut("AK4CategLooseButNotTightObjectPreselection",
+    cutflow.addCutToLastActiveCut("AK4CategLoose",
         [&]()
         {
             // Require leading in b-tag score to be loose and the subleading to be loose
@@ -1400,7 +1390,7 @@ void VBSHWW::initSRCutflow()
                 return false;
 
             // Require leading in b-tag score to be tight and the subleading to be tight
-            if ((tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[0] and tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[1]))
+            if (not ((tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[0] and not tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[1]) or (not tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[0] and tx.getBranch<vector<int>>("higgs_jets_tight_btagged")[1])))
                 return false;
 
             return true;
