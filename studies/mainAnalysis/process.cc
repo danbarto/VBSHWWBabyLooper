@@ -24,6 +24,8 @@ int main(int argc, char** argv)
     // Splitting events by channels
     vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("AllChannel"   , UNITY, UNITY);
 
+    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("LooseVRChannel", [&]() { return VBSINT("lepchannel") >= 0 and VBSINT("lepchannel") <= 2;                                }, UNITY);
+
     vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("TightEEChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 0;                               }, UNITY);
     vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("TightEMChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 1;                               }, UNITY);
     vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("TightMMChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 2;                               }, UNITY);
@@ -166,7 +168,20 @@ int main(int argc, char** argv)
     // Write out the "run:lumi:evt" of the events passing a certain cut into a text file
     // If the output.root is "output/path/dir/name.root"
     // then the text file will be named "output/path/dir/name_CutName.txt"
+    vbs.writeEventList("Root");
+    vbs.writeEventList("Weight");
+    vbs.writeEventList("Preselection");
+    vbs.writeEventList("SelectGenPart");
+    vbs.writeEventList("GoodRunsList");
+    vbs.writeEventList("EventFilters");
+    vbs.writeEventList("SelectLeptons");
+    vbs.writeEventList("SSPreselection");
+    vbs.writeEventList("Trigger");
+    vbs.writeEventList("SelectJets");
+    vbs.writeEventList("AK4CategTagHiggsJets");
+    vbs.writeEventList("AK4CategTagVBSJets");
     vbs.writeEventList("AK4CategPresel");
+    vbs.writeEventList("LooseVRChannel");
 
     // The below can be sometimes crucial
     delete vbs.output_tfile;

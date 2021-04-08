@@ -1080,8 +1080,8 @@ void VBSHWW::initSRCutflow()
                 bool is_medium_btagged = false;
                 bool is_tight_btagged = false;
 
-                // B-tagging is also done up to 2.5 in eta only
-                if (abs(jet_p4.eta()) < 2.5)
+                // B-tagging is also done up to 2.4 in eta only
+                if (abs(jet_p4.eta()) < 2.4)
                 {
                     // Check if it passes btagging
                     is_loose_btagged = nt.Jet_btagDeepFlavB()[ijet] > gconf.WP_DeepFlav_loose;
@@ -1164,8 +1164,8 @@ void VBSHWW::initSRCutflow()
                 bool is_medium_btagged = false;
                 bool is_tight_btagged = false;
 
-                // B-tagging is also done up to 2.5 in eta only
-                if (abs(jet_p4.eta()) < 2.5)
+                // B-tagging is also done up to 2.4 in eta only
+                if (abs(jet_p4.eta()) < 2.4)
                 {
                     // Check if it passes btagging
                     if (nt.year() == 2018)
