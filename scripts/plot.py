@@ -74,7 +74,14 @@ if "2018" in hadd_dir: lumi = 59.97
 if "Run2" in hadd_dir: lumi = 137
 
 histxaxislabeloptions = {
-        "Mbb"                      : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins":  6, "signal_scale":   5                },
+        "TightLLChannel__MJJ"      : {"xaxis_label"      : "m_{jj} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
+        "TightLLChannel__LeptonPt0": {"xaxis_label"      : "p_{T,lead-lep} [GeV]"    , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
+        "TightLLChannel__LeptonPt1": {"xaxis_label"      : "p_{T,sublead-lep} [GeV]" , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
+        "Mbb"                      : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 18, "signal_scale":   1                },
+        "TightLLChannel__MJJ"      : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 18, "signal_scale":   1                },
+        "TightLLCRMjj__Mbb"        : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 18, "signal_scale":   1                },
+        "TightLLCRLepPt0__Mbb"     : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 12, "signal_scale":   1                },
+        "TightLLCRLepPt1__Mbb"     : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 12, "signal_scale":   1                },
         "LeptonPt0"                : {"xaxis_label"      : "p_{T,lead-lep} [GeV]"    , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto"            },
         "LeptonPt1"                : {"xaxis_label"      : "p_{T,sublead-lep} [GeV]" , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto"            },
         "LeptonPtFlavor0"          : {"xaxis_label"      : "p_{T,type0} [GeV]"       , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto"            },
@@ -92,7 +99,7 @@ histxaxislabeloptions = {
         "JetPt0"                   : {"xaxis_label"      : "p_{T,lead-jet} [GeV]"    , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         "JetPt1"                   : {"xaxis_label"      : "p_{T,sublead-jet} [GeV]" , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         "BJetPt0"                  : {"xaxis_label"      : "p_{T,lead-b} [GeV]"      , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
-        "BJetPt1"                  : {"xaxis_label"      : "p_{T,sublead-b} [GeV]"   , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
+        "BJetPt1"                  : {"xaxis_label"      : "p_{T,sublead-b} [GeV]"   , "xaxis_ndivisions" : 505, "nbins": 180, "signal_scale":   1                },
         "JetEta0"                  : {"xaxis_label"      : "#eta_{lead-jet}"         , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         "JetEta1"                  : {"xaxis_label"      : "#eta_{sublead-jet}"      , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         "BJetEta0"                 : {"xaxis_label"      : "#eta_{lead-b}"           , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
