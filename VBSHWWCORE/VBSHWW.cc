@@ -143,6 +143,7 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     tx.createBranch<LV>("j0");
     tx.createBranch<LV>("j1");
     tx.createBranch<int>("channel");
+    tx.createBranch<int>("channeldetail");
     tx.createBranch<int>("lepchannel");
     tx.createBranch<int>("btagchannel");
     tx.createBranch<int>("mee_noZ");
@@ -1033,7 +1034,7 @@ void VBSHWW::initSRCutflow()
                         trig_se = Common_HLT_Ele32_WPTight_Gsf;
                         break;
                 }
-                return (is_pd and trig_se);
+                return nt.isData() ? (is_pd and trig_se) : trig_se;
             }
             else if (tx.getBranch<int>("lepchannel") == 4)
             {
@@ -1057,7 +1058,7 @@ void VBSHWW::initSRCutflow()
                         trig_sm = Common_HLT_IsoMu24;
                         break;
                 }
-                return (is_pd and trig_sm);
+                return nt.isData() ? (is_pd and trig_sm) : trig_sm;
             }
             else
             {
@@ -1316,10 +1317,15 @@ void VBSHWW::initSRCutflow()
             else
                 btagchannel = -1;
             tx.setBranch<int>("btagchannel", btagchannel);
-            if (btagchannel == 0 or btagchannel == 1)
+
+            if (bloose0 and bloose1)
                 return true;
             else
                 return false;
+            // if (btagchannel == 0 or btagchannel == 1)
+            //     return true;
+            // else
+            //     return false;
 
         }, UNITY);
 
@@ -1452,10 +1458,29 @@ void VBSHWW::initSRCutflow()
             if (pass_blind and btagchannel == 0 and lepchannel == 4 and     mbbIn) channel = 6;
             if (pass_blind and btagchannel == 0 and lepchannel == 4 and not mbbIn) channel = 7;
             tx.setBranch<int>("channel", channel);
-            if (channel < 0)
-                return false;
-            else
-                return true;
+            int channeldetail = -1;
+            if (pass_blind and btagchannel == 0 and lepchannel == 0 and     mbbIn) channeldetail = 0;
+            if (pass_blind and btagchannel == 0 and lepchannel == 0 and not mbbIn) channeldetail = 1;
+            if (pass_blind and btagchannel == 0 and lepchannel == 1 and     mbbIn) channeldetail = 2;
+            if (pass_blind and btagchannel == 0 and lepchannel == 1 and not mbbIn) channeldetail = 3;
+            if (pass_blind and btagchannel == 0 and lepchannel == 2 and     mbbIn) channeldetail = 4;
+            if (pass_blind and btagchannel == 0 and lepchannel == 2 and not mbbIn) channeldetail = 5;
+            if (pass_blind and btagchannel == 1 and lepchannel == 0 and     mbbIn) channeldetail = 6;
+            if (pass_blind and btagchannel == 1 and lepchannel == 0 and not mbbIn) channeldetail = 7;
+            if (pass_blind and btagchannel == 1 and lepchannel == 1 and     mbbIn) channeldetail = 8;
+            if (pass_blind and btagchannel == 1 and lepchannel == 1 and not mbbIn) channeldetail = 9;
+            if (pass_blind and btagchannel == 1 and lepchannel == 2 and     mbbIn) channeldetail = 10;
+            if (pass_blind and btagchannel == 1 and lepchannel == 2 and not mbbIn) channeldetail = 11;
+            if (pass_blind and btagchannel == 0 and lepchannel == 3 and     mbbIn) channeldetail = 12;
+            if (pass_blind and btagchannel == 0 and lepchannel == 3 and not mbbIn) channeldetail = 13;
+            if (pass_blind and btagchannel == 0 and lepchannel == 4 and     mbbIn) channeldetail = 14;
+            if (pass_blind and btagchannel == 0 and lepchannel == 4 and not mbbIn) channeldetail = 15;
+            tx.setBranch<int>("channeldetail", channeldetail);
+            return true;
+            // if (channel < 0)
+            //     return false;
+            // else
+            //     return true;
         }, UNITY);
 
     return;

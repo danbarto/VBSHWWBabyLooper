@@ -22,22 +22,22 @@ int main(int argc, char** argv)
     vbs.initSRCutflow();
 
     // Splitting events by channels
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("AllChannel"   , UNITY, UNITY);
+    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("AllChannel"    , [&]() { return VBSINT("channel") >= 0;                                                                 }, UNITY);
 
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("LooseVRChannel", [&]() { return VBSINT("lepchannel") >= 0 and VBSINT("lepchannel") <= 2;                                }, UNITY);
+    vbs.cutflow.getCut("AllChannel");     vbs.cutflow.addCutToLastActiveCut("LooseVRChannel", [&]() { return VBSINT("lepchannel") >= 0 and VBSINT("lepchannel") <= 2;                                }, UNITY);
 
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("TightEEChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 0;                               }, UNITY);
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("TightEMChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 1;                               }, UNITY);
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("TightMMChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 2;                               }, UNITY);
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("TightETChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 3;                               }, UNITY);
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("TightMTChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 4;                               }, UNITY);
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("TightLLChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") >= 0 and VBSINT("lepchannel") <= 2; }, UNITY);
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("TightLTChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") >= 3 and VBSINT("lepchannel") <= 4; }, UNITY);
+    vbs.cutflow.getCut("AllChannel");     vbs.cutflow.addCutToLastActiveCut("TightEEChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 0;                               }, UNITY);
+    vbs.cutflow.getCut("AllChannel");     vbs.cutflow.addCutToLastActiveCut("TightEMChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 1;                               }, UNITY);
+    vbs.cutflow.getCut("AllChannel");     vbs.cutflow.addCutToLastActiveCut("TightMMChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 2;                               }, UNITY);
+    vbs.cutflow.getCut("AllChannel");     vbs.cutflow.addCutToLastActiveCut("TightETChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 3;                               }, UNITY);
+    vbs.cutflow.getCut("AllChannel");     vbs.cutflow.addCutToLastActiveCut("TightMTChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 4;                               }, UNITY);
+    vbs.cutflow.getCut("AllChannel");     vbs.cutflow.addCutToLastActiveCut("TightLLChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") >= 0 and VBSINT("lepchannel") <= 2; }, UNITY);
+    vbs.cutflow.getCut("AllChannel");     vbs.cutflow.addCutToLastActiveCut("TightLTChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") >= 3 and VBSINT("lepchannel") <= 4; }, UNITY);
 
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("LooseEEChannel", [&]() { return VBSINT("btagchannel") == 1 and VBSINT("lepchannel") == 0;                               }, UNITY);
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("LooseEMChannel", [&]() { return VBSINT("btagchannel") == 1 and VBSINT("lepchannel") == 1;                               }, UNITY);
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("LooseMMChannel", [&]() { return VBSINT("btagchannel") == 1 and VBSINT("lepchannel") == 2;                               }, UNITY);
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("LooseLLChannel", [&]() { return VBSINT("btagchannel") == 1 and VBSINT("lepchannel") >= 0 and VBSINT("lepchannel") <= 2; }, UNITY);
+    vbs.cutflow.getCut("AllChannel");     vbs.cutflow.addCutToLastActiveCut("LooseEEChannel", [&]() { return VBSINT("btagchannel") == 1 and VBSINT("lepchannel") == 0;                               }, UNITY);
+    vbs.cutflow.getCut("AllChannel");     vbs.cutflow.addCutToLastActiveCut("LooseEMChannel", [&]() { return VBSINT("btagchannel") == 1 and VBSINT("lepchannel") == 1;                               }, UNITY);
+    vbs.cutflow.getCut("AllChannel");     vbs.cutflow.addCutToLastActiveCut("LooseMMChannel", [&]() { return VBSINT("btagchannel") == 1 and VBSINT("lepchannel") == 2;                               }, UNITY);
+    vbs.cutflow.getCut("AllChannel");     vbs.cutflow.addCutToLastActiveCut("LooseLLChannel", [&]() { return VBSINT("btagchannel") == 1 and VBSINT("lepchannel") >= 0 and VBSINT("lepchannel") <= 2; }, UNITY);
 
     // Selecting channels of interest
     std::vector<TString> channels =
@@ -66,22 +66,35 @@ int main(int argc, char** argv)
     for (auto& channel : channels)
     {
         vbs.cutflow.getCut(TString::Format("%sChannel", channel.Data()));
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sSRMjj", channel.Data()), [&]() { return (VBSLV("j0")+VBSLV("j1")).mass() > 500.; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sSRLepPt0", channel.Data()), [&, lep_pt0_threshold]() { return VBSLV("leadlep").pt() > lep_pt0_threshold; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sSRLepPt1", channel.Data()), [&, lep_pt1_threshold]() { return VBSLV("subllep").pt() > lep_pt1_threshold; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sSRFit", channel.Data()), UNITY, UNITY); // Dummy cut to have a clean name for "Mbb fit" distribution
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sSRMbb", channel.Data()), [&]() { return (VBSLV("b0")+VBSLV("b1")).mass() < 140. and (VBSLV("b0")+VBSLV("b1")).mass() > 90.; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sSR", channel.Data()), UNITY, UNITY); // Dummy cut to have a clean name for final SR
-    }
-
-    for (auto& channel : channels)
-    {
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sMbbOn", channel.Data()), [&]() { return (VBSLV("b0")+VBSLV("b1")).mass() < 140. and (VBSLV("b0")+VBSLV("b1")).mass() > 90.; }, UNITY );
         vbs.cutflow.getCut(TString::Format("%sChannel", channel.Data()));
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sCRMbb", channel.Data()), [&]() { return not ((VBSLV("b0")+VBSLV("b1")).mass() < 140. and (VBSLV("b0")+VBSLV("b1")).mass() > 90.); }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sCRMjj", channel.Data()), [&]() { return (VBSLV("j0")+VBSLV("j1")).mass() > 500.; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sCRLepPt0", channel.Data()), [&, lep_pt0_threshold]() { return VBSLV("leadlep").pt() > lep_pt0_threshold; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sCRLepPt1", channel.Data()), [&, lep_pt1_threshold]() { return VBSLV("subllep").pt() > lep_pt1_threshold; }, UNITY );
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sCR", channel.Data()), UNITY, UNITY); // Dummy cut to have a clean name for final SR
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sMbbOff", channel.Data()), [&]() { return not ((VBSLV("b0")+VBSLV("b1")).mass() < 140. and (VBSLV("b0")+VBSLV("b1")).mass() > 90.); }, UNITY );
+        vbs.cutflow.getCut(TString::Format("%sChannel", channel.Data()));
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sMbbAll", channel.Data()), UNITY, UNITY );
+
+        std::vector<TString> kin_regs = {"MbbOn", "MbbOff", "MbbAll"};
+        for (auto& kin_reg : kin_regs)
+        {
+            vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%sMjj"      , channel.Data(), kin_reg.Data()), [&]()                    { return (VBSLV("j0")+VBSLV("j1")).mass() > 500.;   }, UNITY );
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%sLepPt0"   , channel.Data(), kin_reg.Data()), [&, lep_pt0_threshold]() { return VBSLV("leadlep").pt() > lep_pt0_threshold; }, UNITY );
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%sLepPt1"   , channel.Data(), kin_reg.Data()), [&, lep_pt1_threshold]() { return VBSLV("subllep").pt() > lep_pt1_threshold; }, UNITY );
+            vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s132Mjj"   , channel.Data(), kin_reg.Data()), [&]()                    { return (VBSLV("j0")+VBSLV("j1")).mass() > 500.;   }, UNITY );
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s132LepPt1", channel.Data(), kin_reg.Data()), [&, lep_pt0_threshold]() { return VBSLV("leadlep").pt() > lep_pt0_threshold; }, UNITY );
+            vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s213LepPt0", channel.Data(), kin_reg.Data()), [&, lep_pt0_threshold]() { return VBSLV("leadlep").pt() > lep_pt0_threshold; }, UNITY );
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s213Mjj"   , channel.Data(), kin_reg.Data()), [&]()                    { return (VBSLV("j0")+VBSLV("j1")).mass() > 500.;   }, UNITY );
+            vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s231LepPt0", channel.Data(), kin_reg.Data()), [&, lep_pt0_threshold]() { return VBSLV("leadlep").pt() > lep_pt0_threshold; }, UNITY );
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s231LepPt1", channel.Data(), kin_reg.Data()), [&, lep_pt1_threshold]() { return VBSLV("subllep").pt() > lep_pt1_threshold; }, UNITY );
+            vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s312LepPt1", channel.Data(), kin_reg.Data()), [&, lep_pt1_threshold]() { return VBSLV("subllep").pt() > lep_pt1_threshold; }, UNITY );
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s312Mjj"   , channel.Data(), kin_reg.Data()), [&]()                    { return (VBSLV("j0")+VBSLV("j1")).mass() > 500.;   }, UNITY );
+            vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s321LepPt1", channel.Data(), kin_reg.Data()), [&, lep_pt1_threshold]() { return VBSLV("subllep").pt() > lep_pt1_threshold; }, UNITY );
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s321LepPt0", channel.Data(), kin_reg.Data()), [&, lep_pt0_threshold]() { return VBSLV("leadlep").pt() > lep_pt0_threshold; }, UNITY );
+        }
     }
 
     // Print the cuts
@@ -137,7 +150,8 @@ int main(int argc, char** argv)
     vbs.histograms.addHistogram("DRbb"                , 180 , 0       , 10     , [&]() { return RooUtil::Calc::DeltaR(VBSLV("b0"), VBSLV("b1"));                                   } );
     vbs.histograms.addHistogram("MET"                 , 180 , 0       , 1500   , [&]() { return VBSLV("met_p4").pt();                                                              } );
     vbs.histograms.addHistogram("METLow"              , 180 , 0       , 250    , [&]() { return VBSLV("met_p4").pt();                                                              } );
-    vbs.histograms.addHistogram("Channels"            , 8   , 0       , 8      , [&]() { return VBSINT("channel");                                                                  } );
+    vbs.histograms.addHistogram("Channels"            , 8   , 0       , 8      , [&]() { return VBSINT("channel");                                                                 } );
+    vbs.histograms.addHistogram("ChannelsDetails"     , 16  , 0       , 16     , [&]() { return VBSINT("channeldetail");                                                           } );
 
     // Book the histograms
     vbs.cutflow.bookHistogramsForCutAndBelow(vbs.histograms, "AK4CategPresel");
