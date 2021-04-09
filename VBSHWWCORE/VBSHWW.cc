@@ -918,7 +918,7 @@ void VBSHWW::initSRCutflow()
             if (not mee_noZ) // reject events with dielectrons being on-Z (charge flip from likely Z+jets)
                 return false;
 
-            return pt0 > 35. and pt1 > 35.;
+            return pt0 > 40. and pt1 > 40.;
 
         },
         UNITY);
@@ -1009,9 +1009,59 @@ void VBSHWW::initSRCutflow()
                 bool duplicate = nt.isData() ? pass_duplicate_ee_em_mm : 1.;
                 return (pass_trigger and duplicate);
             }
+            else if (tx.getBranch<int>("lepchannel") == 3)
+            {
+                bool is_pd = looper.getCurrentFileName().Contains("SingleElectron") or looper.getCurrentFileName().Contains("EGamma");
+                bool Common_HLT_Ele27_WPTight_Gsf        = false;
+                bool Common_HLT_Ele25_eta2p1_WPTight_Gsf = false;
+                bool Common_HLT_Ele35_WPTight_Gsf        = false;
+                bool Common_HLT_Ele32_WPTight_Gsf        = false;
+                try { Common_HLT_Ele27_WPTight_Gsf        = nt.HLT_Ele27_WPTight_Gsf();        } catch (std::runtime_error) { Common_HLT_Ele27_WPTight_Gsf        = false; }
+                try { Common_HLT_Ele25_eta2p1_WPTight_Gsf = nt.HLT_Ele25_eta2p1_WPTight_Gsf(); } catch (std::runtime_error) { Common_HLT_Ele25_eta2p1_WPTight_Gsf = false; }
+                try { Common_HLT_Ele35_WPTight_Gsf        = nt.HLT_Ele35_WPTight_Gsf();        } catch (std::runtime_error) { Common_HLT_Ele35_WPTight_Gsf        = false; }
+                try { Common_HLT_Ele32_WPTight_Gsf        = nt.HLT_Ele32_WPTight_Gsf();        } catch (std::runtime_error) { Common_HLT_Ele32_WPTight_Gsf        = false; }
+                bool trig_se = false;
+                switch (nt.year())
+                {
+                    case 2016:
+                        trig_se = Common_HLT_Ele27_WPTight_Gsf or Common_HLT_Ele25_eta2p1_WPTight_Gsf;
+                        break;
+                    case 2017:
+                        trig_se = Common_HLT_Ele35_WPTight_Gsf;
+                        break;
+                    case 2018:
+                        trig_se = Common_HLT_Ele32_WPTight_Gsf;
+                        break;
+                }
+                return (is_pd and trig_se);
+            }
+            else if (tx.getBranch<int>("lepchannel") == 4)
+            {
+                bool is_pd = looper.getCurrentFileName().Contains("SingleMuon");
+                bool Common_HLT_IsoMu24   = false;
+                bool Common_HLT_IsoTkMu24 = false;
+                bool Common_HLT_IsoMu27   = false;
+                try { Common_HLT_IsoMu24   = nt.HLT_IsoMu24();   } catch (std::runtime_error) { Common_HLT_IsoMu24   = false; }
+                try { Common_HLT_IsoTkMu24 = nt.HLT_IsoTkMu24(); } catch (std::runtime_error) { Common_HLT_IsoTkMu24 = false; }
+                try { Common_HLT_IsoMu27   = nt.HLT_IsoMu27();   } catch (std::runtime_error) { Common_HLT_IsoMu27   = false; }
+                bool trig_sm = false;
+                switch (nt.year())
+                {
+                    case 2016:
+                        trig_sm = Common_HLT_IsoMu24 or Common_HLT_IsoTkMu24;
+                        break;
+                    case 2017:
+                        trig_sm = Common_HLT_IsoMu27;
+                        break;
+                    case 2018:
+                        trig_sm = Common_HLT_IsoMu24;
+                        break;
+                }
+                return (is_pd and trig_sm);
+            }
             else
             {
-                return (not nt.isData());
+                return false;
             }
 
         }, UNITY);

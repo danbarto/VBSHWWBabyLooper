@@ -43,6 +43,12 @@ WWZ \
 WZG \
 WZZ \
 ZZZ \
+WWToLNuQQ \
+ST_s-channel_4f \
+ST_t-channel_antitop_4f \
+ST_t-channel_top_4f \
+ST_tW_antitop_5f \
+ST_tW_top_5f \
 VBSWmpWmpHToLNuLNu_C2V_6_TuneCP5 \
 VBSWmpWmpHToLNuLNu_C2V_3_TuneCP5 \
 VBSWmpWmpHToLNuLNu_C2V_4p5_TuneCP5 \
@@ -51,12 +57,17 @@ VBSWmpWmpHToLNuLNu_TuneCP5 \
 DoubleEG_Run2016 \
 DoubleMuon_Run2016 \
 MuonEG_Run2016 \
+SingleElectron_Run2016 \
+SingleMuon_Run2016 \
 DoubleEG_Run2017 \
 DoubleMuon_Run2017 \
 MuonEG_Run2017 \
+SingleElectron_Run2017 \
+SingleMuon_Run2017 \
 EGamma_Run2018 \
 DoubleMuon_Run2018 \
-MuonEG_Run2018"
+MuonEG_Run2018 \
+SingleMuon_Run2018"
 
 # NANOSKIMDIR=/hadoop/cms/store/user/phchang/VBSHWWNanoSkim/v12/
 NANOSKIMDIR=/nfs-7/userdata/phchang/VBSHWWNanoSkim_v12/
@@ -80,6 +91,11 @@ for SAMPLE in ${SAMPLES}; do
         if [[ ${SAMPLE} == *"Run201"* ]]; then NANOTAG=""; fi
 
         if [[ ${SAMPLE} == *"tZq_ll_4f_ckm_NLO"* ]]; then XSEC=0.0758; fi
+        if [[ ${SAMPLE} == *"ST_s-channel_4f"* ]]; then XSEC=3.74; fi
+        if [[ ${SAMPLE} == *"ST_t-channel_antitop_4f"* ]]; then XSEC=80.95; fi
+        if [[ ${SAMPLE} == *"ST_t-channel_top_4f"* ]]; then XSEC=136.02; fi
+        if [[ ${SAMPLE} == *"ST_tW_antitop_5f"* ]]; then XSEC=19.559; fi
+        if [[ ${SAMPLE} == *"ST_tW_top_5f"* ]]; then XSEC=19.559; fi
         if [[ ${SAMPLE} == *"ST_tWll_5f_LO"* ]]; then XSEC=0.01123; fi
         if [[ ${SAMPLE} == *"ZZTo4L"* ]]; then XSEC=1.256; fi
         if [[ ${SAMPLE} == *"GluGluHToZZTo4L"* ]]; then XSEC=0.0082323; fi
@@ -112,6 +128,7 @@ for SAMPLE in ${SAMPLES}; do
         if [[ ${SAMPLE} == *"WZG"* ]]; then XSEC=0.04123; fi
         if [[ ${SAMPLE} == *"WZZ"* ]]; then XSEC=0.05565; fi
         if [[ ${SAMPLE} == *"ZZZ"* ]]; then XSEC=0.01398; fi
+        if [[ ${SAMPLE} == *"WWToLNuQQ"* ]]; then XSEC=49.997; fi
         if [[ ${SAMPLE} == *"Run201"* ]]; then XSEC=1; fi # data
 
         if [[ -z "${XSEC}" ]]; then
