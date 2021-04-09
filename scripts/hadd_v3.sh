@@ -35,8 +35,8 @@ for YEAR in ${YEARS}; do
     echo "hadd -f ${HADDDIR}/vjet.root ${HISTDIR}/WJetsTo*.root ${HISTDIR}/DY*.root > ${HADDDIR}/vjet.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/tt1l.root ${HISTDIR}/TTJets_Sing*.root > ${HADDDIR}/tt1l.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/tt2l.root ${HISTDIR}/TTJets_Di*.root > ${HADDDIR}/tt2l.hadd.log 2>&1" >> .haddjobs.txt
-    echo "hadd -f ${HADDDIR}/ttw.root ${HISTDIR}/TTW*.root > ${HADDDIR}/ttw.hadd.log 2>&1" >> .haddjobs.txt
-    echo "hadd -f ${HADDDIR}/ttz.root ${HISTDIR}/TTZ*.root > ${HADDDIR}/ttz.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/ttw.root ${HISTDIR}/TTWJets*.root > ${HADDDIR}/ttw.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/ttz.root ${HISTDIR}/TTZToLL*.root > ${HADDDIR}/ttz.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/tth.root ${HISTDIR}/ttHToNonbb*.root ${HISTDIR}/ttHTobb*.root > ${HADDDIR}/tth.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/twz.root ${HISTDIR}/ST_tWll*.root > ${HADDDIR}/twz.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/tzq.root ${HISTDIR}/tZq_ll_4f_ckm_NLO*.root > ${HADDDIR}/tzq.hadd.log 2>&1" >> .haddjobs.txt
