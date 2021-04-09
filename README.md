@@ -1,12 +1,15 @@
-# Cutflow sync
+# April 9th: Producing preliminary loose validation region plots
 
     git clone --recursive git@github.com:sgnoohc/VBSHWWBabyLooper.git
     cd VBSHWWBabyLooper
     source setup.sh
     make clean
     make -j
-    sh scripts/cutflow_sync.sh
-    ls -l cutflow_sync/ # Contains the event list for each cut stage
+    sh scripts/run_v3.sh -s mainAnalysis # Runs all the jobs
+    python scripts/cutflow.py mainAnalysis_Run2 # Produces every cutflow table possible
+    python scripts/summary_table.py  > data.csv # Creates a .csv file of grand table
+    cp data.csv table/ # If you want some pretty printing on your webpage
+    python scripts/plot.py mainAnalysis_Run2 LooseVRChannel__ChannelsDetails
 
 # Quick Instructions
 

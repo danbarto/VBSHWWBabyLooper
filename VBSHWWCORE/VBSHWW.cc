@@ -143,6 +143,7 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     tx.createBranch<LV>("j0");
     tx.createBranch<LV>("j1");
     tx.createBranch<int>("channel");
+    tx.createBranch<int>("channeldetail");
     tx.createBranch<int>("lepchannel");
     tx.createBranch<int>("btagchannel");
     tx.createBranch<int>("mee_noZ");
@@ -918,7 +919,7 @@ void VBSHWW::initSRCutflow()
             if (not mee_noZ) // reject events with dielectrons being on-Z (charge flip from likely Z+jets)
                 return false;
 
-            return pt0 > 35. and pt1 > 35.;
+            return pt0 > 40. and pt1 > 40.;
 
         },
         UNITY);
@@ -1009,9 +1010,59 @@ void VBSHWW::initSRCutflow()
                 bool duplicate = nt.isData() ? pass_duplicate_ee_em_mm : 1.;
                 return (pass_trigger and duplicate);
             }
+            else if (tx.getBranch<int>("lepchannel") == 3)
+            {
+                bool is_pd = looper.getCurrentFileName().Contains("SingleElectron") or looper.getCurrentFileName().Contains("EGamma");
+                bool Common_HLT_Ele27_WPTight_Gsf        = false;
+                bool Common_HLT_Ele25_eta2p1_WPTight_Gsf = false;
+                bool Common_HLT_Ele35_WPTight_Gsf        = false;
+                bool Common_HLT_Ele32_WPTight_Gsf        = false;
+                try { Common_HLT_Ele27_WPTight_Gsf        = nt.HLT_Ele27_WPTight_Gsf();        } catch (std::runtime_error) { Common_HLT_Ele27_WPTight_Gsf        = false; }
+                try { Common_HLT_Ele25_eta2p1_WPTight_Gsf = nt.HLT_Ele25_eta2p1_WPTight_Gsf(); } catch (std::runtime_error) { Common_HLT_Ele25_eta2p1_WPTight_Gsf = false; }
+                try { Common_HLT_Ele35_WPTight_Gsf        = nt.HLT_Ele35_WPTight_Gsf();        } catch (std::runtime_error) { Common_HLT_Ele35_WPTight_Gsf        = false; }
+                try { Common_HLT_Ele32_WPTight_Gsf        = nt.HLT_Ele32_WPTight_Gsf();        } catch (std::runtime_error) { Common_HLT_Ele32_WPTight_Gsf        = false; }
+                bool trig_se = false;
+                switch (nt.year())
+                {
+                    case 2016:
+                        trig_se = Common_HLT_Ele27_WPTight_Gsf or Common_HLT_Ele25_eta2p1_WPTight_Gsf;
+                        break;
+                    case 2017:
+                        trig_se = Common_HLT_Ele35_WPTight_Gsf;
+                        break;
+                    case 2018:
+                        trig_se = Common_HLT_Ele32_WPTight_Gsf;
+                        break;
+                }
+                return nt.isData() ? (is_pd and trig_se) : trig_se;
+            }
+            else if (tx.getBranch<int>("lepchannel") == 4)
+            {
+                bool is_pd = looper.getCurrentFileName().Contains("SingleMuon");
+                bool Common_HLT_IsoMu24   = false;
+                bool Common_HLT_IsoTkMu24 = false;
+                bool Common_HLT_IsoMu27   = false;
+                try { Common_HLT_IsoMu24   = nt.HLT_IsoMu24();   } catch (std::runtime_error) { Common_HLT_IsoMu24   = false; }
+                try { Common_HLT_IsoTkMu24 = nt.HLT_IsoTkMu24(); } catch (std::runtime_error) { Common_HLT_IsoTkMu24 = false; }
+                try { Common_HLT_IsoMu27   = nt.HLT_IsoMu27();   } catch (std::runtime_error) { Common_HLT_IsoMu27   = false; }
+                bool trig_sm = false;
+                switch (nt.year())
+                {
+                    case 2016:
+                        trig_sm = Common_HLT_IsoMu24 or Common_HLT_IsoTkMu24;
+                        break;
+                    case 2017:
+                        trig_sm = Common_HLT_IsoMu27;
+                        break;
+                    case 2018:
+                        trig_sm = Common_HLT_IsoMu24;
+                        break;
+                }
+                return nt.isData() ? (is_pd and trig_sm) : trig_sm;
+            }
             else
             {
-                return (not nt.isData());
+                return false;
             }
 
         }, UNITY);
@@ -1266,10 +1317,15 @@ void VBSHWW::initSRCutflow()
             else
                 btagchannel = -1;
             tx.setBranch<int>("btagchannel", btagchannel);
-            if (btagchannel == 0 or btagchannel == 1)
+
+            if (bloose0 and bloose1)
                 return true;
             else
                 return false;
+            // if (btagchannel == 0 or btagchannel == 1)
+            //     return true;
+            // else
+            //     return false;
 
         }, UNITY);
 
@@ -1402,10 +1458,29 @@ void VBSHWW::initSRCutflow()
             if (pass_blind and btagchannel == 0 and lepchannel == 4 and     mbbIn) channel = 6;
             if (pass_blind and btagchannel == 0 and lepchannel == 4 and not mbbIn) channel = 7;
             tx.setBranch<int>("channel", channel);
-            if (channel < 0)
-                return false;
-            else
-                return true;
+            int channeldetail = -1;
+            if (pass_blind and btagchannel == 0 and lepchannel == 0 and     mbbIn) channeldetail = 0;
+            if (pass_blind and btagchannel == 0 and lepchannel == 0 and not mbbIn) channeldetail = 1;
+            if (pass_blind and btagchannel == 0 and lepchannel == 1 and     mbbIn) channeldetail = 2;
+            if (pass_blind and btagchannel == 0 and lepchannel == 1 and not mbbIn) channeldetail = 3;
+            if (pass_blind and btagchannel == 0 and lepchannel == 2 and     mbbIn) channeldetail = 4;
+            if (pass_blind and btagchannel == 0 and lepchannel == 2 and not mbbIn) channeldetail = 5;
+            if (pass_blind and btagchannel == 1 and lepchannel == 0 and     mbbIn) channeldetail = 6;
+            if (pass_blind and btagchannel == 1 and lepchannel == 0 and not mbbIn) channeldetail = 7;
+            if (pass_blind and btagchannel == 1 and lepchannel == 1 and     mbbIn) channeldetail = 8;
+            if (pass_blind and btagchannel == 1 and lepchannel == 1 and not mbbIn) channeldetail = 9;
+            if (pass_blind and btagchannel == 1 and lepchannel == 2 and     mbbIn) channeldetail = 10;
+            if (pass_blind and btagchannel == 1 and lepchannel == 2 and not mbbIn) channeldetail = 11;
+            if (pass_blind and btagchannel == 0 and lepchannel == 3 and     mbbIn) channeldetail = 12;
+            if (pass_blind and btagchannel == 0 and lepchannel == 3 and not mbbIn) channeldetail = 13;
+            if (pass_blind and btagchannel == 0 and lepchannel == 4 and     mbbIn) channeldetail = 14;
+            if (pass_blind and btagchannel == 0 and lepchannel == 4 and not mbbIn) channeldetail = 15;
+            tx.setBranch<int>("channeldetail", channeldetail);
+            return true;
+            // if (channel < 0)
+            //     return false;
+            // else
+            //     return true;
         }, UNITY);
 
     return;

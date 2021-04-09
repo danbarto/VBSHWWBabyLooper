@@ -6,7 +6,7 @@ import sys
 def usage():
     print("Usage:")
     print("")
-    print("   python {} STUDYNAME CUTNAME".format(sys.argv[0]))
+    print("   python {} STUDYNAME [CUTNAME]".format(sys.argv[0]))
     print("")
     print("")
     sys.exit()
@@ -14,10 +14,14 @@ def usage():
 
 try:
     study_name = sys.argv[1]
-    cutname_to_plot = sys.argv[2]
 except:
     usage()
     sys.exit()
+
+try:
+    cutname_to_plot = sys.argv[2]
+except:
+    cutname_to_plot = ""
 
 hadd_dir = "hadds/{}".format(study_name)
 
@@ -67,7 +71,8 @@ p.dump_plot(fnames=bkgs,
     signal_labels=signal_labels,
     usercolors=colors,
     dirname="cutflow/{}".format(study_name),
-    filter_pattern="{}_cutflow".format(cutname_to_plot), # TODO this is not generalized yet
+    filter_pattern="{}_cutflow".format(cutname_to_plot),
+    dogrep=True,
     histxaxislabeloptions=histxaxislabeloptions,
     extraoptions={
         "print_yield": True,

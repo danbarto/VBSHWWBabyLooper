@@ -40,12 +40,12 @@ for YEAR in ${YEARS}; do
     echo "hadd -f ${HADDDIR}/tth.root ${HISTDIR}/ttHToNonbb*.root ${HISTDIR}/ttHTobb*.root > ${HADDDIR}/tth.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/twz.root ${HISTDIR}/ST_tWll*.root > ${HADDDIR}/twz.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/tzq.root ${HISTDIR}/tZq_ll_4f_ckm_NLO*.root > ${HADDDIR}/tzq.hadd.log 2>&1" >> .haddjobs.txt
-    echo "hadd -f ${HADDDIR}/raretop.root ${HISTDIR}/ttHToNonbb*.root ${HISTDIR}/ttHTobb*.root ${HISTDIR}/ST_tWll*.root ${HISTDIR}/tZq_ll_4f_ckm_NLO*.root ${HISTDIR}/TTTT*.root ${HISTDIR}/TTWH*.root ${HISTDIR}/TTZH*.root ${HISTDIR}/TTWW*.root ${HISTDIR}/TTWZ*.root ${HISTDIR}/TTZZ*.root > ${HADDDIR}/raretop.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/raretop.root ${HISTDIR}/ttHToNonbb*.root ${HISTDIR}/ttHTobb*.root ${HISTDIR}/ST_s-channel_*.root ${HISTDIR}/ST_t-channel_top_*.root ${HISTDIR}/ST_t-channel_antitop_*.root ${HISTDIR}/ST_tW_top_*.root ${HISTDIR}/ST_tW_antitop_*.root ${HISTDIR}/ST_tWll*.root ${HISTDIR}/tZq_ll_4f_ckm_NLO*.root ${HISTDIR}/TTTT*.root ${HISTDIR}/TTWH*.root ${HISTDIR}/TTZH*.root ${HISTDIR}/TTWW*.root ${HISTDIR}/TTWZ*.root ${HISTDIR}/TTZZ*.root > ${HADDDIR}/raretop.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/vvv.root ${HISTDIR}/WWW_4F*.root ${HISTDIR}/WWZ*.root ${HISTDIR}/WZZ*.root ${HISTDIR}/ZZZ*.root > ${HADDDIR}/vvv.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/wz.root ${HISTDIR}/WZTo3LNu*.root > ${HADDDIR}/wz.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/wzg.root ${HISTDIR}/WZG*.root > ${HADDDIR}/wzg.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/zz.root ${HISTDIR}/ZZTo4L*.root ${HISTDIR}/GluGluHToZZTo4L*.root > ${HADDDIR}/zz.hadd.log 2>&1" >> .haddjobs.txt
-    echo "hadd -f ${HADDDIR}/bosons.root ${HISTDIR}/WJetsTo*.root ${HISTDIR}/DY*.root ${HISTDIR}/WpWp*.root ${HISTDIR}/WZTo3LNu*.root ${HISTDIR}/ZZTo4L*.root ${HISTDIR}/GluGluHToZZTo4L*.root ${HISTDIR}/WWW_4F*.root ${HISTDIR}/WWZ*.root ${HISTDIR}/WZZ*.root ${HISTDIR}/ZZZ*.root > ${HADDDIR}/wz.hadd.log 2>&1" >> .haddjobs.txt
+    echo "hadd -f ${HADDDIR}/bosons.root ${HISTDIR}/WJetsTo*.root ${HISTDIR}/DY*.root ${HISTDIR}/WWToLNuQQ*.root ${HISTDIR}/WpWp*.root ${HISTDIR}/WZTo3LNu*.root ${HISTDIR}/ZZTo4L*.root ${HISTDIR}/GluGluHToZZTo4L*.root ${HISTDIR}/WWW_4F*.root ${HISTDIR}/WWZ*.root ${HISTDIR}/WZZ*.root ${HISTDIR}/ZZZ*.root > ${HADDDIR}/bosons.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/vbshww.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_TuneCP5*.root > ${HADDDIR}/vbshww.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/vbshww_c2v_6.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_C2V_6_TuneCP5*.root > ${HADDDIR}/vbshww_c2v_6.hadd.log 2>&1" >> .haddjobs.txt
     echo "hadd -f ${HADDDIR}/vbshww_c2v_3.root ${HISTDIR}/VBSWmpWmpHToLNuLNu_C2V_3_TuneCP5*.root > ${HADDDIR}/vbshww_c2v_3.hadd.log 2>&1" >> .haddjobs.txt
