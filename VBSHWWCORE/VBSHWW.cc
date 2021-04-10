@@ -43,6 +43,20 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     tx.createBranch<unsigned long long>("evt");
     tx.createBranch<float>("wgt");
 
+    // Create trigger branches
+    tx.createBranch<int>("trig_ee");
+    tx.createBranch<int>("trig_em");
+    tx.createBranch<int>("trig_mm");
+    tx.createBranch<int>("trig_se");
+    tx.createBranch<int>("trig_sm");
+    tx.createBranch<int>("pass_duplicate_ee_em_mm");
+    tx.createBranch<int>("pass_duplicate_mm_em_ee");
+    tx.createBranch<int>("is_pd_ee");
+    tx.createBranch<int>("is_pd_em");
+    tx.createBranch<int>("is_pd_mm");
+    tx.createBranch<int>("is_pd_se");
+    tx.createBranch<int>("is_pd_sm");
+
     // Create met branches
     tx.createBranch<LV>("met_p4");
 
@@ -816,6 +830,335 @@ void VBSHWW::initSRCutflow()
         },
         UNITY);
 
+    //*****************************
+    // - Select Good Reco Jets
+    //*****************************
+    // Description: Select Good Reco Jets
+    //              - TODO TODO TODO TODO : Check pileup jet ID for year 2017
+    //              - Perform overlap removal against loose leptons
+    //              - Accept jets above 20 GeV for the container
+    //              - Count N btagged jets (nbloose, nbmedium, nbtight)
+    //              - Count central and all jets with pt > 30 GeV
+    //              - Save the jets into good_jets containers
+    cutflow.addCutToLastActiveCut("SelectJets",
+        [&]()
+        {
+
+            // b tagging counters
+            int nbloose = 0;
+            int nbmedium = 0;
+            int nbtight = 0;
+
+            int ncenjet30 = 0;
+            int njet30 = 0;
+
+            // Loop over the jets
+            for (unsigned int ijet = 0; ijet < nt.Jet_pt().size(); ++ijet)
+            {
+
+                // Read jet p4
+                const LV& jet_p4 = nt.Jet_p4()[ijet];
+
+                if (nt.Jet_jetId()[ijet] < 2) // "Tight" ID requirement
+                    continue;
+
+                // Overlap check against good leptons
+                bool isOverlap = false;
+                for (unsigned int ilep = 0; ilep < tx.getBranchLazy<vector<LV>>("good_leptons_p4").size(); ++ilep)
+                {
+                    if (tx.getBranchLazy<vector<int>>("good_leptons_jetIdx").at(ilep) == (int) ijet)
+                    {
+                        isOverlap = true;
+                        break;
+                    }
+                }
+
+                for (unsigned int itau = 0; itau < tx.getBranchLazy<vector<LV>>("good_taus_p4").size(); ++itau)
+                {
+                    if (RooUtil::Calc::DeltaR(tx.getBranchLazy<vector<LV>>("good_taus_p4").at(itau), jet_p4) < 0.4)
+                    {
+                        isOverlap = true;
+                        break;
+                    }
+                }
+
+                // Then skip
+                if (isOverlap)
+                    continue;
+
+                // B-tagging is done down to 20 GeV
+                if (not (jet_p4.pt() > 20.))
+                    continue;
+
+                bool is_loose_btagged = false;
+                bool is_medium_btagged = false;
+                bool is_tight_btagged = false;
+
+                // B-tagging is also done up to 2.4 in eta only
+                if (abs(jet_p4.eta()) < 2.4)
+                {
+                    // Check if it passes btagging
+                    is_loose_btagged = nt.Jet_btagDeepFlavB()[ijet] > gconf.WP_DeepFlav_loose;
+                    is_medium_btagged = nt.Jet_btagDeepFlavB()[ijet] > gconf.WP_DeepFlav_medium;
+                    is_tight_btagged = nt.Jet_btagDeepFlavB()[ijet] > gconf.WP_DeepFlav_tight;
+
+                    // Count up the btagging
+                    if (is_loose_btagged) nbloose++;
+                    if (is_medium_btagged) nbmedium++;
+                    if (is_tight_btagged) nbtight++;
+                }
+
+                tx.pushbackToBranch<LV>("good_jets_p4", jet_p4);
+                tx.pushbackToBranch<int>("good_jets_loose_btagged", is_loose_btagged);
+                tx.pushbackToBranch<int>("good_jets_medium_btagged", is_medium_btagged);
+                tx.pushbackToBranch<int>("good_jets_tight_btagged", is_tight_btagged);
+                tx.pushbackToBranch<float>("good_jets_btag_score", nt.Jet_btagDeepFlavB()[ijet]);
+                tx.pushbackToBranch<float>("good_jets_qg_disc", nt.Jet_qgl()[ijet]);
+
+                if (abs(jet_p4.eta()) < 3.0 and jet_p4.pt() > 30.)
+                {
+                    ncenjet30 ++;
+                }
+                if (jet_p4.pt() > 30.)
+                {
+                    njet30 ++;
+                }
+
+            }
+
+            tx.setBranch<int>("nbloose", nbloose);
+            tx.setBranch<int>("nbmedium", nbmedium);
+            tx.setBranch<int>("nbtight", nbtight);
+            tx.setBranch<int>("ncenjet30", ncenjet30);
+            tx.setBranch<int>("njet30", njet30);
+
+            tx.sortVecBranchesByPt(
+                    /* name of the 4vector branch to use to pt sort by*/               "good_jets_p4",
+                    /* names of any associated vector<float> branches to sort along */ {"good_jets_btag_score", "good_jets_qg_disc"},
+                    /* names of any associated vector<int>   branches to sort along */ {"good_jets_loose_btagged", "good_jets_medium_btagged", "good_jets_tight_btagged"},
+                    /* names of any associated vector<bool>  branches to sort along */ {}
+                    );
+
+            // Loop over the jets
+            for (unsigned int ifatjet = 0; ifatjet < nt.FatJet_pt().size(); ++ifatjet)
+            {
+
+                // Read jet p4
+                const LV& jet_p4 = nt.FatJet_p4()[ifatjet];
+
+                // Overlap check against good leptons
+                bool isOverlap = false;
+                for (unsigned int ilep = 0; ilep < tx.getBranchLazy<vector<LV>>("good_leptons_p4").size(); ++ilep)
+                {
+                    if (RooUtil::Calc::DeltaR(tx.getBranchLazy<vector<LV>>("good_leptons_p4")[ilep], jet_p4) < 0.8)
+                    {
+                        isOverlap = true;
+                        break;
+                    }
+                }
+
+                for (unsigned int itau = 0; itau < tx.getBranchLazy<vector<LV>>("good_taus_p4").size(); ++itau)
+                {
+                    if (RooUtil::Calc::DeltaR(tx.getBranchLazy<vector<LV>>("good_taus_p4").at(itau), jet_p4) < 0.4)
+                    {
+                        isOverlap = true;
+                        break;
+                    }
+                }
+
+                // Then skip
+                if (isOverlap)
+                    continue;
+
+                // FatJet pt preselection is 250 GeV as Hbb tagger SF starts at 250 GeV.
+                if (not (jet_p4.pt() > 250.))
+                    continue;
+
+                bool is_loose_btagged = false;
+                bool is_medium_btagged = false;
+                bool is_tight_btagged = false;
+
+                // B-tagging is also done up to 2.4 in eta only
+                if (abs(jet_p4.eta()) < 2.4)
+                {
+                    // Check if it passes btagging
+                    if (nt.year() == 2018)
+                    {
+                        is_loose_btagged = nt.FatJet_btagDDBvL()[ifatjet] > 0.7; // 85% after SF
+                        is_medium_btagged = nt.FatJet_btagDDBvL()[ifatjet] > 0.86; // 55% after SF
+                        is_tight_btagged = nt.FatJet_btagDDBvL()[ifatjet] > 0.91; // 30% after SF
+                    }
+                }
+
+                tx.pushbackToBranch<LV>("good_fatjets_p4", jet_p4);
+                tx.pushbackToBranch<int>("good_fatjets_loose", is_loose_btagged);
+                tx.pushbackToBranch<int>("good_fatjets_medium", is_medium_btagged);
+                tx.pushbackToBranch<int>("good_fatjets_tight", is_tight_btagged);
+                tx.pushbackToBranch<float>("good_fatjets_msd", nt.FatJet_msoftdrop()[ifatjet]);
+
+
+            }
+
+            tx.sortVecBranchesByPt(
+                    /* name of the 4vector branch to use to pt sort by*/               "good_fatjets_p4",
+                    /* names of any associated vector<float> branches to sort along */ {"good_fatjets_msd"},
+                    /* names of any associated vector<int>   branches to sort along */ {"good_fatjets_loose", "good_fatjets_medium", "good_fatjets_tight"},
+                    /* names of any associated vector<bool>  branches to sort along */ {}
+                    );
+
+            return true;
+        },
+        UNITY);
+
+    //**************************************************
+    // - Selecting Trigger and removing duplicate events
+    //**************************************************
+    cutflow.addCutToLastActiveCut("Trigger",
+        [&]()
+        {
+
+            bool is_pd_ee = looper.getCurrentFileName().Contains("DoubleEG") or looper.getCurrentFileName().Contains("EGamma");
+            bool is_pd_em = looper.getCurrentFileName().Contains("MuonEG");
+            bool is_pd_mm = looper.getCurrentFileName().Contains("DoubleMuon");
+            bool is_pd_se = looper.getCurrentFileName().Contains("SingleElectron") or looper.getCurrentFileName().Contains("EGamma");
+            bool is_pd_sm = looper.getCurrentFileName().Contains("SingleMuon");
+            bool pass_duplicate_ee_em_mm = false;
+            bool pass_duplicate_mm_em_ee = false;
+
+            bool trig_ee = false;
+            bool trig_em = false;
+            bool trig_mm = false;
+            bool trig_se = false;
+            bool trig_sm = false;
+
+            bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ                = false;
+            bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL                   = false;
+            bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8        = false;
+            bool Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ          = false;
+            bool Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL             = false;
+            bool Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ = false;
+            bool Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL    = false;
+            bool Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ  = false;
+            bool Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL     = false;
+
+            try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ                 = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ();                } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ                 = false; } // Lowest unprescaled
+            try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL                    = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL();                   } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL                    = false; } // Lowest unprescaled
+            try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8         = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8();        } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8         = false; } // Lowest unprescaled for >= 2017C
+            try { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ           = nt.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ();          } catch (std::runtime_error) { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ           = false; }
+            try { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL              = nt.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL();             } catch (std::runtime_error) { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL              = false; } // Lowest unprescaled
+            try { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ  = nt.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ(); } catch (std::runtime_error) { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ  = false; } // Lowest unprescaled
+            try { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL     = nt.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL();    } catch (std::runtime_error) { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL     = false; }
+            try { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ   = nt.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ();  } catch (std::runtime_error) { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ   = false; } // Lowest unprescaled
+            try { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL      = nt.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL();     } catch (std::runtime_error) { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL      = false; }
+
+            bool Common_HLT_Ele27_WPTight_Gsf        = false;
+            bool Common_HLT_Ele25_eta2p1_WPTight_Gsf = false;
+            bool Common_HLT_Ele35_WPTight_Gsf        = false;
+            bool Common_HLT_Ele32_WPTight_Gsf        = false;
+            try { Common_HLT_Ele27_WPTight_Gsf        = nt.HLT_Ele27_WPTight_Gsf();        } catch (std::runtime_error) { Common_HLT_Ele27_WPTight_Gsf        = false; }
+            try { Common_HLT_Ele25_eta2p1_WPTight_Gsf = nt.HLT_Ele25_eta2p1_WPTight_Gsf(); } catch (std::runtime_error) { Common_HLT_Ele25_eta2p1_WPTight_Gsf = false; }
+            try { Common_HLT_Ele35_WPTight_Gsf        = nt.HLT_Ele35_WPTight_Gsf();        } catch (std::runtime_error) { Common_HLT_Ele35_WPTight_Gsf        = false; }
+            try { Common_HLT_Ele32_WPTight_Gsf        = nt.HLT_Ele32_WPTight_Gsf();        } catch (std::runtime_error) { Common_HLT_Ele32_WPTight_Gsf        = false; }
+
+            bool Common_HLT_IsoMu24   = false;
+            bool Common_HLT_IsoTkMu24 = false;
+            bool Common_HLT_IsoMu27   = false;
+            try { Common_HLT_IsoMu24   = nt.HLT_IsoMu24();   } catch (std::runtime_error) { Common_HLT_IsoMu24   = false; }
+            try { Common_HLT_IsoTkMu24 = nt.HLT_IsoTkMu24(); } catch (std::runtime_error) { Common_HLT_IsoTkMu24 = false; }
+            try { Common_HLT_IsoMu27   = nt.HLT_IsoMu27();   } catch (std::runtime_error) { Common_HLT_IsoMu27   = false; }
+
+            switch (nt.year())
+            {
+                case 2016:
+                    trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ;
+                    trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL or
+                        Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
+                    trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ or
+                        Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL;
+                    break;
+                case 2017:
+                    trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL;
+                    trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
+                    trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8;
+                    break;
+                case 2018:
+                    trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL;
+                    trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
+                    trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8;
+                    break;
+            }
+
+            if (is_pd_ee)
+            {
+                if (trig_ee)
+                    pass_duplicate_ee_em_mm = true;
+                if (not trig_mm and not trig_em and trig_ee)
+                    pass_duplicate_mm_em_ee = true;
+            }
+            else if (is_pd_em)
+            {
+                if (not trig_ee and trig_em)
+                    pass_duplicate_ee_em_mm = true;
+                if (not trig_mm and trig_em)
+                    pass_duplicate_mm_em_ee = true;
+            }
+            else if (is_pd_mm)
+            {
+                if (not trig_ee and not trig_em and trig_mm)
+                    pass_duplicate_ee_em_mm = true;
+                if (trig_mm)
+                    pass_duplicate_mm_em_ee = true;
+            }
+
+            switch (nt.year())
+            {
+                case 2016:
+                    trig_se = Common_HLT_Ele27_WPTight_Gsf or Common_HLT_Ele25_eta2p1_WPTight_Gsf;
+                    break;
+                case 2017:
+                    trig_se = Common_HLT_Ele35_WPTight_Gsf;
+                    break;
+                case 2018:
+                    trig_se = Common_HLT_Ele32_WPTight_Gsf;
+                    break;
+            }
+
+            switch (nt.year())
+            {
+                case 2016:
+                    trig_sm = Common_HLT_IsoMu24 or Common_HLT_IsoTkMu24;
+                    break;
+                case 2017:
+                    trig_sm = Common_HLT_IsoMu27;
+                    break;
+                case 2018:
+                    trig_sm = Common_HLT_IsoMu24;
+                    break;
+            }
+
+            // Create trigger branches
+            tx.setBranch<int>("trig_ee", trig_ee);
+            tx.setBranch<int>("trig_em", trig_em);
+            tx.setBranch<int>("trig_mm", trig_mm);
+            tx.setBranch<int>("trig_se", trig_se);
+            tx.setBranch<int>("trig_sm", trig_sm);
+            tx.setBranch<int>("pass_duplicate_ee_em_mm", pass_duplicate_ee_em_mm);
+            tx.setBranch<int>("pass_duplicate_mm_em_ee", pass_duplicate_mm_em_ee);
+            tx.setBranch<int>("is_pd_ee", is_pd_ee);
+            tx.setBranch<int>("is_pd_em", is_pd_em);
+            tx.setBranch<int>("is_pd_mm", is_pd_mm);
+            tx.setBranch<int>("is_pd_se", is_pd_se);
+            tx.setBranch<int>("is_pd_sm", is_pd_sm);
+
+            return true;
+
+        }, UNITY);
+
+    //*******************************
+    // - Select Two Same-Sign Leptons
+    //*******************************
+    cutflow.addCutToLastActiveCut("ObjectsSelection", UNITY, UNITY);
+
     //*******************************
     // - Select Two Same-Sign Leptons
     //*******************************
@@ -919,331 +1262,36 @@ void VBSHWW::initSRCutflow()
             if (not mee_noZ) // reject events with dielectrons being on-Z (charge flip from likely Z+jets)
                 return false;
 
-            return pt0 > 40. and pt1 > 40.;
+            if (not (pt0 > 40. and pt1 > 40.))
+                return false;
 
-        },
-        UNITY);
-
-    //**************************************************
-    // - Selecting Trigger and removing duplicate events
-    //**************************************************
-    cutflow.addCutToLastActiveCut("Trigger",
-        [&]()
-        {
-            if (tx.getBranch<int>("lepchannel") <= 2)
+            if (lepchannel <= 2 and lepchannel >= 0)
             {
-                bool is_pd_ee = looper.getCurrentFileName().Contains("DoubleEG") or looper.getCurrentFileName().Contains("EGamma");
-                bool is_pd_em = looper.getCurrentFileName().Contains("MuonEG");
-                bool is_pd_mm = looper.getCurrentFileName().Contains("DoubleMuon");
-                bool pass_duplicate_ee_em_mm = false;
-                bool pass_duplicate_mm_em_ee = false;
-
-                bool trig_ee = false;
-                bool trig_em = false;
-                bool trig_mm = false;
-
-                bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ = false;
-                bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL = false;
-                bool Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8 = false;
-                bool Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ = false;
-                bool Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL = false;
-                bool Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ = false;
-                bool Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL = false;
-                bool Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ = false;
-                bool Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL = false;
-
-                try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ                 = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ();                } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ                 = false; } // Lowest unprescaled
-                try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL                    = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL();                   } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL                    = false; } // Lowest unprescaled
-                try { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8         = nt.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8();        } catch (std::runtime_error) { Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8         = false; } // Lowest unprescaled for >= 2017C
-                try { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ           = nt.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ();          } catch (std::runtime_error) { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ           = false; }
-                try { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL              = nt.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL();             } catch (std::runtime_error) { Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL              = false; } // Lowest unprescaled
-                try { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ  = nt.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ(); } catch (std::runtime_error) { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ  = false; } // Lowest unprescaled
-                try { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL     = nt.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL();    } catch (std::runtime_error) { Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL     = false; }
-                try { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ   = nt.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ();  } catch (std::runtime_error) { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ   = false; } // Lowest unprescaled
-                try { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL      = nt.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL();     } catch (std::runtime_error) { Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL      = false; }
-
-                switch (nt.year())
-                {
-                    case 2016:
-                        trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ;
-                        trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL or
-                            Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
-                        trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ or
-                            Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL;
-                        break;
-                    case 2017:
-                        trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL;
-                        trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
-                        trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8;
-                        break;
-                    case 2018:
-                        trig_ee = Common_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL;
-                        trig_em = Common_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or Common_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ;
-                        trig_mm = Common_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8;
-                        break;
-                }
-
-                if (is_pd_ee)
-                {
-                    if (trig_ee)
-                        pass_duplicate_ee_em_mm = true;
-                    if (not trig_mm and not trig_em and trig_ee)
-                        pass_duplicate_mm_em_ee = true;
-                }
-                else if (is_pd_em)
-                {
-                    if (not trig_ee and trig_em)
-                        pass_duplicate_ee_em_mm = true;
-                    if (not trig_mm and trig_em)
-                        pass_duplicate_mm_em_ee = true;
-                }
-                else if (is_pd_mm)
-                {
-                    if (not trig_ee and not trig_em and trig_mm)
-                        pass_duplicate_ee_em_mm = true;
-                    if (trig_mm)
-                        pass_duplicate_mm_em_ee = true;
-                }
-
-
+                const int& trig_ee = tx.getBranch<int>("trig_ee");
+                const int& trig_em = tx.getBranch<int>("trig_em");
+                const int& trig_mm = tx.getBranch<int>("trig_mm");
+                const int& pass_duplicate_ee_em_mm = tx.getBranch<int>("pass_duplicate_ee_em_mm");
                 bool pass_trigger = trig_ee or trig_em or trig_mm;
                 bool duplicate = nt.isData() ? pass_duplicate_ee_em_mm : 1.;
                 return (pass_trigger and duplicate);
             }
             else if (tx.getBranch<int>("lepchannel") == 3)
             {
-                bool is_pd = looper.getCurrentFileName().Contains("SingleElectron") or looper.getCurrentFileName().Contains("EGamma");
-                bool Common_HLT_Ele27_WPTight_Gsf        = false;
-                bool Common_HLT_Ele25_eta2p1_WPTight_Gsf = false;
-                bool Common_HLT_Ele35_WPTight_Gsf        = false;
-                bool Common_HLT_Ele32_WPTight_Gsf        = false;
-                try { Common_HLT_Ele27_WPTight_Gsf        = nt.HLT_Ele27_WPTight_Gsf();        } catch (std::runtime_error) { Common_HLT_Ele27_WPTight_Gsf        = false; }
-                try { Common_HLT_Ele25_eta2p1_WPTight_Gsf = nt.HLT_Ele25_eta2p1_WPTight_Gsf(); } catch (std::runtime_error) { Common_HLT_Ele25_eta2p1_WPTight_Gsf = false; }
-                try { Common_HLT_Ele35_WPTight_Gsf        = nt.HLT_Ele35_WPTight_Gsf();        } catch (std::runtime_error) { Common_HLT_Ele35_WPTight_Gsf        = false; }
-                try { Common_HLT_Ele32_WPTight_Gsf        = nt.HLT_Ele32_WPTight_Gsf();        } catch (std::runtime_error) { Common_HLT_Ele32_WPTight_Gsf        = false; }
-                bool trig_se = false;
-                switch (nt.year())
-                {
-                    case 2016:
-                        trig_se = Common_HLT_Ele27_WPTight_Gsf or Common_HLT_Ele25_eta2p1_WPTight_Gsf;
-                        break;
-                    case 2017:
-                        trig_se = Common_HLT_Ele35_WPTight_Gsf;
-                        break;
-                    case 2018:
-                        trig_se = Common_HLT_Ele32_WPTight_Gsf;
-                        break;
-                }
-                return nt.isData() ? (is_pd and trig_se) : trig_se;
+                const int& is_pd_se = tx.getBranch<int>("is_pd_se");
+                const int& trig_se = tx.getBranch<int>("trig_se");
+                return nt.isData() ? (is_pd_se and trig_se) : trig_se == 1;
             }
             else if (tx.getBranch<int>("lepchannel") == 4)
             {
-                bool is_pd = looper.getCurrentFileName().Contains("SingleMuon");
-                bool Common_HLT_IsoMu24   = false;
-                bool Common_HLT_IsoTkMu24 = false;
-                bool Common_HLT_IsoMu27   = false;
-                try { Common_HLT_IsoMu24   = nt.HLT_IsoMu24();   } catch (std::runtime_error) { Common_HLT_IsoMu24   = false; }
-                try { Common_HLT_IsoTkMu24 = nt.HLT_IsoTkMu24(); } catch (std::runtime_error) { Common_HLT_IsoTkMu24 = false; }
-                try { Common_HLT_IsoMu27   = nt.HLT_IsoMu27();   } catch (std::runtime_error) { Common_HLT_IsoMu27   = false; }
-                bool trig_sm = false;
-                switch (nt.year())
-                {
-                    case 2016:
-                        trig_sm = Common_HLT_IsoMu24 or Common_HLT_IsoTkMu24;
-                        break;
-                    case 2017:
-                        trig_sm = Common_HLT_IsoMu27;
-                        break;
-                    case 2018:
-                        trig_sm = Common_HLT_IsoMu24;
-                        break;
-                }
-                return nt.isData() ? (is_pd and trig_sm) : trig_sm;
+                const int& is_pd_sm = tx.getBranch<int>("is_pd_sm");
+                const int& trig_sm = tx.getBranch<int>("trig_sm");
+                return nt.isData() ? (is_pd_sm and trig_sm) : trig_sm == 1;
             }
             else
             {
                 return false;
             }
 
-        }, UNITY);
-
-    //*****************************
-    // - Select Good Reco Jets
-    //*****************************
-    // Description: Select Good Reco Jets
-    //              - TODO TODO TODO TODO : Check pileup jet ID for year 2017
-    //              - Perform overlap removal against loose leptons
-    //              - Accept jets above 20 GeV for the container
-    //              - Count N btagged jets (nbloose, nbmedium, nbtight)
-    //              - Count central and all jets with pt > 30 GeV
-    //              - Save the jets into good_jets containers
-    cutflow.addCutToLastActiveCut("SelectJets",
-        [&]()
-        {
-
-            // b tagging counters
-            int nbloose = 0;
-            int nbmedium = 0;
-            int nbtight = 0;
-
-            int ncenjet30 = 0;
-            int njet30 = 0;
-
-            // Loop over the jets
-            for (unsigned int ijet = 0; ijet < nt.Jet_pt().size(); ++ijet)
-            {
-
-                // Read jet p4
-                const LV& jet_p4 = nt.Jet_p4()[ijet];
-
-                if (nt.Jet_jetId()[ijet] < 2) // "Tight" ID requirement
-                    continue;
-
-                // Overlap check against good leptons
-                bool isOverlap = false;
-                for (unsigned int ilep = 0; ilep < tx.getBranch<vector<LV>>("good_leptons_p4").size(); ++ilep)
-                {
-                    if (tx.getBranch<vector<int>>("good_leptons_jetIdx").at(ilep) == (int) ijet)
-                    {
-                        isOverlap = true;
-                        break;
-                    }
-                }
-
-                for (unsigned int itau = 0; itau < tx.getBranchLazy<vector<LV>>("good_taus_p4").size(); ++itau)
-                {
-                    if (RooUtil::Calc::DeltaR(tx.getBranchLazy<vector<LV>>("good_taus_p4").at(itau), jet_p4) < 0.4)
-                    {
-                        isOverlap = true;
-                        break;
-                    }
-                }
-
-                // Then skip
-                if (isOverlap)
-                    continue;
-
-                // B-tagging is done down to 20 GeV
-                if (not (jet_p4.pt() > 20.))
-                    continue;
-
-                bool is_loose_btagged = false;
-                bool is_medium_btagged = false;
-                bool is_tight_btagged = false;
-
-                // B-tagging is also done up to 2.4 in eta only
-                if (abs(jet_p4.eta()) < 2.4)
-                {
-                    // Check if it passes btagging
-                    is_loose_btagged = nt.Jet_btagDeepFlavB()[ijet] > gconf.WP_DeepFlav_loose;
-                    is_medium_btagged = nt.Jet_btagDeepFlavB()[ijet] > gconf.WP_DeepFlav_medium;
-                    is_tight_btagged = nt.Jet_btagDeepFlavB()[ijet] > gconf.WP_DeepFlav_tight;
-
-                    // Count up the btagging
-                    if (is_loose_btagged) nbloose++;
-                    if (is_medium_btagged) nbmedium++;
-                    if (is_tight_btagged) nbtight++;
-                }
-
-                tx.pushbackToBranch<LV>("good_jets_p4", jet_p4);
-                tx.pushbackToBranch<int>("good_jets_loose_btagged", is_loose_btagged);
-                tx.pushbackToBranch<int>("good_jets_medium_btagged", is_medium_btagged);
-                tx.pushbackToBranch<int>("good_jets_tight_btagged", is_tight_btagged);
-                tx.pushbackToBranch<float>("good_jets_btag_score", nt.Jet_btagDeepFlavB()[ijet]);
-                tx.pushbackToBranch<float>("good_jets_qg_disc", nt.Jet_qgl()[ijet]);
-
-                if (abs(jet_p4.eta()) < 3.0 and jet_p4.pt() > 30.)
-                {
-                    ncenjet30 ++;
-                }
-                if (jet_p4.pt() > 30.)
-                {
-                    njet30 ++;
-                }
-
-            }
-
-            tx.setBranch<int>("nbloose", nbloose);
-            tx.setBranch<int>("nbmedium", nbmedium);
-            tx.setBranch<int>("nbtight", nbtight);
-            tx.setBranch<int>("ncenjet30", ncenjet30);
-            tx.setBranch<int>("njet30", njet30);
-
-            tx.sortVecBranchesByPt(
-                    /* name of the 4vector branch to use to pt sort by*/               "good_jets_p4",
-                    /* names of any associated vector<float> branches to sort along */ {"good_jets_btag_score", "good_jets_qg_disc"},
-                    /* names of any associated vector<int>   branches to sort along */ {"good_jets_loose_btagged", "good_jets_medium_btagged", "good_jets_tight_btagged"},
-                    /* names of any associated vector<bool>  branches to sort along */ {}
-                    );
-
-            // Loop over the jets
-            for (unsigned int ifatjet = 0; ifatjet < nt.FatJet_pt().size(); ++ifatjet)
-            {
-
-                // Read jet p4
-                const LV& jet_p4 = nt.FatJet_p4()[ifatjet];
-
-                // Overlap check against good leptons
-                bool isOverlap = false;
-                for (unsigned int ilep = 0; ilep < tx.getBranch<vector<LV>>("good_leptons_p4").size(); ++ilep)
-                {
-                    if (RooUtil::Calc::DeltaR(tx.getBranchLazy<vector<LV>>("good_leptons_p4")[ilep], jet_p4) < 0.8)
-                    {
-                        isOverlap = true;
-                        break;
-                    }
-                }
-
-                for (unsigned int itau = 0; itau < tx.getBranchLazy<vector<LV>>("good_taus_p4").size(); ++itau)
-                {
-                    if (RooUtil::Calc::DeltaR(tx.getBranchLazy<vector<LV>>("good_taus_p4").at(itau), jet_p4) < 0.4)
-                    {
-                        isOverlap = true;
-                        break;
-                    }
-                }
-
-                // Then skip
-                if (isOverlap)
-                    continue;
-
-                // FatJet pt preselection is 250 GeV as Hbb tagger SF starts at 250 GeV.
-                if (not (jet_p4.pt() > 250.))
-                    continue;
-
-                bool is_loose_btagged = false;
-                bool is_medium_btagged = false;
-                bool is_tight_btagged = false;
-
-                // B-tagging is also done up to 2.4 in eta only
-                if (abs(jet_p4.eta()) < 2.4)
-                {
-                    // Check if it passes btagging
-                    if (nt.year() == 2018)
-                    {
-                        is_loose_btagged = nt.FatJet_btagDDBvL()[ifatjet] > 0.7; // 85% after SF
-                        is_medium_btagged = nt.FatJet_btagDDBvL()[ifatjet] > 0.86; // 55% after SF
-                        is_tight_btagged = nt.FatJet_btagDDBvL()[ifatjet] > 0.91; // 30% after SF
-                    }
-                }
-
-                tx.pushbackToBranch<LV>("good_fatjets_p4", jet_p4);
-                tx.pushbackToBranch<int>("good_fatjets_loose", is_loose_btagged);
-                tx.pushbackToBranch<int>("good_fatjets_medium", is_medium_btagged);
-                tx.pushbackToBranch<int>("good_fatjets_tight", is_tight_btagged);
-                tx.pushbackToBranch<float>("good_fatjets_msd", nt.FatJet_msoftdrop()[ifatjet]);
-
-
-            }
-
-            tx.sortVecBranchesByPt(
-                    /* name of the 4vector branch to use to pt sort by*/               "good_fatjets_p4",
-                    /* names of any associated vector<float> branches to sort along */ {"good_fatjets_msd"},
-                    /* names of any associated vector<int>   branches to sort along */ {"good_fatjets_loose", "good_fatjets_medium", "good_fatjets_tight"},
-                    /* names of any associated vector<bool>  branches to sort along */ {}
-                    );
-
-            return true;
         },
         UNITY);
 
