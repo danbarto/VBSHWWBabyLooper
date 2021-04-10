@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     std::vector<TString> channels =
         {
             // All channels
-            "All", // All channels included
+            "LooseVR", // All channels included
 
             // Main channels
             "TightLL", // Tight-Tight b-tag + lightlep + lightlep
