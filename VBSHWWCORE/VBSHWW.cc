@@ -1,4 +1,5 @@
 #include "VBSHWW.h"
+#include "common_utils.h" // Four-top analysis scale factors
 
 VBSHWW::VBSHWW(int argc, char** argv) :
     tx(
@@ -92,6 +93,9 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     tx.createBranch<float>("genst");
     tx.createBranch<float>("genmtllbbmet");
     tx.createBranch<float>("genmllbbmet");
+
+    // Create scale factor branches
+    tx.createBranch<float>("lepsf");
 
     // Create lepton branches
     tx.createBranch<vector<LV>>("good_leptons_p4");
@@ -717,6 +721,8 @@ void VBSHWW::initSRCutflow()
         [&]()
         {
 
+            float lepsf = 1.;
+
             // Select muons
             for (unsigned int imu = 0; imu < nt.Muon_pt().size(); ++imu)
             {
@@ -731,6 +737,7 @@ void VBSHWW::initSRCutflow()
                     tx.pushbackToBranch<float>("good_leptons_jetPtRelv2", nt.Muon_jetPtRelv2()[imu]);
                     tx.pushbackToBranch<float>("good_leptons_jetRelIso", nt.Muon_jetRelIso()[imu]);
                     tx.pushbackToBranch<float>("good_leptons_miniPFRelIso_all", nt.Muon_miniPFRelIso_all()[imu]);
+                    lepsf *= leptonScaleFactor(nt.year(), 13, nt.Muon_p4()[imu].pt(), nt.Muon_p4()[imu].eta(), /*ht is always 0 as we do not use HT trigger*/0, FTANA/*we use 4-top ID*/);
                 }
             }
 
@@ -748,6 +755,7 @@ void VBSHWW::initSRCutflow()
                     tx.pushbackToBranch<float>("good_leptons_jetPtRelv2", nt.Electron_jetPtRelv2()[iel]);
                     tx.pushbackToBranch<float>("good_leptons_jetRelIso", nt.Electron_jetRelIso()[iel]);
                     tx.pushbackToBranch<float>("good_leptons_miniPFRelIso_all", nt.Electron_miniPFRelIso_all()[iel]);
+                    lepsf *= leptonScaleFactor(nt.year(), 11, nt.Electron_p4()[iel].pt(), nt.Electron_p4()[iel].eta(), /*ht is always 0 as we do not use HT trigger*/0, FTANA/*we use 4-top ID*/);
                 }
             }
 
@@ -824,6 +832,9 @@ void VBSHWW::initSRCutflow()
                     {}
                     );
             }
+
+            // Set the lepton scale factor weight
+            tx.setBranch<float>("lepsf", nt.isData() ? 1. : lepsf);
 
             return true;
 
@@ -1293,7 +1304,8 @@ void VBSHWW::initSRCutflow()
             }
 
         },
-        UNITY);
+        [&]() { return tx.getBranch<float>("lepsf"); } );
+
 
     //*****************************
     // - Tag Hbb jets

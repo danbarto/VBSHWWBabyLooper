@@ -14,9 +14,6 @@
 int main(int argc, char** argv)
 {
 
-    const float lep_pt0_threshold = 140;
-    const float lep_pt1_threshold = 60;
-
     VBSHWW vbs(argc, argv);
 
     vbs.initSRCutflow();
@@ -67,38 +64,16 @@ int main(int argc, char** argv)
         vbs.cutflow.addCutToLastActiveCut(TString::Format("%sMbbOn", channel.Data()), [&]() { return (VBSLV("b0")+VBSLV("b1")).mass() < 140. and (VBSLV("b0")+VBSLV("b1")).mass() > 90.; }, UNITY );
         vbs.cutflow.getCut(TString::Format("%sChannel", channel.Data()));
         vbs.cutflow.addCutToLastActiveCut(TString::Format("%sMbbOff", channel.Data()), [&]() { return not ((VBSLV("b0")+VBSLV("b1")).mass() < 140. and (VBSLV("b0")+VBSLV("b1")).mass() > 90.); }, UNITY );
-        vbs.cutflow.getCut(TString::Format("%sChannel", channel.Data()));
-        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sMbbAll", channel.Data()), UNITY, UNITY );
 
-        std::vector<TString> kin_regs = {"MbbOn", "MbbOff", "MbbAll"};
+        std::vector<TString> kin_regs = {"MbbOn", "MbbOff"};
         for (auto& kin_reg : kin_regs)
         {
             vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
-            // Below the structure of the various cutflow is a bit ugly... TODO: Come up with a better organization....
-            // Adding cuts in Mjj -> LepPt0 -> LepPt1 order
-            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%sMjj"      , channel.Data(), kin_reg.Data()), [&]()                    { return (VBSLV("j0")+VBSLV("j1")).mass() > 500.;   }, UNITY );
-            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%sLepPt0"   , channel.Data(), kin_reg.Data()), [&, lep_pt0_threshold]() { return VBSLV("leadlep").pt() > lep_pt0_threshold; }, UNITY );
-            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%sLepPt1"   , channel.Data(), kin_reg.Data()), [&, lep_pt1_threshold]() { return VBSLV("subllep").pt() > lep_pt1_threshold; }, UNITY );
-            // Adding cuts in Mjj -> LepPt1 (-> LepPt1 order) last cut is not added since it's the same as the last cut from first set
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%sVBF"   , channel.Data(), kin_reg.Data()), [&]() { return (VBSLV("j0")+VBSLV("j1")).mass() > 500. and fabs(RooUtil::Calc::DeltaEta(VBSLV("j0"), VBSLV("j1"))) > 3.0;                                                                }, UNITY );
             vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
-            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s132Mjj"   , channel.Data(), kin_reg.Data()), [&]()                    { return (VBSLV("j0")+VBSLV("j1")).mass() > 500.;   }, UNITY );
-            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s132LepPt1", channel.Data(), kin_reg.Data()), [&, lep_pt0_threshold]() { return VBSLV("leadlep").pt() > lep_pt0_threshold; }, UNITY );
-            // Adding cuts in LepPt0 -> Mjj (-> LepPt1 order) last cut is not added since it's the same as the last cut from first set
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%sLepPts", channel.Data(), kin_reg.Data()), [&]() { return                                                                                                               VBSLV("leadlep").pt() > 140 and VBSLV("subllep").pt() > 60; }, UNITY );
             vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
-            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s213LepPt0", channel.Data(), kin_reg.Data()), [&, lep_pt0_threshold]() { return VBSLV("leadlep").pt() > lep_pt0_threshold; }, UNITY );
-            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s213Mjj"   , channel.Data(), kin_reg.Data()), [&]()                    { return (VBSLV("j0")+VBSLV("j1")).mass() > 500.;   }, UNITY );
-            // Adding cuts in LepPt0 -> LepPt1 (-> Mjj order) last cut is not added since it's the same as the last cut from first set
-            vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
-            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s231LepPt0", channel.Data(), kin_reg.Data()), [&, lep_pt0_threshold]() { return VBSLV("leadlep").pt() > lep_pt0_threshold; }, UNITY );
-            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s231LepPt1", channel.Data(), kin_reg.Data()), [&, lep_pt1_threshold]() { return VBSLV("subllep").pt() > lep_pt1_threshold; }, UNITY );
-            // Adding cuts in LepPt1 -> Mjj (-> LepPt0 order) last cut is not added since it's the same as the last cut from first set
-            vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
-            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s312LepPt1", channel.Data(), kin_reg.Data()), [&, lep_pt1_threshold]() { return VBSLV("subllep").pt() > lep_pt1_threshold; }, UNITY );
-            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s312Mjj"   , channel.Data(), kin_reg.Data()), [&]()                    { return (VBSLV("j0")+VBSLV("j1")).mass() > 500.;   }, UNITY );
-            // Adding cuts in LepPt1 -> LepPt0 (-> Mjj order) last cut is not added since it's the same as the last cut from first set
-            vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
-            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s321LepPt1", channel.Data(), kin_reg.Data()), [&, lep_pt1_threshold]() { return VBSLV("subllep").pt() > lep_pt1_threshold; }, UNITY );
-            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%s321LepPt0", channel.Data(), kin_reg.Data()), [&, lep_pt0_threshold]() { return VBSLV("leadlep").pt() > lep_pt0_threshold; }, UNITY );
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%sSR"    , channel.Data(), kin_reg.Data()), [&]() { return (VBSLV("j0")+VBSLV("j1")).mass() > 500. and fabs(RooUtil::Calc::DeltaEta(VBSLV("j0"), VBSLV("j1"))) > 3.0 and VBSLV("leadlep").pt() > 140 and VBSLV("subllep").pt() > 60; }, UNITY );
         }
     }
 
