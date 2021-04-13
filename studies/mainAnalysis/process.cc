@@ -19,7 +19,7 @@ int main(int argc, char** argv)
     vbs.initSRCutflow();
 
     // Splitting events by channels
-    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("LooseVRChannel"    , [&]() { return VBSINT("channel") >= 0;                                                                 }, UNITY);
+    vbs.cutflow.getCut("AK4CategPresel"); vbs.cutflow.addCutToLastActiveCut("LooseVRChannel", [&]() { return VBSINT("channel") >= 0;                                                                 }, UNITY);
 
     vbs.cutflow.getCut("LooseVRChannel"); vbs.cutflow.addCutToLastActiveCut("TightEEChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 0;                               }, UNITY);
     vbs.cutflow.getCut("LooseVRChannel"); vbs.cutflow.addCutToLastActiveCut("TightEMChannel", [&]() { return VBSINT("btagchannel") == 0 and VBSINT("lepchannel") == 1;                               }, UNITY);
@@ -64,8 +64,10 @@ int main(int argc, char** argv)
         vbs.cutflow.addCutToLastActiveCut(TString::Format("%sMbbOn", channel.Data()), [&]() { return (VBSLV("b0")+VBSLV("b1")).mass() < 140. and (VBSLV("b0")+VBSLV("b1")).mass() > 90.; }, UNITY );
         vbs.cutflow.getCut(TString::Format("%sChannel", channel.Data()));
         vbs.cutflow.addCutToLastActiveCut(TString::Format("%sMbbOff", channel.Data()), [&]() { return not ((VBSLV("b0")+VBSLV("b1")).mass() < 140. and (VBSLV("b0")+VBSLV("b1")).mass() > 90.); }, UNITY );
+        vbs.cutflow.getCut(TString::Format("%sChannel", channel.Data()));
+        vbs.cutflow.addCutToLastActiveCut(TString::Format("%sMbbAll", channel.Data()), UNITY, UNITY );
 
-        std::vector<TString> kin_regs = {"MbbOn", "MbbOff"};
+        std::vector<TString> kin_regs = {"MbbOn", "MbbOff", "MbbAll"};
         for (auto& kin_reg : kin_regs)
         {
             vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
@@ -74,6 +76,8 @@ int main(int argc, char** argv)
             vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%sLepPts", channel.Data(), kin_reg.Data()), [&]() { return                                                                                                               VBSLV("leadlep").pt() > 140 and VBSLV("subllep").pt() > 60; }, UNITY );
             vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
             vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%sSR"    , channel.Data(), kin_reg.Data()), [&]() { return (VBSLV("j0")+VBSLV("j1")).mass() > 500. and fabs(RooUtil::Calc::DeltaEta(VBSLV("j0"), VBSLV("j1"))) > 3.0 and VBSLV("leadlep").pt() > 140 and VBSLV("subllep").pt() > 60; }, UNITY );
+            vbs.cutflow.getCut(TString::Format("%s%s", channel.Data(), kin_reg.Data()));
+            vbs.cutflow.addCutToLastActiveCut(TString::Format("%s%sLowMjj", channel.Data(), kin_reg.Data()), [&]() { return (VBSLV("j0")+VBSLV("j1")).mass() < 500.;                                                                                                                                  }, UNITY );
         }
     }
 
@@ -126,12 +130,20 @@ int main(int argc, char** argv)
     vbs.histograms.addHistogram("Mll"                 , 180 , 0       , 2000   , [&]() { return (VBSLV("leadlep")+VBSLV("subllep")).mass();                                        } );
     vbs.histograms.addHistogram("MllLow"              , 180 , 0       , 250    , [&]() { return (VBSLV("leadlep")+VBSLV("subllep")).mass();                                        } );
     vbs.histograms.addHistogram("Mbb"                 , 180 , -10     , 290    , [&]() { return (VBSLV("b0")+VBSLV("b1")).mass();                                                  } );
+    vbs.histograms.addHistogram("MbbMax"              , 180 , -10     , 590    , [&]() { return (VBSLV("b0")+VBSLV("b1")).mass();                                                  } );
     vbs.histograms.addHistogram("MbbInOut"            , 2   , 0       , 2      , [&]() { return (VBSLV("b0")+VBSLV("b1")).mass() < 140 and (VBSLV("b0")+VBSLV("b1")).mass() > 90.; } );
     vbs.histograms.addHistogram("DRbb"                , 180 , 0       , 10     , [&]() { return RooUtil::Calc::DeltaR(VBSLV("b0"), VBSLV("b1"));                                   } );
     vbs.histograms.addHistogram("MET"                 , 180 , 0       , 1500   , [&]() { return VBSLV("met_p4").pt();                                                              } );
     vbs.histograms.addHistogram("METLow"              , 180 , 0       , 250    , [&]() { return VBSLV("met_p4").pt();                                                              } );
     vbs.histograms.addHistogram("Channels"            , 8   , 0       , 8      , [&]() { return VBSINT("channel");                                                                 } );
     vbs.histograms.addHistogram("ChannelsDetails"     , 16  , 0       , 16     , [&]() { return VBSINT("channeldetail");                                                           } );
+
+    vbs.histograms.add2DHistogram("Mbb", 50 , 0 , 300 , "HiggsPt", 50, 0, 350, [&]() { return (VBSLV("b0")+VBSLV("b1")).mass(); }, [&]() { return (VBSLV("b0")+VBSLV("b1")).pt(); } );
+    vbs.histograms.add2DHistogram("Mbb", 50 , 0 , 300 , "DRbb", 50, 0, 6, [&]() { return (VBSLV("b0")+VBSLV("b1")).mass(); }, [&]() { return RooUtil::Calc::DeltaR(VBSLV("b0"), VBSLV("b1")); } );
+    vbs.histograms.add2DHistogram("Mbb", 50 , 0 , 300 , "MJJ", 50, 0, 4500, [&]() { return (VBSLV("b0")+VBSLV("b1")).mass(); }, [&]() { return (VBSLV("j0")+VBSLV("j1")).mass(); } );
+    vbs.histograms.add2DHistogram("Mbb", 50 , 0 , 300 , "DEtaJJ", 50, 0, 6, [&]() { return (VBSLV("b0")+VBSLV("b1")).mass(); }, [&]() { return fabs(RooUtil::Calc::DeltaEta(VBSLV("j0"), VBSLV("j1"))); } );
+    vbs.histograms.add2DHistogram("Mbb", 50 , 0 , 300 , "LepPt0", 50, 0, 600, [&]() { return (VBSLV("b0")+VBSLV("b1")).mass(); }, [&]() { return VBSLV("leadlep").pt(); } );
+    vbs.histograms.add2DHistogram("Mbb", 50 , 0 , 300 , "LepPt1", 50, 0, 600, [&]() { return (VBSLV("b0")+VBSLV("b1")).mass(); }, [&]() { return VBSLV("subllep").pt(); } );
 
     // Book the histograms
     vbs.cutflow.bookHistogramsForCutAndBelow(vbs.histograms, "AK4CategPresel");

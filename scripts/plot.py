@@ -78,7 +78,7 @@ histxaxislabeloptions = {
         "TightLLChannel__MJJ"      : {"xaxis_label"      : "m_{jj} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
         "TightLLChannel__LeptonPt0": {"xaxis_label"      : "p_{T,lead-lep} [GeV]"    , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
         "TightLLChannel__LeptonPt1": {"xaxis_label"      : "p_{T,sublead-lep} [GeV]" , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
-        "Mbb"                      : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 18, "signal_scale":   1                },
+        "Mbb"                      : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins":  6, "signal_scale":   1                },
         "TightLLChannel__MJJ"      : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 18, "signal_scale":   1                },
         "TightLLCRMjj__Mbb"        : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 18, "signal_scale":   1                },
         "TightLLCRLepPt0__Mbb"     : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 12, "signal_scale":   1                },

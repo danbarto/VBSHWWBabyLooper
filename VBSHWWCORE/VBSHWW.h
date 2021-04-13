@@ -10,6 +10,7 @@
 #include "MuonSelections.h"
 #include "TauSelections.h"
 #include "Tools/goodrun.h"
+#include "Tools/btagsf/BTagCalibrationStandalone.h"
 
 class VBSHWW
 {
@@ -57,6 +58,10 @@ public:
 
     // Custom TTree object
     RooUtil::TTreeX tx;
+
+    BTagCalibration* btagCalib;
+    BTagCalibrationReader* btagReaderTight;
+    BTagCalibrationReader* btagReaderLoose;
 
     VBSHWW(int, char**);
     ~VBSHWW();

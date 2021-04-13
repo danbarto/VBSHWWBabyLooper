@@ -32,6 +32,28 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     // cout << "Setting grl: " << json_file << endl;
     set_goodrun_file("/nfs-7/userdata/phchang/analysis_data/grl/Cert_271036-325175_13TeV_Combined161718_JSON_snt.txt");
 
+    // Setting up btagging scale factors
+    if (nt.year() == 2016)
+    {
+        btagCalib = new BTagCalibration("DeepJet", "data/DeepJet_2016LegacySF_V1.csv");
+    }
+    else if (nt.year() == 2017)
+    {
+        btagCalib = new BTagCalibration("DeepJet", "data/DeepJet_94XSF_V4_B_F.csv");
+    }
+    else if (nt.year() == 2018)
+    {
+        btagCalib = new BTagCalibration("DeepJet", "data/DeepJet_102XSF_V3.csv");
+    }
+    else
+    {
+        RooUtil::error(TString::Format("While setting b-tag scale factors, found year = %d that is not recognized.", nt.year()));
+    }
+    btagReaderTight = new BTagCalibrationReader(BTagEntry::OP_TIGHT, "central", {"up", "down"});
+    btagReaderLoose = new BTagCalibrationReader(BTagEntry::OP_LOOSE, "central", {"up", "down"});
+    btagReaderTight->load(*btagCalib, BTagEntry::FLAV_B, "comb");
+    btagReaderLoose->load(*btagCalib, BTagEntry::FLAV_B, "comb");
+
 //=============================
 //
 // Analysis Data Structure
@@ -96,6 +118,7 @@ VBSHWW::VBSHWW(int argc, char** argv) :
 
     // Create scale factor branches
     tx.createBranch<float>("lepsf");
+    tx.createBranch<float>("btagsf");
 
     // Create lepton branches
     tx.createBranch<vector<LV>>("good_leptons_p4");
@@ -1360,8 +1383,6 @@ void VBSHWW::initSRCutflow()
             tx.setBranch<LV>("b1", tx.getBranch<vector<LV>>("higgs_jets_p4")[1]);
             float mbb = (tx.getBranch<LV>("b0")+tx.getBranch<LV>("b1")).mass();
             int mbbIn = mbb > 90. and mbb < 140.;
-            int mbbOut = (not mbbIn);
-            tx.setBranch<int>("pass_blind", nt.isData() ? mbbOut: 1.);
             tx.setBranch<int>("mbbIn", mbbIn);
 
             // Require at least one of them pass a tight and another pass loose
@@ -1370,23 +1391,33 @@ void VBSHWW::initSRCutflow()
             const int& bloose0 = tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[0];
             const int& bloose1 = tx.getBranch<vector<int>>("higgs_jets_loose_btagged")[1];
             int btagchannel = -999;
+            float btagsf = 1.;
             if (btight0 and btight1)
+            {
                 btagchannel = 0;
-            else if ((btight0 and bloose1) or (bloose0 and btight1))
+                btagsf *= btagReaderTight->eval_auto_bounds("central", BTagEntry::FLAV_B, fabs(tx.getBranch<vector<LV>>("higgs_jets_p4")[0].eta()), tx.getBranch<vector<LV>>("higgs_jets_p4")[0].pt());
+                btagsf *= btagReaderTight->eval_auto_bounds("central", BTagEntry::FLAV_B, fabs(tx.getBranch<vector<LV>>("higgs_jets_p4")[1].eta()), tx.getBranch<vector<LV>>("higgs_jets_p4")[1].pt());
+            }
+            else if (btight0 and bloose1)
+            {
                 btagchannel = 1;
+                btagsf *= btagReaderTight->eval_auto_bounds("central", BTagEntry::FLAV_B, fabs(tx.getBranch<vector<LV>>("higgs_jets_p4")[0].eta()), tx.getBranch<vector<LV>>("higgs_jets_p4")[0].pt());
+                btagsf *= btagReaderLoose->eval_auto_bounds("central", BTagEntry::FLAV_B, fabs(tx.getBranch<vector<LV>>("higgs_jets_p4")[1].eta()), tx.getBranch<vector<LV>>("higgs_jets_p4")[1].pt());
+            }
+            else if (bloose0 and btight1)
+            {
+                btagchannel = 1;
+                btagsf *= btagReaderLoose->eval_auto_bounds("central", BTagEntry::FLAV_B, fabs(tx.getBranch<vector<LV>>("higgs_jets_p4")[0].eta()), tx.getBranch<vector<LV>>("higgs_jets_p4")[0].pt());
+                btagsf *= btagReaderTight->eval_auto_bounds("central", BTagEntry::FLAV_B, fabs(tx.getBranch<vector<LV>>("higgs_jets_p4")[1].eta()), tx.getBranch<vector<LV>>("higgs_jets_p4")[1].pt());
+            }
             else
+            {
                 btagchannel = -1;
+            }
             tx.setBranch<int>("btagchannel", btagchannel);
+            tx.setBranch<float>("btagsf", nt.isData() ? 1. : btagsf);
 
-            if (bloose0 and bloose1)
-                return true;
-            else
-                return false;
-            // if (btagchannel == 0 or btagchannel == 1)
-            //     return true;
-            // else
-            //     return false;
-
+            return true;
         }, UNITY);
 
     //*****************************
@@ -1430,7 +1461,6 @@ void VBSHWW::initSRCutflow()
                 // Set the vbs jets
                 tx.setBranch<LV>("j0", good_jets_p4[vbs_jet_cands_idxs[0]]);
                 tx.setBranch<LV>("j1", good_jets_p4[vbs_jet_cands_idxs[1]]);
-                return true;
             }
             else
             {
@@ -1495,8 +1525,11 @@ void VBSHWW::initSRCutflow()
                 // Set the vbs jets
                 tx.setBranch<LV>("j0", good_jets_p4[vbs_jet_idx_0]);
                 tx.setBranch<LV>("j1", good_jets_p4[vbs_jet_idx_1]);
-                return true;
             }
+            float mjj = (tx.getBranch<LV>("j0") + tx.getBranch<LV>("j1")).mass();
+            int mbbIn = tx.getBranch<int>("mbbIn");
+            tx.setBranch<int>("pass_blind", nt.isData() ? (not mbbIn or mjj < 500.) : 1);
+            return true;
 
         },
         UNITY);
@@ -1536,12 +1569,11 @@ void VBSHWW::initSRCutflow()
             if (pass_blind and btagchannel == 0 and lepchannel == 4 and     mbbIn) channeldetail = 14;
             if (pass_blind and btagchannel == 0 and lepchannel == 4 and not mbbIn) channeldetail = 15;
             tx.setBranch<int>("channeldetail", channeldetail);
-            return true;
-            // if (channel < 0)
-            //     return false;
-            // else
-            //     return true;
-        }, UNITY);
+            if (channel < 0)
+                return false;
+            else
+                return true;
+        }, [&]() { return tx.getBranch<float>("btagsf"); } );
 
     return;
 }
