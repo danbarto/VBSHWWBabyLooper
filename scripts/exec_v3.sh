@@ -234,5 +234,5 @@ for SAMPLE in ${SAMPLES}; do
 done
 
 echo "Launching jobs in parallel...."
-# xargs.sh .jobs.txt
+xargs.sh .jobs.txt
 echo "Done!"
