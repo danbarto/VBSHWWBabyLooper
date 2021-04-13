@@ -1528,7 +1528,7 @@ void VBSHWW::initSRCutflow()
             }
             float mjj = (tx.getBranch<LV>("j0") + tx.getBranch<LV>("j1")).mass();
             int mbbIn = tx.getBranch<int>("mbbIn");
-            tx.setBranch<int>("pass_blind", nt.isData() ? (not mbbIn or mjj < 500.) : 1);
+            tx.setBranch<int>("pass_blind", nt.isData() ? not mbbIn : 1);
             return true;
 
         },
