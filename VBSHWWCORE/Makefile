@@ -16,7 +16,7 @@ LIB=VBSHWW_CORE.so
 #
 
 $(LIB): $(SOURCES) $(HEADERS)
-	$(LD) $(CXXFLAGS) $(LDFLAGS) -fPIC -ITMultiDrawTreePlayer -Wunused-variable $(SOFLAGS) $(SOURCES) $(ROOTLIBS) -lTMVA -lEG -lGenVector -lXMLIO -lMLP -lTreePlayer -I../NanoTools/NanoCORE/ -I../rooutil -DLorentzVectorPtEtaPhiM4D -o $@
+	$(LD) $(CXXFLAGS) $(LDFLAGS) -fPIC -ITMultiDrawTreePlayer -Wunused-variable $(SOFLAGS) $(SOURCES) $(ROOTLIBS) -lTMVA -lEG -lGenVector -lXMLIO -lMLP -lTreePlayer -I../NanoTools/NanoCORE/ -I../FTAnalysis/analysis/misc -I../rooutil -DLorentzVectorPtEtaPhiM4D -o $@
 	ln -sf VBSHWW_CORE.so libVBSHWW_CORE.so
 
 all: $(LIB) 

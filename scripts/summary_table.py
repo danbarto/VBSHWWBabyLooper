@@ -3,11 +3,10 @@
 import os
 
 jobs = [
-        ("LepPt1",    ","         , "Presel,"    ), # Presel
-        ("LepPt1",    "Mjj,"      , "Only Mjj500,"   ), # Only Mjj
-        ("231LepPt1", "231LepPt0,", "Only LeadLep140,"), # Only LepPt0
-        ("321LepPt0", "321LepPt1,", "Only SubleadLep60,"), # Only LepPt1
-        ("LepPt1",    "LepPt1,"   , "All Nominal Cuts,"), # All nominal cuts
+        ("SR"     , ","       , "Presel,"             ) ,
+        ("VBF"    , "VBF,"    , "Only VBF cuts,"      ) ,
+        ("LepPts" , "LepPts," , "Only Lepton PT cuts,"),
+        ("SR"     , "SR,"     , "All Nominal Cuts,"   ) ,
     ]
 
 categories = [
