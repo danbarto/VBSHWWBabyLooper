@@ -85,36 +85,18 @@ VBSHWW::VBSHWW(int argc, char** argv) :
 
     // Create gen particle branches
     tx.createBranch<int>("isvbswwh");
-    tx.createBranch<LV>("gen_jet0_p4");
-    tx.createBranch<LV>("gen_jet1_p4");
-    tx.createBranch<LV>("gen_w0_p4");
-    tx.createBranch<LV>("gen_w1_p4");
-    tx.createBranch<LV>("gen_h_p4");
-    tx.createBranch<LV>("gen_lep0_p4");
-    tx.createBranch<LV>("gen_lep1_p4");
-    tx.createBranch<LV>("gen_nu0_p4");
-    tx.createBranch<LV>("gen_nu1_p4");
-    tx.createBranch<LV>("gen_b0_p4");
-    tx.createBranch<LV>("gen_b1_p4");
-    tx.createBranch<float>("genleppt0");
-    tx.createBranch<float>("genleppt1");
-    tx.createBranch<float>("gentaupt");
+    tx.createBranch<LV>("gen_jet0");
+    tx.createBranch<LV>("gen_jet1");
+    tx.createBranch<LV>("gen_w0");
+    tx.createBranch<LV>("gen_w1");
+    tx.createBranch<LV>("gen_h");
+    tx.createBranch<LV>("gen_lep0");
+    tx.createBranch<LV>("gen_lep1");
+    tx.createBranch<LV>("gen_nu0");
+    tx.createBranch<LV>("gen_nu1");
+    tx.createBranch<LV>("gen_b0");
+    tx.createBranch<LV>("gen_b1");
     tx.createBranch<int>("genchannel");
-    tx.createBranch<float>("genmjj");
-    tx.createBranch<float>("genptjj");
-    tx.createBranch<float>("gendetajj");
-    tx.createBranch<float>("gendphijj");
-    tx.createBranch<float>("genmbb");
-    tx.createBranch<float>("genptbb");
-    tx.createBranch<float>("gendphibb");
-    tx.createBranch<float>("gendrbb");
-    tx.createBranch<float>("genmll");
-    tx.createBranch<float>("genptll");
-    tx.createBranch<float>("gendphill");
-    tx.createBranch<float>("gendrll");
-    tx.createBranch<float>("genst");
-    tx.createBranch<float>("genmtllbbmet");
-    tx.createBranch<float>("genmllbbmet");
 
     // Create scale factor branches
     tx.createBranch<float>("lepsf");
@@ -160,6 +142,8 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     tx.createBranch<vector<int>>("higgs_jets_tight_btagged");
     tx.createBranch<vector<float>>("higgs_jets_btag_score");
     tx.createBranch<vector<int>>("higgs_jets_good_jets_idx");
+    tx.createBranch<vector<int>>("higgs_jets_genmatched");
+    tx.createBranch<vector<float>>("higgs_jets_genmatched_dr");
 
     // Create vbs tagged jet branches
     tx.createBranch<vector<LV>>("vbs_jets_p4");
@@ -187,6 +171,7 @@ VBSHWW::VBSHWW(int argc, char** argv) :
     tx.createBranch<int>("channeldetail");
     tx.createBranch<int>("lepchannel");
     tx.createBranch<int>("btagchannel");
+    tx.createBranch<int>("bmatchcateg");
     tx.createBranch<int>("mee_noZ");
     tx.createBranch<int>("mbbIn");
     tx.createBranch<int>("pass_blind");
@@ -506,176 +491,16 @@ void VBSHWW::initSRCutflow()
         {
             if (looper.getCurrentFileName().Contains("VBSWmpWmpHToLNuLNu_C2V"))
             {
-                bool isvbswwh = nt.GenPart_status()[2] == 23;
-                tx.setBranch<int>("isvbswwh", isvbswwh);
-                if (isvbswwh)
-                {
-                    const LV& ijet = nt.GenPart_p4()[2];
-                    const LV& jjet = nt.GenPart_p4()[3];
-                    const LV& jet0 = ijet.pt() > jjet.pt() ? ijet : jjet;
-                    const LV& jet1 = ijet.pt() > jjet.pt() ? jjet : ijet;
-                    tx.setBranch<LV>("gen_jet0_p4", jet0);
-                    tx.setBranch<LV>("gen_jet1_p4", jet1);
-                    const LV& iW = nt.GenPart_p4()[4];
-                    const LV& jW = nt.GenPart_p4()[5];
-                    const LV& W0 = iW.pt() > jW.pt() ? iW : jW;
-                    const LV& W1 = iW.pt() > jW.pt() ? jW : iW;
-                    tx.setBranch<LV>("gen_w0_p4", W0);
-                    tx.setBranch<LV>("gen_w1_p4", W1);
-                    const LV& h = nt.GenPart_p4()[6];
-                    tx.setBranch<LV>("gen_h_p4", h);
-
-                    std::vector<LV> leptons;
-                    std::vector<int> lepton_pdgids;
-                    for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
-                    {
-                        int midx = nt.GenPart_genPartIdxMother()[igen];
-                        if (midx > 1)
-                        {
-                            if (abs(nt.GenPart_pdgId()[midx]) == 24 and abs(nt.GenPart_status()[midx]) == 62
-                                and (
-                                    ((nt.GenPart_status()[igen] == 1 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 11 or abs(nt.GenPart_pdgId()[igen]) == 13))
-                                    or
-                                    ((nt.GenPart_status()[igen] == 2 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 15))
-                                    )
-                               )
-                            {
-                                leptons.push_back(nt.GenPart_p4()[igen]);
-                                lepton_pdgids.push_back(nt.GenPart_pdgId()[igen]);
-                            }
-                        }
-                        else
-                        {
-                            continue;
-                        }
-                    }
-
-                    if (leptons.size() != 2)
-                    {
-                        std::cout <<  " leptons.size(): " << leptons.size() <<  std::endl;
-                        for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
-                        {
-                            int pdgid = nt.GenPart_pdgId()[igen];
-                            int status = nt.GenPart_status()[igen];
-                            int midx = nt.GenPart_genPartIdxMother()[igen];
-                            int mid = midx > -1 ? nt.GenPart_pdgId()[midx] : -1;
-                            int mstatus = midx > -1 ? nt.GenPart_status()[midx] : -1;
-                            std::cout <<  " pdgid: " << pdgid <<  " status: " << status <<  " midx: " << midx <<  " mid: " << mid <<  " mstatus: " << mstatus <<  std::endl;
-                        }
-                    }
-                    const LV& lep0 = leptons[0].pt() > leptons[1].pt() ? leptons[0] : leptons[1];
-                    const LV& lep1 = leptons[0].pt() > leptons[1].pt() ? leptons[1] : leptons[0];
-
-                    std::vector<LV> nus;
-                    for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
-                    {
-                        int midx = nt.GenPart_genPartIdxMother()[igen];
-                        if (midx > 1)
-                        {
-                            if (abs(nt.GenPart_pdgId()[midx]) == 24 and abs(nt.GenPart_status()[midx]) == 62
-                                and (
-                                    ((nt.GenPart_status()[igen] == 1 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 12 or abs(nt.GenPart_pdgId()[igen]) == 14))
-                                    or
-                                    ((nt.GenPart_status()[igen] == 1 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 16))
-                                    )
-                               )
-                            {
-                                nus.push_back(nt.GenPart_p4()[igen]);
-                            }
-                        }
-                        else
-                        {
-                            continue;
-                        }
-                    }
-
-                    if (nus.size() != 2)
-                    {
-                        std::cout <<  " nus.size(): " << nus.size() <<  std::endl;
-                    }
-                    const LV& nu0 = nus[0].pt() > nus[1].pt() ? nus[0] : nus[1];
-                    const LV& nu1 = nus[0].pt() > nus[1].pt() ? nus[1] : nus[0];
-
-                    std::vector<LV> bs;
-                    for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
-                    {
-                        if (abs(nt.GenPart_pdgId()[igen]) == 5 and nt.GenPart_status()[igen] == 23)
-                        {
-                            bs.push_back(nt.GenPart_p4()[igen]);
-                        }
-                    }
-
-                    if (bs.size() != 2)
-                    {
-                        std::cout <<  " bs.size(): " << bs.size() <<  std::endl;
-                    }
-                    const LV& b0 = bs[0].pt() > bs[1].pt() ? bs[0] : bs[1];
-                    const LV& b1 = bs[0].pt() > bs[1].pt() ? bs[1] : bs[0];
-
-                    tx.setBranch<LV>("gen_lep0_p4", lep0);
-                    tx.setBranch<LV>("gen_lep1_p4", lep1);
-                    tx.setBranch<LV>("gen_nu0_p4", nu0);
-                    tx.setBranch<LV>("gen_nu1_p4", nu1);
-                    tx.setBranch<LV>("gen_b0_p4", b0);
-                    tx.setBranch<LV>("gen_b1_p4", b1);
-
-                    int channel = -1;
-                    if (lepton_pdgids[0] * lepton_pdgids[1] == 121)
-                    {
-                        channel = 0;
-                    }
-                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 143)
-                    {
-                        channel = 1;
-                    }
-                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 169)
-                    {
-                        channel = 2;
-                    }
-                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 165)
-                    {
-                        channel = 3;
-                    }
-                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 195)
-                    {
-                        channel = 4;
-                    }
-                    else if (lepton_pdgids[0] * lepton_pdgids[1] == 225)
-                    {
-                        channel = 5;
-                    }
-
-                    tx.setBranch<float>("genleppt0", lep0.pt());
-                    tx.setBranch<float>("genleppt1", lep1.pt());
-                    tx.setBranch<float>("gentaupt", -999.);
-                    tx.setBranch<int>("genchannel", channel);
-                    tx.setBranch<float>("genmjj", (jet0+jet1).mass());
-                    tx.setBranch<float>("genptjj", (jet0+jet1).pt());
-                    tx.setBranch<float>("gendetajj", abs(RooUtil::Calc::DeltaEta(jet0, jet1)));
-                    tx.setBranch<float>("gendphijj", abs(RooUtil::Calc::DeltaPhi(jet0, jet1)));
-                    tx.setBranch<float>("genmbb", (b0+b1).mass());
-                    tx.setBranch<float>("genptbb", (b0+b1).pt());
-                    tx.setBranch<float>("gendphibb", abs(RooUtil::Calc::DeltaPhi(b0, b1)));
-                    tx.setBranch<float>("gendrbb", RooUtil::Calc::DeltaR(b0, b1));
-                    tx.setBranch<float>("genmll", (lep0+lep1).mass());
-                    tx.setBranch<float>("genptll", (lep0+lep1).pt());
-                    tx.setBranch<float>("gendphill", abs(RooUtil::Calc::DeltaPhi(lep0, lep1)));
-                    tx.setBranch<float>("gendrll", RooUtil::Calc::DeltaR(lep0, lep1));
-                    tx.setBranch<float>("genst", (lep0.pt() + lep1.pt() + b0.pt() + b1.pt() + (nu0 + nu1).pt()));
-                    tx.setBranch<float>("genmtllbbmet", (lep0 + lep1 + b0 + b1 + nu0 + nu1).mt());
-                    tx.setBranch<float>("genmllbbmet", (lep0 + lep1 + b0 + b1 + nu0 + nu1).mass());
-
-                    return true;
-                }
-                else
-                {
-                    return true;
-                }
+                processGenParticles_VBSWWH();
             }
-            else
+            if (looper.getCurrentFileName().Contains("TTWJetsToLNu")
+                or looper.getCurrentFileName().Contains("TTJets_")
+                or looper.getCurrentFileName().Contains("TTZTo")
+               )
             {
-                return true;
+                processGenParticles_TopBackgrounds();
             }
+            return true;
         }, UNITY);
 
     //************************************
@@ -1378,6 +1203,35 @@ void VBSHWW::initSRCutflow()
             tx.pushbackToBranch<float>("higgs_jets_btag_score", tx.getBranch<vector<float>>("good_jets_btag_score")[higgs_jet_1]);
             tx.pushbackToBranch<int>("higgs_jets_good_jets_idx", higgs_jet_1);
 
+            if (tx.isBranchSet<LV>("gen_b0"))
+            {
+                std::vector<LV> reco_bs = {tx.getBranch<vector<LV>>("good_jets_p4")[higgs_jet_0], tx.getBranch<vector<LV>>("good_jets_p4")[higgs_jet_1]};
+                std::vector<LV> gen_bs = {tx.getBranch<LV>("gen_b0"), tx.getBranch<LV>("gen_b1")};
+
+                std::vector<int> idxs = RooUtil::Calc::hungarianDeltaRMatching(reco_bs, gen_bs);
+
+                float reco_b_match_dr_0 = RooUtil::Calc::DeltaR(reco_bs[0], gen_bs[idxs[0]]);
+                float reco_b_match_dr_1 = RooUtil::Calc::DeltaR(reco_bs[1], gen_bs[idxs[1]]);
+                int reco_b_match_0 = reco_b_match_dr_0 < 0.4;
+                int reco_b_match_1 = reco_b_match_dr_1 < 0.4;
+
+                tx.pushbackToBranch<int>("higgs_jets_genmatched", reco_b_match_1);
+                tx.pushbackToBranch<float>("higgs_jets_genmatched_dr", reco_b_match_dr_1);
+                tx.pushbackToBranch<int>("higgs_jets_genmatched", reco_b_match_0);
+                tx.pushbackToBranch<float>("higgs_jets_genmatched_dr", reco_b_match_dr_0);
+
+                int bmatchcateg = reco_b_match_0 + reco_b_match_1;
+                tx.setBranch<int>("bmatchcateg", bmatchcateg);
+            }
+            else
+            {
+                tx.pushbackToBranch<int>("higgs_jets_genmatched", 0);
+                tx.pushbackToBranch<float>("higgs_jets_genmatched_dr", -999);
+                tx.pushbackToBranch<int>("higgs_jets_genmatched", 0);
+                tx.pushbackToBranch<float>("higgs_jets_genmatched_dr", -999);
+                tx.setBranch<int>("bmatchcateg", -1);
+            }
+
             // Set the tagged higgs jets
             tx.setBranch<LV>("b0", tx.getBranch<vector<LV>>("higgs_jets_p4")[0]);
             tx.setBranch<LV>("b1", tx.getBranch<vector<LV>>("higgs_jets_p4")[1]);
@@ -1527,8 +1381,11 @@ void VBSHWW::initSRCutflow()
                 tx.setBranch<LV>("j1", good_jets_p4[vbs_jet_idx_1]);
             }
             float mjj = (tx.getBranch<LV>("j0") + tx.getBranch<LV>("j1")).mass();
+            float detajj = fabs(RooUtil::Calc::DeltaEta(tx.getBranch<LV>("j0"), tx.getBranch<LV>("j1")));
+            float leppt0 = tx.getBranch<LV>("leadlep").pt();
+            float leppt1 = tx.getBranch<LV>("subllep").pt();
             int mbbIn = tx.getBranch<int>("mbbIn");
-            tx.setBranch<int>("pass_blind", nt.isData() ? not mbbIn : 1);
+            tx.setBranch<int>("pass_blind", nt.isData() ? not (mbbIn and mjj > 500. and detajj > 3 and leppt0 > 140. and leppt1 > 60.): 1);
             return true;
 
         },
@@ -1665,4 +1522,198 @@ void VBSHWW::initBDTInputComputation()
             },
             UNITY
             );
+}
+
+void VBSHWW::processGenParticles_VBSWWH()
+{
+
+    bool isvbswwh = nt.GenPart_status()[2] == 23;
+    tx.setBranch<int>("isvbswwh", isvbswwh);
+    if (isvbswwh)
+    {
+        const LV& ijet = nt.GenPart_p4()[2];
+        const LV& jjet = nt.GenPart_p4()[3];
+        const LV& jet0 = ijet.pt() > jjet.pt() ? ijet : jjet;
+        const LV& jet1 = ijet.pt() > jjet.pt() ? jjet : ijet;
+        tx.setBranch<LV>("gen_jet0", jet0);
+        tx.setBranch<LV>("gen_jet1", jet1);
+        const LV& iW = nt.GenPart_p4()[4];
+        const LV& jW = nt.GenPart_p4()[5];
+        const LV& W0 = iW.pt() > jW.pt() ? iW : jW;
+        const LV& W1 = iW.pt() > jW.pt() ? jW : iW;
+        tx.setBranch<LV>("gen_w0", W0);
+        tx.setBranch<LV>("gen_w1", W1);
+        const LV& h = nt.GenPart_p4()[6];
+        tx.setBranch<LV>("gen_h", h);
+
+        std::vector<LV> leptons;
+        std::vector<int> lepton_pdgids;
+        for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
+        {
+            int midx = nt.GenPart_genPartIdxMother()[igen];
+            if (midx > 1)
+            {
+                if (abs(nt.GenPart_pdgId()[midx]) == 24 and abs(nt.GenPart_status()[midx]) == 62
+                    and (
+                        ((nt.GenPart_status()[igen] == 1 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 11 or abs(nt.GenPart_pdgId()[igen]) == 13))
+                        or
+                        ((nt.GenPart_status()[igen] == 2 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 15))
+                        )
+                   )
+                {
+                    leptons.push_back(nt.GenPart_p4()[igen]);
+                    lepton_pdgids.push_back(nt.GenPart_pdgId()[igen]);
+                }
+            }
+            else
+            {
+                continue;
+            }
+        }
+
+        if (leptons.size() != 2)
+        {
+            std::cout <<  " leptons.size(): " << leptons.size() <<  std::endl;
+            for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
+            {
+                int pdgid = nt.GenPart_pdgId()[igen];
+                int status = nt.GenPart_status()[igen];
+                int midx = nt.GenPart_genPartIdxMother()[igen];
+                int mid = midx > -1 ? nt.GenPart_pdgId()[midx] : -1;
+                int mstatus = midx > -1 ? nt.GenPart_status()[midx] : -1;
+                std::cout <<  " pdgid: " << pdgid <<  " status: " << status <<  " midx: " << midx <<  " mid: " << mid <<  " mstatus: " << mstatus <<  std::endl;
+            }
+        }
+        const LV& lep0 = leptons[0].pt() > leptons[1].pt() ? leptons[0] : leptons[1];
+        const LV& lep1 = leptons[0].pt() > leptons[1].pt() ? leptons[1] : leptons[0];
+
+        std::vector<LV> nus;
+        for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
+        {
+            int midx = nt.GenPart_genPartIdxMother()[igen];
+            if (midx > 1)
+            {
+                if (abs(nt.GenPart_pdgId()[midx]) == 24 and abs(nt.GenPart_status()[midx]) == 62
+                    and (
+                        ((nt.GenPart_status()[igen] == 1 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 12 or abs(nt.GenPart_pdgId()[igen]) == 14))
+                        or
+                        ((nt.GenPart_status()[igen] == 1 or nt.GenPart_status()[igen] == 23) and (abs(nt.GenPart_pdgId()[igen]) == 16))
+                        )
+                   )
+                {
+                    nus.push_back(nt.GenPart_p4()[igen]);
+                }
+            }
+            else
+            {
+                continue;
+            }
+        }
+
+        if (nus.size() != 2)
+        {
+            std::cout <<  " nus.size(): " << nus.size() <<  std::endl;
+        }
+        const LV& nu0 = nus[0].pt() > nus[1].pt() ? nus[0] : nus[1];
+        const LV& nu1 = nus[0].pt() > nus[1].pt() ? nus[1] : nus[0];
+
+        std::vector<LV> bs;
+        for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
+        {
+            if (abs(nt.GenPart_pdgId()[igen]) == 5 and nt.GenPart_status()[igen] == 23)
+            {
+                bs.push_back(nt.GenPart_p4()[igen]);
+            }
+        }
+
+        if (bs.size() != 2)
+        {
+            std::cout <<  " bs.size(): " << bs.size() <<  std::endl;
+        }
+        const LV& b0 = bs[0].pt() > bs[1].pt() ? bs[0] : bs[1];
+        const LV& b1 = bs[0].pt() > bs[1].pt() ? bs[1] : bs[0];
+
+        tx.setBranch<LV>("gen_lep0", lep0);
+        tx.setBranch<LV>("gen_lep1", lep1);
+        tx.setBranch<LV>("gen_nu0", nu0);
+        tx.setBranch<LV>("gen_nu1", nu1);
+        tx.setBranch<LV>("gen_b0", b0);
+        tx.setBranch<LV>("gen_b1", b1);
+
+        int channel = -1;
+        if (lepton_pdgids[0] * lepton_pdgids[1] == 121)
+        {
+            channel = 0;
+        }
+        else if (lepton_pdgids[0] * lepton_pdgids[1] == 143)
+        {
+            channel = 1;
+        }
+        else if (lepton_pdgids[0] * lepton_pdgids[1] == 169)
+        {
+            channel = 2;
+        }
+        else if (lepton_pdgids[0] * lepton_pdgids[1] == 165)
+        {
+            channel = 3;
+        }
+        else if (lepton_pdgids[0] * lepton_pdgids[1] == 195)
+        {
+            channel = 4;
+        }
+        else if (lepton_pdgids[0] * lepton_pdgids[1] == 225)
+        {
+            channel = 5;
+        }
+        tx.setBranch<int>("genchannel", channel);
+    }
+}
+
+void VBSHWW::processGenParticles_TopBackgrounds()
+{
+
+    std::vector<int> b_idxs;
+    std::vector<int> b_from_top_idxs;
+    std::vector<int> b_midx;
+    std::vector<LV> b_from_top_p4s;
+    for (unsigned int igen = 0; igen < nt.GenPart_p4().size(); ++igen)
+    {
+        // Selecting the following will 100% select the b quarks from the top quark
+        // Note that when you look at it more generally that you find extra bquarks from the ISR
+        // In those cases the mother points to the incoming parton, and presumably the 21 gluon is "contracted out".
+        // So the gluons doesn't show up
+        if (nt.GenPart_status()[igen] == 23 and abs(nt.GenPart_pdgId()[igen]) == 5)
+        {
+            b_idxs.push_back(igen);
+            int midx = nt.GenPart_genPartIdxMother()[igen];
+            if (abs(nt.GenPart_pdgId()[midx]) == 6 and abs(nt.GenPart_status()[midx]) == 62)
+            {
+                b_from_top_idxs.push_back(igen);
+                b_from_top_p4s.push_back(nt.GenPart_p4()[igen]);
+            }
+            b_midx.push_back(midx);
+        }
+    }
+
+    const LV& b0 = b_from_top_p4s[0].pt() > b_from_top_p4s[1].pt() ? b_from_top_p4s[0] : b_from_top_p4s[1];
+    const LV& b1 = b_from_top_p4s[0].pt() > b_from_top_p4s[1].pt() ? b_from_top_p4s[1] : b_from_top_p4s[0];
+
+    tx.setBranch<LV>("gen_b0", b0);
+    tx.setBranch<LV>("gen_b1", b1);
+
+    if (b_from_top_idxs.size() != 2)
+    {
+        std::cout << std::endl;
+        std::cout <<  "WARNING! b_from_top_idxs.size(): " << b_from_top_idxs.size() <<  std::endl;
+        std::cout << std::endl;
+    }
+
+    // if (b_idxs.size() == 4)
+    // {
+    //     std::cout << std::endl;
+    //     std::cout <<  " (nt.GenPart_p4()[b_idxs[0]]+nt.GenPart_p4()[b_idxs[1]]).mass(): " << (nt.GenPart_p4()[b_idxs[0]]+nt.GenPart_p4()[b_idxs[1]]).mass() <<  std::endl;
+    //     std::cout <<  " RooUtil::Calc::DeltaR(nt.GenPart_p4()[b_idxs[0]],nt.GenPart_p4()[b_idxs[1]]): " << RooUtil::Calc::DeltaR(nt.GenPart_p4()[b_idxs[0]],nt.GenPart_p4()[b_idxs[1]]) <<  std::endl;
+    //     std::cout << std::endl;
+    // }
+
 }
