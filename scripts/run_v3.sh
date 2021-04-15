@@ -42,5 +42,3 @@ echo "================================================"
 
 sh $DIR/exec_v3.sh ${STUDY}
 sh $DIR/hadd_v3.sh ${STUDY}
-# python $DIR/cutflow.py ${STUDY}
-# python $DIR/plot.py

@@ -29,7 +29,7 @@ mbbs = [
     ]
 
 
-cmd = "python rooutil/yield_for_keynote.py cutflow/mainAnalysis_Run2/TightLLMbbOnLepPt1_cutflow.txt | grep \"tt\" | sed 's/,tt(1l)/,,,,tt(1l)/'"
+cmd = "python rooutil/yield_for_keynote.py cutflow/mainAnalysis_Run2/TightLLMbbOnSR_cutflow.txt | grep \"tt\" | sed 's/,tt(1l)/,,,,tt(1l)/'"
 os.system(cmd)
 
 for job in jobs:

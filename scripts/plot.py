@@ -73,11 +73,44 @@ if "2017" in hadd_dir: lumi = 41.5
 if "2018" in hadd_dir: lumi = 59.97
 if "Run2" in hadd_dir: lumi = 137
 
+ChannelsDetails_bin_labels = [
+"T-ee-in",
+"T-ee-out",
+"T-e#mu-in",
+"T-e#mu-out",
+"T-#mu#mu-in",
+"T-#mu#mu-out",
+"L-ee-in",
+"L-ee-out",
+"L-e#mu-in",
+"L-e#mu-out",
+"L-#mu#mu-in",
+"L-#mu#mu-out",
+"T-e#tau-in",
+"T-e#tau-out",
+"T-#mu#tau-in",
+"T-#mu#tau-out",
+]
+
+ChannelsMbbMerged_bin_labels = [
+"T-ee",
+"T-e#mu",
+"T-#mu#mu",
+"L-ee",
+"L-e#mu",
+"L-#mu#mu",
+"T-e#tau",
+"T-#mu#tau",
+]
+
 histxaxislabeloptions = {
         "LL__Mb0b1MET"             : {"xaxis_label"      : "m_{bbMET} [GeV]"         , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1, "remove_overflow":True},
-        "TightLLChannel__MJJ"      : {"xaxis_label"      : "m_{jj} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
-        "TightLLChannel__LeptonPt0": {"xaxis_label"      : "p_{T,lead-lep} [GeV]"    , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
-        "TightLLChannel__LeptonPt1": {"xaxis_label"      : "p_{T,sublead-lep} [GeV]" , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
+        "TightLLMbbAll__MJJ"       : {"xaxis_label"      : "m_{jj} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
+        "TightLLMbbAll__DEtaJJ"    : {"xaxis_label"      : "#Delta#eta_{jj}"         , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
+        "TightLLMbbAll__LeptonPt0" : {"xaxis_label"      : "p_{T,lead-lep} [GeV]"    , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
+        "TightLLMbbAll__LeptonPt1" : {"xaxis_label"      : "p_{T,sublead-lep} [GeV]" , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
+        "TightLLMbbAll__HiggsPt"   : {"xaxis_label"      : "p_{T,bb} [GeV]"          , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
+        "TightLLMbbAll__DRbb"      : {"xaxis_label"      : "#DeltaR_{bb}"            , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":  "auto" ,"blind":True},
         "Mbb"                      : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 18, "signal_scale":   1                },
         "TightLLChannel__MJJ"      : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 18, "signal_scale":   1                },
         "TightLLCRMjj__Mbb"        : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 18, "signal_scale":   1                },
@@ -90,7 +123,7 @@ histxaxislabeloptions = {
         "HiggsPt"                  : {"xaxis_label"      : "p_{T,bb} [GeV]"          , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         "DRbb"                     : {"xaxis_label"      : "#DeltaR_{bb}"            , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         "MET"                      : {"xaxis_label"      : "MET [GeV]"               , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
-        "METLow"                   : {"xaxis_label"      : "MET [GeV]"               , "xaxis_ndivisions" : 505, "nbins": 180, "signal_scale":   1                },
+        "METLow"                   : {"xaxis_label"      : "MET [GeV]"               , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         "Mll"                      : {"xaxis_label"      : "m_{ll} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         "Mll"                      : {"xaxis_label"      : "m_{ll} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         "MJJ"                      : {"xaxis_label"      : "m_{jj} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
@@ -111,9 +144,13 @@ histxaxislabeloptions = {
         "BJetPhi0"                 : {"xaxis_label"      : "#phi_{lead-b}"           , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         "BJetPhi1"                 : {"xaxis_label"      : "#phi_{sublead-b}"        , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
         "Channels"                 : {"xaxis_label"      : "Channels"                , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                },
+        "ChannelsDetails"          : {"xaxis_label"      : ""                        , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                , "bin_labels": ChannelsDetails_bin_labels},
+        "ChannelsMbbMerged"        : {"xaxis_label"      : ""                        , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                , "bin_labels": ChannelsMbbMerged_bin_labels},
+        "MbbBothGenMatched"        : {"xaxis_label"      : "m_{bb} [GeV]"            , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   1                , "remove_underflow": True},
+        "BJetMatchCategory"        : {"xaxis_label"      : "N_{b-jet,gen-matched}"   , "xaxis_ndivisions" : 505, "nbins": 20, "signal_scale":   "auto"           , "bin_labels": ["N/A", "0", "1", "2"]},
         }
 
-dogrep = True
+dogrep = False
 if len(cutname_to_plot) == 0:
     filter_pattern = ",".join(histxaxislabeloptions.keys())
     dogrep = False
@@ -133,6 +170,8 @@ else:
         else:
             filter_pattern = "{}__".format(cutname_to_plot)
 
+if "*" in filter_pattern:
+    dogrep = True
 
 # cutflow
 p.dump_plot(fnames=bkgs,
@@ -143,7 +182,6 @@ p.dump_plot(fnames=bkgs,
     dirname="plots/{}".format(study_name),
     filter_pattern=filter_pattern,
     dogrep=dogrep,
-    # dogrep=False,
     usercolors=colors,
     extraoptions={
         "print_yield": True,
@@ -155,5 +193,6 @@ p.dump_plot(fnames=bkgs,
         "ratio_range": [0., 2.],
         },
     histxaxislabeloptions=histxaxislabeloptions,
+    skip2d=True,
     )
 
