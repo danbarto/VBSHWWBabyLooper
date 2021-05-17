@@ -1,4 +1,4 @@
-# April 9th: Producing preliminary loose validation region plots
+# April 15th: Producing preliminary loose validation region plots
 
     git clone --recursive git@github.com:sgnoohc/VBSHWWBabyLooper.git
     cd VBSHWWBabyLooper
@@ -10,6 +10,10 @@
     python scripts/summary_table.py  > data.csv # Creates a .csv file of grand table
     cp data.csv table/ # If you want some pretty printing on your webpage
     python scripts/plot.py mainAnalysis_Run2 LooseVRChannel__ChannelsDetails
+
+# Producing mbb extrapolation factor study plots
+
+    python scripts/mbb_study.py
 
 # Quick Instructions
 
