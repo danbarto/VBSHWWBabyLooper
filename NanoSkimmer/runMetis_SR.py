@@ -278,7 +278,7 @@ if __name__ == "__main__":
 
 
      # submission tag
-     tag = "fcnc_v7_SRandCR_12may2021"
+     tag = "fcnc_v8_SRonly_12may2021"
 
      task_list = []
      for sample in samples:
@@ -290,8 +290,8 @@ if __name__ == "__main__":
                condor_submit_params = {"sites": "T2_US_UCSD", "use_xrootd":True},
                cmssw_version = "CMSSW_10_0_0",
                input_executable = "condor_executable_metis.sh", # your condor executable here
-               tarfile = "/hadoop/cms/store/user/ksalyer/FCNC_NanoSkimmer_SRandCR_ptEtaCuts_incMaxEl.package.tar.gz", # your tarfile with assorted goodies here
-               #tarfile = "/hadoop/cms/store/user/ksalyer/FCNC_NanoSkimmer_SSOnly.package.tar.gz",
+               #tarfile = "/hadoop/cms/store/user/ksalyer/FCNC_NanoSkimmer_v2.package.tar.gz", # your tarfile with assorted goodies here
+               tarfile = "/hadoop/cms/store/user/ksalyer/FCNC_NanoSkimmer_SROnly_ptEtaCuts_incMaxEl.package.tar.gz",
                #tarfile = "/nfs-7/userdata/phchang/VBSHWWNanoSkimmer_v1.package.tar.gz",
                special_dir = "FCNC_NanoSkim/{}".format(tag), # output files into /hadoop/cms/store/<user>/<special_dir>
                #special_dir = "VBSHWWNanoSkim/{}".format(tag), # output files into /hadoop/cms/store/<user>/<special_dir>
