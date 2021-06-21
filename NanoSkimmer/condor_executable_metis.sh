@@ -7,7 +7,7 @@ INPUTFILENAMES=$3
 IFILE=$4
 # CMSSWVERSION=$5 # We will be overriding by hand with the following
 # SCRAMARCH=$6 # We will be overriding by hand with the following
-CMSSWVERSION=CMSSW_10_0_0
+CMSSWVERSION=CMSSW_10_2_9
 SCRAMARCH=slc7_amd64_gcc700
 
 function getjobad {
@@ -104,7 +104,7 @@ fi
 
 # Setup environment and build
 export SCRAM_ARCH=${SCRAMARCH} && scramv1 project CMSSW ${CMSSWVERSION}
-cd CMSSW_10_0_0/src/
+cd ${CMSSWVERSION}/src/
 tar xvf ../../package.tar.gz
 cd PhysicsTools/NanoAODTools/
 eval `scramv1 runtime -sh`
@@ -118,7 +118,7 @@ echo -e "\n--- begin running ---\n" #                           <----- section d
 
 #------------------------------------------------------------------------------------------------------------------------------>
 localpath=$(echo ${INPUTFILENAMES} | sed 's/^.*\(\/store.*\).*$/\1/')
-INPUTFILE=root://xcache-redirector.t2.ucsd.edu:2040/${localpath}
+INPUTFILE=root://xcache-redirector.t2.ucsd.edu:2042/${localpath}
 echo ${INPUTFILE}
 #------------------------------------------------------------------------------------------------------------------------------>
 
@@ -176,12 +176,9 @@ if [[ $RUN_STATUS != 0 ]]; then
 fi
 
 # Run the postprocessor
-CMD="python scripts/nano_postproc.py \
-    ./ ${INPUTFILE} \
-    -b python/postprocessing/examples/keep_and_drop.txt \
-    -I PhysicsTools.NanoAODTools.postprocessing.examples.vbsHwwSkimModule vbsHwwSkimModuleConstr"
+CMD="python run.py ${INPUTFILE} "
 echo $CMD
-echo "Running nano_postproc.py" | tee >(cat >&2)
+echo "Running nano postprocessor" | tee >(cat >&2)
 $CMD > >(tee nano_postproc.txt) 2> >(tee nano_postproc_stderr.txt >&2)
 
 RUN_STATUS=$?
