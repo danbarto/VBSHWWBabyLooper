@@ -7,7 +7,7 @@ INPUTFILENAMES=$3
 IFILE=$4
 # CMSSWVERSION=$5 # We will be overriding by hand with the following
 # SCRAMARCH=$6 # We will be overriding by hand with the following
-CMSSWVERSION=CMSSW_10_2_13
+CMSSWVERSION=CMSSW_10_2_9
 SCRAMARCH=slc7_amd64_gcc700
 
 function getjobad {
@@ -33,6 +33,39 @@ function chirp {
     ret=$?
     echo "[chirp] Chirped $1 => $2 with exit code $ret"
 }
+
+function stageout {
+    COPY_SRC=$1
+    COPY_DEST=$2
+    retries=0
+    COPY_STATUS=1
+    until [ $retries -ge 3 ]
+    do
+        echo "Stageout attempt $((retries+1)): env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 7200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
+        env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 7200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
+        COPY_STATUS=$?
+        if [ $COPY_STATUS -ne 0 ]; then
+            echo "Failed stageout attempt $((retries+1))"
+        else
+            echo "Successful stageout with $retries retries"
+            break
+        fi
+        retries=$[$retries+1]
+        echo "Sleeping for 30m"
+        sleep 30m
+    done
+    if [ $COPY_STATUS -ne 0 ]; then
+        echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
+        env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
+        REMOVE_STATUS=$?
+        if [ $REMOVE_STATUS -ne 0 ]; then
+            echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
+            echo "You probably have a corrupt file sitting on hadoop now."
+            exit 1
+        fi
+    fi
+}
+
 
 # Make sure OUTPUTNAME doesn't have .root since we add it manually
 OUTPUTNAME=$(echo $OUTPUTNAME | sed 's/\.root//')
@@ -71,7 +104,7 @@ fi
 
 # Setup environment and build
 export SCRAM_ARCH=${SCRAMARCH} && scramv1 project CMSSW ${CMSSWVERSION}
-cd CMSSW_10_2_13/src/
+cd ${CMSSWVERSION}/src/
 tar xvf ../../package.tar.gz
 cd PhysicsTools/NanoAODTools/
 eval `scramv1 runtime -sh`
@@ -85,7 +118,7 @@ echo -e "\n--- begin running ---\n" #                           <----- section d
 
 #------------------------------------------------------------------------------------------------------------------------------>
 localpath=$(echo ${INPUTFILENAMES} | sed 's/^.*\(\/store.*\).*$/\1/')
-INPUTFILE=root://xcache-redirector.t2.ucsd.edu:2040/${localpath}
+INPUTFILE=root://xcache-redirector.t2.ucsd.edu:2042/${localpath}
 echo ${INPUTFILE}
 #------------------------------------------------------------------------------------------------------------------------------>
 
@@ -136,18 +169,16 @@ fi
 RUN_STATUS=$?
 
 if [[ $RUN_STATUS != 0 ]]; then
-    echo "Error: count_nevents.C on all events crashed with exit code $?" | tee >(cat >&2)
+    echo "Error: removing output file because count_nevents.C on all events crashed with exit code $?" | tee >(cat >&2)
+    rm ${NANOPOSTPROCOUTPUTFILENAME}_Skim.root
     echo "Exiting..."
     exit 1
 fi
 
 # Run the postprocessor
-CMD="python scripts/nano_postproc.py \
-    ./ ${INPUTFILE} \
-    -b python/postprocessing/examples/keep_and_drop.txt \
-    -I PhysicsTools.NanoAODTools.postprocessing.examples.vbsHwwSkimModule vbsHwwSkimModuleConstr"
+CMD="python run.py ${INPUTFILE} "
 echo $CMD
-echo "Running nano_postproc.py" | tee >(cat >&2)
+echo "Running nano postprocessor" | tee >(cat >&2)
 $CMD > >(tee nano_postproc.txt) 2> >(tee nano_postproc_stderr.txt >&2)
 
 RUN_STATUS=$?
@@ -203,47 +234,50 @@ OUTPUTDIRPATHNEW=$(echo ${OUTPUTDIR} | sed 's/^.*\(\/store.*\).*$/\1/')
 # Copying the output file
 COPY_SRC="file://`pwd`/${OUTPUTNAME}.root"
 COPY_DEST="davs://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}.root"
-echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
-env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
-COPY_STATUS=$?
-if [[ $COPY_STATUS != 0 ]]; then
-    echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
-    env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
-    REMOVE_STATUS=$?
-    if [[ $REMOVE_STATUS != 0 ]]; then
-        echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
-    fi
-fi
+stageout $COPY_SRC $COPY_DEST
+# echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
+# env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
+# COPY_STATUS=$?
+# if [[ $COPY_STATUS != 0 ]]; then
+#     echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
+#     env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
+#     REMOVE_STATUS=$?
+#     if [[ $REMOVE_STATUS != 0 ]]; then
+#         echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
+#     fi
+# fi
 
 # Copying n events
 COPY_SRC="file://`pwd`/nevents.txt"
 COPY_DEST="davs://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}_nevents.txt"
-echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
-env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
-COPY_STATUS=$?
-if [[ $COPY_STATUS != 0 ]]; then
-    echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
-    env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
-    REMOVE_STATUS=$?
-    if [[ $REMOVE_STATUS != 0 ]]; then
-        echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
-    fi
-fi
+stageout $COPY_SRC $COPY_DEST
+# echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
+# env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
+# COPY_STATUS=$?
+# if [[ $COPY_STATUS != 0 ]]; then
+#     echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
+#     env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
+#     REMOVE_STATUS=$?
+#     if [[ $REMOVE_STATUS != 0 ]]; then
+#         echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
+#     fi
+# fi
 
 # Copying n events skimmed
 COPY_SRC="file://`pwd`/nevents_skimmed.txt"
 COPY_DEST="davs://redirector.t2.ucsd.edu:1094//${OUTPUTDIRPATHNEW}/${OUTPUTNAME}_${IFILE}_nevents_skimmed.txt"
-echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
-env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
-COPY_STATUS=$?
-if [[ $COPY_STATUS != 0 ]]; then
-    echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
-    env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
-    REMOVE_STATUS=$?
-    if [[ $REMOVE_STATUS != 0 ]]; then
-        echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
-    fi
-fi
+stageout $COPY_SRC $COPY_DEST
+# echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
+# env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 4200 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
+# COPY_STATUS=$?
+# if [[ $COPY_STATUS != 0 ]]; then
+#     echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
+#     env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
+#     REMOVE_STATUS=$?
+#     if [[ $REMOVE_STATUS != 0 ]]; then
+#         echo "Uhh, gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
+#     fi
+# fi
 echo -e "\n--- end copying output ---\n" #                    <----- section division
 
 

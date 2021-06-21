@@ -17,7 +17,7 @@
 
 # Quick Instructions
 
-First fork the following repo to user's area.  
+First, fork this or the original (cmstas/VBSHWWBabyLooper) repo to user's area.   
 Then, clone the repository to local area.
 
     git clone --recursive git@github.com:<yourgitusername>/VBSHWWBabyLooper.git
@@ -55,3 +55,35 @@ The outputs are located in
     git push origin main # to push the local changes to the forked repository
     # Then go to https://github.com/<yourgitusername>/VBSHWWBabyLooper/pulls and click "New pull request" button
 
+# Using the NanoSkimmer
+Set your CMS environment:
+    
+    cmsrel CMSSW_10_0_0
+    cd CMSSW_10_0_0/src/
+    cmsenv
+
+Check that the skim is appropriate for your purposes.
+For this analysis, the skim is saved in a tarred directory stored on the uaf's hadoop:
+
+    /hadoop/cms/store/user/ksalyer/FCNC_NanoSkimmer_v1.package.tar.gz
+
+To find the skim, untar this directory by running
+
+    tar xf /hadoop/cms/store/user/ksalyer/FCNC_NanoSkimmer_v1.package.tar.gz
+
+This will produce a directory titled "PhysicsTools". The skim module is
+
+    ./PhysicsTools/NanoAODTools/python/postprocessing/examples/vbsHwwSkimModule.py
+
+If you edit the skim, be sure to re-tar the PhysicsTools directory in the CMSSW_10_0_0 environment to match the framework of the condor executable.
+
+Local tests of the skimmer can be done by running:
+
+    cd PhysicsTools/NanoAODTools
+    scram b
+    python scripts/nano_postproc.py \
+        ./ \
+        /MY/NANO/AOD/FILE.root \
+        -b python/postprocessing/examples/keep_and_drop.txt \
+        -I PhysicsTools.NanoAODTools.postprocessing.examples.vbsHwwSkimModule vbsHwwSkimModuleConstr
+    
